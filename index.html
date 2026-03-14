@@ -1,0 +1,4554 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WordFun – 智慧單字學習</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ink: #0e0f14;
+  --paper: #f7f5f0;
+  --card: #ffffff;
+  --accent: #e84545;
+  --accent2: #2563eb;
+  --gold: #f59e0b;
+  --green: #10b981;
+  --muted: #6b7280;
+  --border: #e5e1d8;
+  --radius: 14px;
+  --shadow: 0 2px 16px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+h1,h2,h3,.syne{font-family:'Syne',sans-serif}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;background:var(--ink);position:sticky;top:0;z-index:100;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--accent)}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{
+  padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.82rem;
+  font-weight:500;color:#9ca3af;transition:.2s;border:none;background:transparent;
+  font-family:'DM Sans',sans-serif;
+}
+.nav-tab:hover{color:#fff}
+.nav-tab.active{background:#fff1;color:#fff;font-weight:600}
+.api-btn{
+  padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;
+  font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:.15s;
+}
+.api-btn:hover{opacity:.85}
+
+/* ── PAGES ── */
+.page{display:none;padding:28px;max-width:1000px;margin:0 auto}
+.page.active{display:block}
+
+/* ── HERO ── */
+.hero{
+  background:var(--ink);border-radius:20px;padding:40px 36px;
+  margin-bottom:28px;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;right:-60px;top:-60px;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,#e8454522 0%,transparent 70%);
+}
+.hero h1{font-size:2.2rem;color:#fff;line-height:1.1;margin-bottom:10px}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero p{color:#9ca3af;font-size:.9rem;max-width:420px}
+.hero-stats{display:flex;gap:24px;margin-top:24px}
+.stat{text-align:left}
+.stat-n{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#fff}
+.stat-l{font-size:.75rem;color:#6b7280;margin-top:2px}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:9px;font-size:.83rem;font-weight:600;
+  cursor:pointer;border:none;transition:.15s;font-family:'DM Sans',sans-serif;
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#c73535}
+.btn-secondary{background:var(--ink);color:#fff}
+.btn-secondary:hover{background:#1f2130}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+.btn-sm{padding:5px 12px;font-size:.75rem}
+.btn-green{background:var(--green);color:#fff}
+.btn-blue{background:var(--accent2);color:#fff}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:20px}
+
+/* ── LISTS ── */
+.list-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:20px}
+.list-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:20px;cursor:pointer;transition:.2s;position:relative;
+}
+.list-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.list-card.active-list{border-color:var(--accent2);background:#eff6ff}
+.list-card h3{font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:6px}
+.list-card .wc{font-size:.78rem;color:var(--muted)}
+.list-card .del{
+  position:absolute;top:10px;right:10px;
+  background:#fee2e2;border:none;border-radius:6px;
+  color:#dc2626;cursor:pointer;font-size:.8rem;
+  padding:3px 8px;font-weight:600;opacity:1;
+  transition:.15s;line-height:1.4;
+}
+.list-card .del:hover{background:#fecaca}
+
+/* ── WORD TABLE ── */
+.word-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.word-table th{text-align:left;padding:10px 14px;background:#f9f8f6;font-family:'Syne',sans-serif;font-size:.75rem;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border)}
+.word-table td{padding:11px 14px;border-bottom:1px solid var(--border)}
+.word-table tr:last-child td{border-bottom:none}
+.word-table tr:hover td{background:#fafaf8}
+.word-chip{
+  display:inline-block;font-weight:600;color:var(--accent2);cursor:pointer;
+  transition:.15s;
+}
+.word-chip:hover{color:var(--accent);text-decoration:underline}
+.stars{color:var(--gold);font-size:.75rem}
+.badge-mc{background:#dcfce7;color:#166534;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700}
+.badge-cloze{background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700}
+.badge-err{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700}
+
+/* ── INPUT ── */
+input,textarea,select{
+  width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
+  font-size:.85rem;font-family:'DM Sans',sans-serif;background:#fff;color:var(--ink);
+  transition:.15s;outline:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
+.form-row{margin-bottom:14px}
+.form-label{font-size:.78rem;font-weight:600;margin-bottom:5px;display:block;color:var(--muted)}
+
+/* ── MODAL ── */
+.spell-letter-btn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  transform: translateY(-2px);
+}
+.spell-letter-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.modal-bg{
+  display:none;position:fixed;inset:0;background:#0007;z-index:200;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:#fff;border-radius:20px;max-width:560px;width:100%;
+  max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px #0003;
+  animation:modalIn .2s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.modal-header{
+  padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;
+}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);transition:.15s}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:24px}
+
+/* ── PRACTICE ── */
+.practice-wrap{max-width:580px;margin:0 auto}
+.practice-q{
+  background:var(--ink);color:#fff;border-radius:16px;
+  padding:28px 30px;margin-bottom:20px;
+}
+.practice-q .qword{font-family:'DM Sans',sans-serif;font-size:2.2rem;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+.practice-q .qlabel{font-size:.75rem;color:#9ca3af}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.option{
+  padding:14px 16px;background:var(--card);border:2px solid var(--border);
+  border-radius:12px;cursor:pointer;font-size:.88rem;font-weight:500;
+  transition:.15s;text-align:center;
+}
+.option:hover{border-color:var(--accent2);background:#eff6ff}
+.option.correct{border-color:var(--green);background:#f0fdf4;color:#166534;font-weight:700}
+.option.wrong{border-color:var(--accent);background:#fef2f2;color:#991b1b}
+.option.disabled{pointer-events:none}
+.score-bar{background:#e5e7eb;border-radius:99px;height:8px;margin:12px 0}
+.score-fill{background:var(--green);height:8px;border-radius:99px;transition:width .4s}
+
+/* ── CLOZE ── */
+.story-text{
+  font-size:1rem;line-height:1.9;background:#f9f8f6;
+  border-radius:12px;padding:20px;margin-bottom:20px;
+  border:1px solid var(--border);
+}
+.blank-select{
+  display:inline-block;width:auto;padding:2px 8px;min-width:100px;
+  border:none;border-bottom:2px solid var(--accent2);border-radius:0;
+  background:#e0eaff;font-weight:600;color:var(--accent2);margin:0 2px;
+}
+.blank-select.correct{border-color:var(--green);background:#dcfce7;color:#166534}
+.blank-select.wrong{border-color:var(--accent);background:#fee2e2;color:#991b1b}
+
+/* ── DETAIL PANEL ── */
+.detail-section{margin-bottom:18px}
+.detail-section h4{font-family:'Syne',sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:#f3f4f6;border-radius:6px;padding:4px 10px;font-size:.78rem}
+.tag.syn{background:#dbeafe;color:#1d4ed8}
+.tag.ant{background:#fee2e2;color:#b91c1c}
+.example-item{margin-bottom:10px;padding:10px 14px;background:#f9f8f6;border-radius:9px;border-left:3px solid var(--accent2)}
+.example-item .en{font-size:.85rem;font-weight:500}
+.example-item .zh{font-size:.78rem;color:var(--muted);margin-top:3px}
+.phrase-item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 14px;margin-bottom:6px;background:#f0f7ff;border-radius:9px;border-left:3px solid var(--gold)}
+.phrase-en{font-size:.85rem;font-weight:600;color:#1e40af}
+.phrase-zh{font-size:.78rem;color:var(--muted);text-align:right;flex-shrink:0}
+.phonetic{font-size:1rem;color:var(--muted);font-style:italic;margin-left:8px}
+.pos-badge{background:var(--ink);color:#fff;font-size:.7rem;padding:3px 9px;border-radius:20px;margin-left:8px;font-weight:700}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:10px 22px;border-radius:99px;
+  font-size:.82rem;font-weight:500;opacity:0;transition:.25s;z-index:999;pointer-events:none;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── LOADING ── */
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid #ddd;border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row{text-align:center;padding:32px;color:var(--muted);font-size:.85rem}
+
+/* ── API KEY BANNER ── */
+.api-banner{
+  background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;
+  padding:14px 18px;margin-bottom:20px;font-size:.83rem;display:flex;align-items:center;gap:10px;
+}
+.api-banner a{color:var(--accent2);font-weight:600;cursor:pointer}
+
+/* ── PRACTICE SETUP CARDS ── */
+.plist-card{
+  background:var(--card);border:2px solid var(--border);border-radius:12px;
+  padding:16px;cursor:pointer;transition:.2s;
+}
+.plist-card:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.plist-card.selected{border-color:var(--accent2);background:#eff6ff}
+.plist-card .pl-name{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.plist-card .pl-count{font-size:.75rem;color:var(--muted)}
+.plist-card .pl-check{float:right;color:var(--accent2);font-size:1rem;opacity:0;transition:.15s}
+.plist-card.selected .pl-check{opacity:1}
+.mode-card{
+  background:var(--card);border:2px solid var(--border);border-radius:12px;
+  padding:16px;cursor:pointer;transition:.2s;text-align:center;
+}
+.mode-card:hover{border-color:var(--accent2)}
+.mode-card.selected{border-color:var(--accent2);background:#eff6ff}
+.count-card{
+  padding:8px 20px;border:2px solid var(--border);border-radius:9px;
+  font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;background:var(--card);
+}
+.count-card:hover{border-color:var(--accent2);color:var(--accent2)}
+.count-card.selected{border-color:var(--accent2);background:#eff6ff;color:var(--accent2)}
+.wrong-chip{
+  padding:5px 12px;background:#fee2e2;border-radius:8px;
+  font-size:.78rem;font-weight:600;color:#991b1b;cursor:pointer;transition:.15s;
+}
+.wrong-chip:hover{background:#fecaca}
+.score-pill{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:.72rem;font-weight:700;letter-spacing:.02em;
+}
+.score-none   {background:#f3f4f6;color:#9ca3af}
+.score-zero   {background:#fee2e2;color:#dc2626}
+.score-low    {background:#ffedd5;color:#c2410c}
+.score-mid    {background:#fef9c3;color:#a16207}
+.score-good   {background:#dbeafe;color:#1d4ed8}
+.score-perfect{background:#dcfce7;color:#15803d}
+
+/* ── CACHE PAGE ── */
+.cache-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  padding:14px 16px;cursor:pointer;transition:.2s;position:relative;
+}
+.cache-card:hover{border-color:var(--accent2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.cache-card .cc-word{font-weight:700;font-size:.95rem;color:var(--ink);margin-bottom:3px}
+.cache-card .cc-pos{font-size:.72rem;color:var(--muted)}
+.cache-card .cc-def{font-size:.75rem;color:var(--ink);margin-top:5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cache-card .cc-del{
+  position:absolute;top:8px;right:8px;background:none;border:none;
+  color:var(--muted);font-size:.8rem;cursor:pointer;opacity:0;transition:.15s;padding:2px 6px;border-radius:5px;
+}
+.cache-card:hover .cc-del{opacity:1}
+.cache-card .cc-del:hover{background:#fee2e2;color:#dc2626}
+.cache-card .cc-date{font-size:.68rem;color:var(--muted);margin-top:6px}
+
+/* ── HISTORY PAGE ── */
+.hist-summary-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px;text-align:center;
+}
+.hist-summary-card .hs-n{font-size:1.5rem;font-weight:800;font-family:'Syne',sans-serif}
+.hist-summary-card .hs-l{font-size:.72rem;color:var(--muted);margin-top:2px}
+.method-badge{
+  display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;
+}
+.method-mc{background:#dbeafe;color:#1d4ed8}
+.method-cloze{background:#ede9fe;color:#5b21b6}
+.method-fill{background:#dcfce7;color:#15803d}
+
+
+/* ── DICT PAGE ── */
+.dict-card{
+  background:var(--card);border:1.5px solid var(--border);border-radius:12px;
+  padding:16px 20px;display:flex;align-items:center;gap:16px;transition:.2s;
+}
+.dict-card.active{border-color:var(--accent2);background:#eff6ff}
+.dict-card .dc-icon{font-size:1.8rem;flex-shrink:0}
+.dict-card .dc-info{flex:1;min-width:0}
+.dict-card .dc-name{font-weight:700;font-size:.92rem;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dict-card .dc-meta{font-size:.74rem;color:var(--muted)}
+.dict-card .dc-actions{display:flex;gap:8px;flex-shrink:0}
+.dict-card .dc-use{background:var(--accent2);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;transition:.15s}
+.dict-card .dc-use:hover{background:#1d4ed8}
+.dict-card.active .dc-use{background:#dcfce7;color:#15803d;cursor:default}
+.dict-card .dc-del{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;color:var(--muted);transition:.15s}
+.dict-card .dc-del:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .options-grid{grid-template-columns:1fr}
+  nav{padding:12px 16px}
+  .page{padding:16px}
+  .hero{padding:26px 20px}
+  .hero h1{font-size:1.6rem}
+}
+
+  .sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  .sortable:hover { color: var(--accent); }
+  .sort-icon { font-size: .75rem; opacity: .6; margin-left: 2px; }
+
+  .provider-option {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; cursor: pointer; font-size: .83rem;
+    transition: border-color .15s, background .15s;
+  }
+  .provider-option:has(input:checked) {
+    border-color: var(--accent); background: var(--surface);
+  }
+  .provider-option input { display: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Word<span>Fun</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="goto('home')">首頁</button>
+    <button class="nav-tab" onclick="goto('words')">單字庫</button>
+    <button class="nav-tab" onclick="goto('practice')">練習</button>
+    <button class="nav-tab" onclick="goto('cache')">快取</button>
+    <button class="nav-tab" onclick="goto('history')">記錄</button>
+    <button class="nav-tab" onclick="goto('dict')">字典</button>
+    <button class="nav-tab" id="nav-settings" onclick="goto('settings')">⚙️ 設定</button>
+  </div>
+  <div id="ai-badge" style="font-size:.72rem;color:#6b7280;background:#ffffff11;padding:5px 12px;border-radius:8px">✦ AI 未設定</div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div id="api-banner" style="display:none"></div>
+  <div class="hero">
+    <h1>智慧單字<br><em>學習工具</em></h1>
+    <p>結合 Claude AI，深度解析單字、克漏字練習、批次匯入管理。</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-n" id="stat-lists">0</div><div class="stat-l">單字清單</div></div>
+      <div class="stat"><div class="stat-n" id="stat-words">0</div><div class="stat-l">已存單字</div></div>
+      <div class="stat"><div class="stat-n" id="stat-practice">0</div><div class="stat-l">練習次數</div></div>
+      <div class="stat"><div class="stat-n" id="stat-cache">0</div><div class="stat-l">⚡ 已快取單字</div></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="goto('words')">📋 管理單字庫</button>
+    <button class="btn btn-secondary" onclick="goto('practice')">🎯 開始練習</button>
+    <button class="btn btn-ghost" onclick="exportBackup()">💾 匯出備份</button>
+    <label class="btn btn-ghost" style="cursor:pointer">📥 匯入備份<input type="file" accept=".json" style="display:none" onchange="importBackup(event)"></label>
+  </div>
+</div>
+
+<!-- WORDS -->
+<div id="page-words" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <h2 style="font-size:1.4rem">單字庫</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 匯入 .txt</button>
+      <button class="btn btn-ghost btn-sm" onclick="startBatchCache()">⚡ 批量快取</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddListModal()">＋ 新增清單</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <input id="list-search" type="text" placeholder="🔍 搜尋清單..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:180px" oninput="renderLists()">
+    <select id="list-sort" onchange="renderLists()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem">
+      <option value="newest">最新建立</option>
+      <option value="oldest">最舊建立</option>
+      <option value="name">名稱 A→Z</option>
+      <option value="count">單字數</option>
+    </select>
+  </div>
+  <div class="list-grid" id="list-grid"></div>
+
+  <div id="word-section" style="display:none;margin-top:28px">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <span class="syne" style="font-weight:700;font-size:1rem" id="active-list-name">—</span>
+          <span style="font-size:.78rem;color:var(--muted);margin-left:8px" id="active-list-count"></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="word-search" type="text" placeholder="🔍 搜尋單字..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:160px" oninput="loadWords()">
+          <button class="btn btn-ghost btn-sm" onclick="openAddWordModal()">＋ 新增單字</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="word-table">
+          <thead><tr><th id="th-word" class="sortable" onclick="sortWords('word')">單字 <span class="sort-icon">⇅</span></th><th>翻譯</th><th id="th-importance" class="sortable" onclick="sortWords('importance')">重要度 <span class="sort-icon">⇅</span></th><th id="th-practice" class="sortable" onclick="sortWords('practice')">練習 <span class="sort-icon">⇅</span></th><th>錯誤</th><th>正確率</th><th id="th-last" class="sortable" onclick="sortWords('last')">最近練習 <span class="sort-icon">⇅</span></th><th></th></tr></thead>
+          <tbody id="word-tbody"></tbody>
+        </table>
+        <div id="word-loading" class="loading-row" style="display:none"><span class="spinner"></span> 載入中…</div>
+        <div id="word-empty" class="loading-row" style="display:none">此清單尚無單字。點擊「新增單字」開始！</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICE -->
+<div id="page-practice" class="page">
+  <h2 style="font-size:1.4rem;margin-bottom:6px">練習模式</h2>
+  <p style="font-size:.83rem;color:var(--muted);margin-bottom:20px">選擇要練習的單字庫與模式</p>
+  <div id="practice-setup">
+
+    <!-- Step 1: 選擇清單 -->
+    <div style="margin-bottom:22px">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        STEP 1 — 選擇單字庫
+      </div>
+      <div id="practice-list-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+      <!-- hidden select for compat -->
+      <select id="practice-list-sel" style="display:none"></select>
+    </div>
+
+    <!-- Step 2: 選擇模式 -->
+    <div style="margin-bottom:22px">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        STEP 2 — 選擇練習模式
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="mode-cards">
+        <div class="mode-card selected" data-mode="mc" onclick="selectMode(this)">
+          <div style="font-size:1.6rem;margin-bottom:6px">🎯</div>
+          <div style="font-weight:700;font-size:.9rem">單選題</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">從 4 個選項中選出正確翻譯</div>
+        </div>
+        <div class="mode-card" data-mode="cloze" onclick="selectMode(this)">
+          <div style="font-size:1.6rem;margin-bottom:6px">📖</div>
+          <div style="font-weight:700;font-size:.9rem">AI 克漏字</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">AI 生成短文，填入正確單字</div>
+        </div>
+        <div class="mode-card" data-mode="vocab" onclick="selectMode(this)">
+          <div style="font-size:1.6rem;margin-bottom:6px">📝</div>
+          <div style="font-weight:700;font-size:.9rem">文意字彙</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">從例句語境中選出正確單字</div>
+        </div>
+        <div class="mode-card" data-mode="spell" onclick="selectMode(this)">
+          <div style="font-size:1.6rem;margin-bottom:6px">🔤</div>
+          <div style="font-weight:700;font-size:.9rem">拼字練習</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">看中文意義，點字母拼出單字</div>
+        </div>
+      </div>
+      <select id="practice-mode-sel" style="display:none">
+        <option value="mc">單選題</option>
+        <option value="cloze">AI 克漏字</option>
+        <option value="vocab">文意字彙</option>
+        <option value="spell">拼字練習</option>
+      </select>
+    </div>
+
+    <!-- Step 3: 題數 -->
+    <div style="margin-bottom:22px">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        STEP 3 — 題數
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="count-cards">
+        <div class="count-card" data-n="5"  onclick="selectCount(this)">5 題</div>
+        <div class="count-card selected" data-n="10" onclick="selectCount(this)">10 題</div>
+        <div class="count-card" data-n="20" onclick="selectCount(this)">20 題</div>
+        <div class="count-card" data-n="0"  onclick="selectCount(this)">全部</div>
+      </div>
+    </div>
+
+    <!-- Step 4: 範圍 -->
+    <div style="margin-bottom:22px">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+        STEP 4 — 練習範圍
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="scope-cards">
+        <div class="count-card selected" data-scope="all"     onclick="selectScope(this)">全部單字</div>
+        <div class="count-card"          data-scope="new"     onclick="selectScope(this)">⭐ 未練過</div>
+        <div class="count-card"          data-scope="wrong"   onclick="selectScope(this)">❌ 有錯誤</div>
+        <div class="count-card"          data-scope="imperfect" onclick="selectScope(this)">📈 未全對</div>
+      </div>
+      <div id="scope-hint" style="font-size:.75rem;color:var(--muted);margin-top:8px;display:none"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startPractice()" style="width:100%;padding:14px;font-size:.95rem" id="start-btn" disabled>
+      選擇單字庫後開始練習
+    </button>
+  </div>
+
+  <div id="practice-mc" class="practice-wrap" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:.8rem;color:var(--muted)" id="mc-progress">題目 1 / 10</span>
+      <span style="font-size:.8rem;color:var(--green);font-weight:700" id="mc-score">0 分</span>
+    </div>
+    <div class="score-bar"><div class="score-fill" id="mc-bar" style="width:0%"></div></div>
+    <div class="practice-q">
+      <div class="qlabel">請選出正確的中文翻譯</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="qword" id="mc-word">—</div>
+        <button id="mc-detail-btn" onclick="mcShowDetail()" title="查詢單字詳細資訊"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.4rem;
+          opacity:.75;transition:.15s;padding:4px;border-radius:8px;line-height:1"
+          onmouseover="this.style.opacity=1;this.style.background='#ffffff22'"
+          onmouseout="this.style.opacity='.75';this.style.background='none'">🔍</button>
+      </div>
+    </div>
+    <div class="options-grid" id="mc-options"></div>
+    <div style="text-align:center">
+      <button class="btn btn-secondary" id="mc-next" onclick="nextMC()" style="display:none">下一題 →</button>
+      <button class="btn btn-ghost btn-sm" onclick="endPractice()">結束練習</button>
+    </div>
+  </div>
+
+  <div id="practice-cloze" class="practice-wrap" style="display:none">
+    <div id="cloze-loading" class="loading-row"><span class="spinner"></span> AI 正在生成克漏字故事…</div>
+    <div id="cloze-content" style="display:none">
+      <div class="card card-body">
+        <h3 style="margin-bottom:14px;font-size:1rem">閱讀故事並填入正確單字</h3>
+        <div class="story-text" id="cloze-story"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="submitCloze()">✓ 提交答案</button>
+          <button class="btn btn-ghost btn-sm" onclick="endPractice()">結束練習</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOCAB MODE -->
+  <div id="practice-vocab" class="practice-wrap" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:.8rem;color:var(--muted)" id="vocab-progress">題目 1 / 10</span>
+      <span style="font-size:.8rem;color:var(--green);font-weight:700" id="vocab-score">0 分</span>
+    </div>
+    <div class="score-bar"><div class="score-fill" id="vocab-bar" style="width:0%"></div></div>
+
+    <!-- 題目卡 -->
+    <div class="practice-q" style="margin-top:14px">
+      <div class="qlabel">📝 文意字彙 — 選出最符合語意的單字</div>
+      <!-- 例句區 -->
+      <div id="vocab-sentences" style="margin:16px 0;line-height:2;font-size:1rem"></div>
+    </div>
+
+    <!-- 5 個選項 -->
+    <div id="vocab-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+
+    <!-- 解析區（答錯才顯示） -->
+    <div id="vocab-explain" style="display:none;margin-bottom:16px;padding:12px 14px;background:var(--bg);border-radius:10px;border-left:3px solid var(--accent)">
+      <div style="font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:8px">各選項解析</div>
+      <div id="vocab-explain-list"></div>
+    </div>
+
+    <!-- 下一題 / 完成 -->
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="vocab-next" class="btn btn-primary" style="display:none" onclick="vocabNext()">下一題 →</button>
+    </div>
+  </div>
+
+  
+  <!-- ── 拼字練習 ── -->
+  <div id="practice-spell" class="practice-wrap" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:.8rem;color:var(--muted)" id="spell-progress">題目 1 / 10</span>
+      <span style="font-size:.8rem;color:var(--green);font-weight:700" id="spell-score">0 分</span>
+    </div>
+    <div class="score-bar"><div class="score-fill" id="spell-bar" style="width:0%"></div></div>
+
+    <div class="practice-q" style="margin-top:14px">
+      <div class="qlabel">🔤 拼字練習 — 點字母拼出正確單字</div>
+
+      <!-- 中文意義 -->
+      <div id="spell-definition" style="margin:16px 0;font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--ink)"></div>
+
+      <!-- 答案槽 -->
+      <div id="spell-answer-row" style="display:flex;flex-wrap:wrap;gap:6px;min-height:48px;padding:10px 12px;background:var(--surface,#f3f4f6);border:2px solid var(--border);border-radius:10px;margin-bottom:14px;align-items:center"></div>
+
+      <!-- 回饋 -->
+      <div id="spell-feedback" style="font-size:.88rem;min-height:1.4em;margin-bottom:10px;font-weight:600"></div>
+
+      <!-- 字母按鈕池 -->
+      <div id="spell-letters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="spellClear()">⌫ 清除</button>
+        <button class="btn btn-ghost btn-sm" onclick="spellSkip()">⏭ 跳過</button>
+        <button class="btn btn-ghost btn-sm" onclick="endPractice()">結束練習</button>
+      </div>
+    </div>
+
+    <button id="spell-next" class="btn btn-primary" style="display:none;width:100%;margin-top:16px" onclick="spellNext()">下一題 →</button>
+  </div>
+
+<div id="practice-result" class="practice-wrap" style="display:none">
+    <div class="card card-body" style="padding:36px 28px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:3rem;margin-bottom:10px" id="result-emoji">🎉</div>
+        <h2 style="margin-bottom:6px" id="result-title">練習完成！</h2>
+        <p style="color:var(--muted);font-size:.85rem" id="result-sub"></p>
+      </div>
+      <!-- 錯題列表 -->
+      <div id="result-wrong-section" style="display:none;margin-bottom:20px">
+        <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">答錯的單字</div>
+        <div id="result-wrong-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-accent" id="retry-wrong-btn" onclick="retryWrongWords()" style="display:none;background:#f59e0b;color:#fff">🔁 再練錯題</button>
+        <button class="btn btn-primary" onclick="startPractice()">再練一次</button>
+        <button class="btn btn-ghost" onclick="endPractice()">返回設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CACHE PAGE -->
+<div id="page-cache" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="font-size:1.3rem;margin-bottom:2px">⚡ 快取單字</h2>
+      <p style="font-size:.78rem;color:var(--muted)">AI 已分析並永久儲存的單字詳解</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="cache-search" placeholder="搜尋單字…" style="width:160px;padding:7px 12px;font-size:.82rem"
+        oninput="filterCache(this.value)" />
+      <button class="btn btn-ghost btn-sm" onclick="clearAllCache()" style="color:var(--accent)">🗑 清除全部</button>
+    </div>
+  </div>
+  <div id="cache-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+  <div id="cache-empty" style="display:none;text-align:center;padding:60px;color:var(--muted);font-size:.85rem">尚無快取單字，點擊單字後 AI 分析結果將自動儲存。</div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="font-size:1.3rem;margin-bottom:2px">📊 練習記錄</h2>
+      <p style="font-size:.78rem;color:var(--muted)">所有單字的練習統計與歷程</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="history-filter" onchange="loadHistory()" style="padding:7px 12px;font-size:.82rem;width:auto">
+        <option value="all">全部單字</option>
+        <option value="wrong">有錯誤</option>
+        <option value="perfect">全對</option>
+        <option value="unplayed">未練習</option>
+      </select>
+      <select id="history-sort" onchange="loadHistory()" style="padding:7px 12px;font-size:.82rem;width:auto">
+        <option value="recent">最近練習</option>
+        <option value="errors">錯誤最多</option>
+        <option value="accuracy">正確率低→高</option>
+        <option value="count">練習次數</option>
+      </select>
+    </div>
+  </div>
+  <!-- 今日統計 -->
+  <div id="today-stats" style="margin-bottom:16px">
+    <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">📅 今日練習</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="today-summary"></div>
+  </div>
+  <!-- 累計統計 -->
+  <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">📊 累計統計</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px" id="history-summary"></div>
+  <!-- Table -->
+  <div class="card" style="overflow:hidden">
+    <table class="word-table" id="history-table">
+      <thead><tr>
+        <th>單字</th><th>翻譯</th><th>練習</th><th>錯誤</th><th>正確率</th><th>最後練習</th><th>方式</th>
+      </tr></thead>
+      <tbody id="history-tbody"></tbody>
+    </table>
+    <div id="history-loading" class="loading-row" style="display:none"><span class="spinner"></span> 載入中…</div>
+    <div id="history-empty" class="loading-row" style="display:none">尚無練習記錄。</div>
+  </div>
+</div>
+
+
+<!-- DICT PAGE -->
+<div id="page-dict" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h2 style="font-size:1.3rem;margin-bottom:2px">📖 字典管理</h2>
+      <p style="font-size:.78rem;color:var(--muted)">上傳 MDX 格式字典，查詢時優先使用字典，不足再由 AI 補充</p>
+    </div>
+    <label class="btn btn-primary" style="cursor:pointer">
+      ＋ 上傳字典
+      <input type="file" accept=".mdx" multiple style="display:none" onchange="uploadDicts(event)">
+    </label>
+  </div>
+
+  <!-- Active dict indicator -->
+  <div id="dict-active-bar" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:.82rem;align-items:center;gap:8px">
+    <span style="color:var(--accent2)">📖</span>
+    <span id="dict-active-name" style="font-weight:600"></span>
+    <span style="color:var(--muted)">已啟用</span>
+    <button class="btn btn-ghost btn-sm" onclick="deactivateDict()" style="margin-left:auto;font-size:.72rem">停用</button>
+  </div>
+
+  <!-- 單字查詢 -->
+  <div id="dict-search-section" style="margin-bottom:20px">
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="dict-query-input" type="text" placeholder="輸入單字查詢…"
+        style="flex:1;padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.9rem"
+        onkeydown="if(event.key==='Enter')dictSearch()"
+        oninput="dictSearchDebounce()">
+      <button class="btn btn-primary" onclick="dictSearch()" style="white-space:nowrap">🔍 查詢</button>
+    </div>
+    <!-- 結果區 -->
+    <div id="dict-result" style="margin-top:12px"></div>
+  </div>
+
+  <!-- Upload progress -->
+  <div id="dict-upload-progress" style="display:none;margin-bottom:16px">
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:6px" id="dict-upload-msg">解析中…</div>
+    <div style="background:#e5e7eb;border-radius:99px;height:6px">
+      <div id="dict-upload-bar" style="background:var(--accent2);height:6px;border-radius:99px;width:0%;transition:width .3s"></div>
+    </div>
+  </div>
+
+  <!-- Dict list -->
+  <div id="dict-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="dict-empty" style="text-align:center;padding:60px;color:var(--muted);font-size:.85rem;display:none">
+    尚未上傳任何字典。點擊「＋ 上傳字典」匯入 .mdx 檔案。
+  </div>
+
+  <!-- Debug log -->
+  <div id="dict-debug-box" style="display:none;margin-top:16px">
+    <div style="font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">🔍 解析診斷記錄</div>
+    <pre id="dict-debug-log" style="background:#0e0f14;color:#a3e635;padding:14px;border-radius:10px;font-size:.72rem;line-height:1.6;overflow-x:auto;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all"></pre>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('dict-debug-box').style.display='none'" style="margin-top:8px">關閉</button>
+  </div>
+
+  <!-- Info box -->
+  <div style="margin-top:24px;background:#f9f8f6;border:1px solid var(--border);border-radius:12px;padding:16px">
+    <div style="font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">關於 MDX 字典</div>
+    <div style="font-size:.78rem;color:var(--muted);line-height:1.7">
+      MDX 是 MDict 格式的字典檔，可從網路免費取得大量英漢字典。<br>
+      建議字典：牛津英漢詞典、朗文英漢詞典、Collins English Dictionary 等。<br>
+      字典資料存於瀏覽器 IndexedDB，不會上傳至任何伺服器。<br>
+      <span style="color:var(--accent2)">查詢順序：字典 → AI 補充缺漏欄位</span>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div style="margin-bottom:20px">
+    <h2 style="font-size:1.3rem;margin-bottom:4px">⚙️ 設定</h2>
+    <p style="font-size:.78rem;color:var(--muted)">AI 功能設定與個人化選項</p>
+  </div>
+
+  <!-- AI Provider Card -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><span style="font-weight:700">🤖 AI 功能設定</span></div>
+    <div class="card-body">
+
+      <!-- Provider 選擇 -->
+      <div style="margin-bottom:18px">
+        <label style="font-size:.8rem;font-weight:600;color:var(--muted);display:block;margin-bottom:8px">AI 供應商</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="provider-option" id="opt-none">
+            <input type="radio" name="ai-provider" value="none" onchange="onProviderChange()">
+            <span>❌ 停用</span>
+          </label>
+          <label class="provider-option" id="opt-gemini">
+            <input type="radio" name="ai-provider" value="gemini" onchange="onProviderChange()">
+            <span>🔵 Google Gemini</span>
+          </label>
+          <label class="provider-option" id="opt-claude">
+            <input type="radio" name="ai-provider" value="claude" onchange="onProviderChange()">
+            <span>🟠 Anthropic Claude</span>
+          </label>
+        </div>
+        <!-- 環境說明 -->
+        <div style="margin-top:10px;padding:10px 12px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;font-size:.78rem;line-height:1.7;color:#713f12">
+          <strong>⚠️ 注意使用環境：</strong><br>
+          • <strong>claude.ai 內開啟（目前環境）</strong>：預設使用內建 Claude，無需設定任何 Key<br>
+          • <strong>下載到本地 / 其他網站開啟</strong>：內建 Claude 失效，請設定 Gemini 或 Claude 自有 Key<br>
+          • Gemini / Claude Key 設定後，在任何環境都有效
+        </div>
+      </div>
+
+      <!-- Gemini 設定 -->
+      <div id="settings-gemini" style="display:none;margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="font-size:.82rem;font-weight:600;margin-bottom:6px;color:#4285f4">🔵 Google Gemini 設定</div>
+        <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:6px 10px;margin-bottom:10px">
+          ⚠️ Gemini 在 claude.ai 環境因 CORS 限制<strong>無法使用</strong>，請下載 HTML 到本地後再設定使用。
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">API Key
+            <a href="https://aistudio.google.com/apikey" target="_blank" style="margin-left:6px;font-size:.72rem;color:var(--accent)">(取得免費 Key ↗)</a>
+          </label>
+          <div style="display:flex;gap:6px">
+            <input id="gemini-key" type="password" placeholder="AIzaSy..." autocomplete="off"
+              style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem;font-family:monospace">
+            <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('gemini-key', this)">👁</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
+          <select id="gemini-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
+            <option value="gemini-2.0-flash">gemini-2.0-flash（免費・每日 1500 次）</option>
+            <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview（免費・較慢）</option>
+            <option value="gemini-2.5-pro-preview-05-06">gemini-2.5-pro-preview（高品質）</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash（舊版免費）</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="testAI('gemini')" style="font-size:.78rem">🧪 測試連線</button>
+        <span id="gemini-test-result" style="font-size:.78rem;margin-left:8px"></span>
+      </div>
+
+      <!-- Claude 設定 -->
+      <div id="settings-claude" style="display:none;margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="font-size:.82rem;font-weight:600;margin-bottom:10px;color:#d97706">🟠 Anthropic Claude 設定</div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">API Key
+            <a href="https://console.anthropic.com/" target="_blank" style="margin-left:6px;font-size:.72rem;color:var(--accent)">(取得 Key ↗)</a>
+          </label>
+          <div style="display:flex;gap:6px">
+            <input id="claude-key" type="password" placeholder="sk-ant-..." autocomplete="off"
+              style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem;font-family:monospace">
+            <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('claude-key', this)">👁</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
+          <select id="claude-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
+            <option value="claude-haiku-4-5-20251001">claude-haiku-4.5（最快・最省）</option>
+            <option value="claude-sonnet-4-20250514">claude-sonnet-4（平衡）</option>
+            <option value="claude-opus-4-20250514">claude-opus-4（最強）</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="testAI('claude')" style="font-size:.78rem">🧪 測試連線</button>
+        <span id="claude-test-result" style="font-size:.78rem;margin-left:8px"></span>
+      </div>
+
+      <!-- 儲存按鈕 -->
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="saveAISettings()">💾 儲存設定</button>
+        <span id="settings-save-msg" style="font-size:.8rem;color:var(--green)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 關於 -->
+  <div class="card">
+    <div class="card-header"><span style="font-weight:700">ℹ️ 關於</span></div>
+    <div class="card-body" style="font-size:.82rem;color:var(--muted);line-height:1.8">
+      <div>WordFun 智慧單字學習工具</div>
+      <div>字典資料存於瀏覽器本地（IndexedDB），API Key 僅存於 localStorage，不會上傳至任何伺服器。</div>
+    </div>
+  </div>
+</div>
+
+  <!-- Google Drive 同步 -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><span style="font-weight:700">☁️ Google Drive 備份同步</span></div>
+    <div class="card-body">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.7">
+        單字庫與練習記錄自動備份至 Google Drive，手機資料被清除也能一鍵還原。
+      </div>
+      <div id="gdrive-status" style="margin-bottom:14px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#f3f4f6;color:var(--muted)">
+        ⬜ 尚未連結 Google 帳號
+      </div>
+      <div id="gdrive-setup" style="margin-bottom:14px">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;line-height:1.7">
+          需要 Google OAuth Client ID（免費）。
+          <a href="#" onclick="showGDriveHelp();return false" style="color:var(--accent2)">查看設定說明 ↗</a>
+        </div>
+        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Google OAuth Client ID</label>
+        <div style="display:flex;gap:6px">
+          <input id="gdrive-client-id" type="text" placeholder="xxx.apps.googleusercontent.com"
+            style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.8rem;font-family:monospace">
+          <button class="btn btn-ghost btn-sm" onclick="saveGDriveClientId()">儲存</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn btn-primary btn-sm" id="gdrive-login-btn" onclick="gdriveLogin()">🔑 連結 Google 帳號</button>
+        <button class="btn btn-ghost btn-sm" id="gdrive-logout-btn" onclick="gdriveLogout()" style="display:none">登出</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" id="gdrive-backup-btn" onclick="gdriveBackup()" disabled>⬆ 立即備份</button>
+        <button class="btn btn-ghost btn-sm" id="gdrive-restore-btn" onclick="gdriveRestore()" disabled>⬇ 從雲端還原</button>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
+        <label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="gdrive-auto" onchange="toggleGDriveAuto(this.checked)" style="width:16px;height:16px">
+          練習結束後自動備份
+        </label>
+      </div>
+      <div id="gdrive-msg" style="margin-top:10px;font-size:.8rem;min-height:1.2em"></div>
+    </div>
+  </div>
+
+
+<!-- GDrive Help Modal -->
+<div class="modal-bg" id="modal-gdrive-help">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">☁️ Google Drive 設定說明</h3>
+      <button class="modal-close" onclick="closeModal('modal-gdrive-help')">✕</button>
+    </div>
+    <div class="modal-body" style="font-size:.82rem;line-height:1.9;color:var(--muted)">
+      <div style="font-weight:700;color:var(--ink);margin-bottom:6px">📋 步驟說明</div>
+      <div><strong>1.</strong> 前往 <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent2)">Google Cloud Console ↗</a></div>
+      <div><strong>2.</strong> 建立新專案（或選現有專案）</div>
+      <div><strong>3.</strong> 左側選單 → <strong>API 和服務 → 程式庫</strong>，搜尋「Google Drive API」並啟用</div>
+      <div><strong>4.</strong> 左側選單 → <strong>API 和服務 → 憑證</strong></div>
+      <div><strong>5.</strong> 點「建立憑證」→ <strong>OAuth 用戶端 ID</strong></div>
+      <div><strong>6.</strong> 應用程式類型選 <strong>Web 應用程式</strong></div>
+      <div><strong>7.</strong> 「已授權的 JavaScript 來源」加入你使用的網址，例如：<br>
+        &nbsp;&nbsp;• <code style="background:#f3f4f6;padding:2px 5px;border-radius:4px">https://你的帳號.github.io</code><br>
+        &nbsp;&nbsp;• 本地測試加 <code style="background:#f3f4f6;padding:2px 5px;border-radius:4px">http://localhost</code> 和 <code style="background:#f3f4f6;padding:2px 5px;border-radius:4px">null</code>
+      </div>
+      <div><strong>8.</strong> 建立後複製「用戶端 ID」貼到設定欄位</div>
+      <div style="margin-top:12px;padding:10px;background:#fef9c3;border-radius:8px;color:#713f12;font-size:.78rem">
+        ⚠️ 本機開啟 HTML 時（file://），OAuth 可能受限。建議部署到 GitHub Pages 再使用。
+      </div>
+    </div>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-bg" id="modal-add-list">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">新增清單</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-list')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">清單名稱</label>
+        <input id="new-list-name" placeholder="例：多益 700" />
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="createList()">建立</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-add-word">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">新增單字</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-word')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label class="form-label">英文單字</label><input id="new-word" placeholder="ephemeral" /></div>
+      <div class="form-row"><label class="form-label">中文翻譯</label><input id="new-trans" placeholder="短暫的（留空讓 AI 翻譯）" /></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-row">
+          <label class="form-label">重要度 (1-5)</label>
+          <select id="new-imp"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">頻率 (1-5)</label>
+          <select id="new-freq"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="addWord()">新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-edit-word">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">✏️ 修改單字</h3>
+      <button class="modal-close" onclick="closeModal('modal-edit-word')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-word-id" />
+      <div class="form-row"><label class="form-label">英文單字</label><input id="edit-word" /></div>
+      <div class="form-row"><label class="form-label">中文翻譯</label><input id="edit-trans" /></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-row">
+          <label class="form-label">重要度 (1-5)</label>
+          <select id="edit-imp"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">頻率 (1-5)</label>
+          <select id="edit-freq"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary" style="flex:1" onclick="saveEditWord()">儲存</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-edit-word')">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-import">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">批次匯入 .txt</h3>
+      <button class="modal-close" onclick="closeModal('modal-import')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">支援逗號或 Tab 分隔（每行：英文,中文 或 僅英文）。<br>若無翻譯，系統將自動呼叫 Claude AI 批次補完。</p>
+      <div class="form-row"><label class="form-label">選擇目標清單</label><select id="import-list-sel"></select></div>
+      <div class="form-row">
+        <label class="form-label">或輸入純文字（每行一個單字）</label>
+        <textarea id="import-text" rows="7" placeholder="apple,蘋果&#10;banana,香蕉&#10;ephemeral&#10;serendipity,意外發現美好事物"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <label class="btn btn-ghost" style="cursor:pointer;flex:1;justify-content:center">
+          📂 選擇 .txt 檔案
+          <input type="file" accept=".txt" style="display:none" onchange="loadTxtFile(event)">
+        </label>
+        <button class="btn btn-primary" style="flex:1" onclick="runImport()" id="import-btn">匯入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-detail">
+  <div class="modal">
+    <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1">
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <span id="detail-word" style="font-family:'DM Sans',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.01em"></span>
+        <span class="phonetic" id="detail-phonetic"></span>
+        <span class="pos-badge" id="detail-pos"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="btn-regen" onclick="regenWordDetail()" class="btn btn-ghost btn-sm" title="清除快取並重新產生">🔄 重新產生</button>
+        <button class="modal-close" onclick="closeModal('modal-detail')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="detail-body">
+      <div class="loading-row"><span class="spinner"></span> AI 正在分析單字…</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-confirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-body" style="padding:28px 24px;text-align:center">
+      <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+      <h3 id="confirm-title" style="font-size:1rem;margin-bottom:8px">確定刪除？</h3>
+      <p id="confirm-msg" style="font-size:.83rem;color:var(--muted);margin-bottom:22px"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" id="confirm-ok" style="background:var(--accent)">確定刪除</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-batch-cache">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <h3 style="font-size:1rem;margin:0">⚡ 批量產生快取</h3>
+      <button class="btn btn-ghost btn-sm" id="batch-cache-close-btn" onclick="stopBatchCache()">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:12px" id="batch-cache-status">準備中…</div>
+      <div style="background:var(--surface);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px">
+        <div id="batch-cache-bar" style="height:100%;width:0%;background:var(--accent);transition:width .3s;border-radius:6px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)">
+        <span id="batch-cache-count">0 / 0</span>
+        <span id="batch-cache-skip" style="color:var(--green)"></span>
+      </div>
+      <div id="batch-cache-log" style="margin-top:14px;max-height:160px;overflow-y:auto;font-size:.75rem;color:var(--muted);line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-stats-detail">
+  <div class="modal" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <h3 id="stats-detail-title" style="font-size:1rem;margin:0">明細</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-stats-detail')">✕</button>
+    </div>
+    <div id="stats-detail-body" style="overflow-y:auto;padding:16px 20px;flex:1;font-size:.85rem"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// DB (IndexedDB – mirrors SQLite schema)
+// ═══════════════════════════════════════
+const DB_NAME = 'wordfun', DB_VER = 2;
+let db;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('word_lists')) {
+        const ls = d.createObjectStore('word_lists', {keyPath:'id', autoIncrement:true});
+        ls.createIndex('name','name');
+      }
+      if (!d.objectStoreNames.contains('words')) {
+        const ws = d.createObjectStore('words', {keyPath:'id', autoIncrement:true});
+        ws.createIndex('list_id','list_id');
+        ws.createIndex('list_word',['list_id','word'],{unique:false});
+      }
+      if (!d.objectStoreNames.contains('word_details')) {
+        d.createObjectStore('word_details', {keyPath:'word'});
+      }
+      if (!d.objectStoreNames.contains('practice_records')) {
+        d.createObjectStore('practice_records', {keyPath:'word_id'});
+      }
+      if (!d.objectStoreNames.contains('practice_history')) {
+        const ph = d.createObjectStore('practice_history', {keyPath:'id', autoIncrement:true});
+        ph.createIndex('word_id','word_id');
+      }
+      if (!d.objectStoreNames.contains('dicts')) {
+        d.createObjectStore('dicts', {keyPath:'id'});
+      }
+      if (!d.objectStoreNames.contains('dict_data')) {
+        d.createObjectStore('dict_data', {keyPath:'id'});
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function txn(stores, mode='readonly') {
+  return db.transaction(stores, mode);
+}
+function store(name, mode='readonly') {
+  return txn(name, mode).objectStore(name);
+}
+function req2p(r) { return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}) }
+function getAll(storeName, indexName, key) {
+  const s = store(storeName);
+  const src = indexName ? s.index(indexName) : s;
+  return req2p(key !== undefined ? src.getAll(key) : src.getAll());
+}
+function putItem(storeName, item) { return req2p(store(storeName,'readwrite').put(item)) }
+function delItem(storeName, key)  { return req2p(store(storeName,'readwrite').delete(key)) }
+function getItem(storeName, key)  { return req2p(store(storeName).get(key)) }
+
+// ── word_lists ──
+async function createListDB(name) {
+  const id = await req2p(store('word_lists','readwrite').add({name, created_at: new Date().toISOString()}));
+  return id;
+}
+async function getAllLists() { return getAll('word_lists') }
+async function deleteListDB(id) {
+  const words = await getAll('words','list_id', id);
+  const t = txn(['word_lists','words'],'readwrite');
+  for (const w of words) {
+    t.objectStore('words').delete(w.id);
+  }
+  t.objectStore('word_lists').delete(id);
+  return new Promise((res,rej)=>{ t.oncomplete=res; t.onerror=()=>rej(t.error); });
+}
+
+// ── words ──
+async function getWordsForList(listId) {
+  const words = await getAll('words','list_id', listId);
+  return words.sort((a,b)=>a.word.localeCompare(b.word));
+}
+async function insertWordDB(w) {
+  // duplicate check (case-insensitive)
+  const existing = await getAll('words','list_id', w.list_id);
+  if (existing.some(e => e.word.toLowerCase() === w.word.toLowerCase())) return -1;
+  return req2p(store('words','readwrite').add(w));
+}
+async function batchInsertWords(listId, words) {
+  let inserted = 0;
+  for (const w of words) {
+    const id = await insertWordDB({list_id:listId, word:w.word, translation:w.translation||'',
+      importance:w.importance||3, frequency:w.frequency||3, examples:w.examples||''});
+    if (id !== -1) inserted++;
+  }
+  return inserted;
+}
+async function deleteWordDB(id) { return delItem('words', id) }
+
+// ── word_details ──
+// Primary store: localStorage (survives iframe reloads in claude.ai)
+// Secondary mirror: IndexedDB (for backup & export)
+const DETAIL_LS_PREFIX = 'wf_detail_';
+
+async function getCachedDetail(word) {
+  const key = DETAIL_LS_PREFIX + word.toLowerCase();
+  // 1. Try localStorage first (fast, persistent)
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { word: word.toLowerCase(), detail_json: parsed.detail_json, created_at: parsed.created_at };
+    }
+  } catch(e) {}
+  // 2. Fall back to IndexedDB
+  try {
+    const rec = await getItem('word_details', word.toLowerCase());
+    if (rec) {
+      // Promote to localStorage for next time
+      localStorage.setItem(key, JSON.stringify(rec));
+      return rec;
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function cacheWordDetail(word, json) {
+  // 統一存物件（不存字串），避免雙重 JSON 序列化
+  let obj;
+  try { obj = typeof json === 'string' ? JSON.parse(json) : json; } catch(e) { obj = json; }
+  const rec = { word: word.toLowerCase(), detail_json: obj, created_at: new Date().toISOString() };
+  try { localStorage.setItem(DETAIL_LS_PREFIX + word.toLowerCase(), JSON.stringify(rec)); } catch(e) {}
+  try { await putItem('word_details', rec); } catch(e) {}
+}
+
+async function deleteCachedDetail(word) {
+  try { localStorage.removeItem(DETAIL_LS_PREFIX + word.toLowerCase()); } catch(e) {}
+  try { await delItem('word_details', word.toLowerCase()); } catch(e) {}
+}
+
+// Count how many words are cached in localStorage
+function countLocalCache() {
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    if (localStorage.key(i).startsWith(DETAIL_LS_PREFIX)) count++;
+  }
+  return count;
+}
+
+// ── practice ──
+async function recordAttempt(wordId, correct, method, wordStr) {
+  // history — 同時存單字文字，避免單字刪除後顯示 id
+  await req2p(store('practice_history','readwrite').add({
+    word_id:wordId, word: wordStr||'', is_correct:correct?1:0, method, timestamp: new Date().toISOString()
+  }));
+  // upsert record
+  const existing = await getItem('practice_records', wordId) || {word_id:wordId, practice_count:0, error_count:0};
+  existing.practice_count++;
+  if (!correct) existing.error_count++;
+  existing.last_practice_time = new Date().toISOString();
+  existing.last_practice_method = method;
+  await putItem('practice_records', existing);
+}
+async function getPracticeRecord(wordId) { return getItem('practice_records', wordId) }
+async function getTotalPracticeCount() {
+  const all = await getAll('practice_records');
+  return all.reduce((s,r)=>s+r.practice_count, 0);
+}
+
+// ═══════════════════════════════════════
+// CLAUDE AI (built-in)
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// AI SETTINGS
+// ═══════════════════════════════════════
+const AI_SETTINGS_KEY = 'wf_ai_settings';
+
+function loadAISettings() {
+  try { return JSON.parse(localStorage.getItem(AI_SETTINGS_KEY)) || {}; } catch { return {}; }
+}
+function saveAISettings() {
+  const provider = document.querySelector('input[name="ai-provider"]:checked')?.value || 'none';
+  const settings = {
+    provider,
+    geminiKey:   document.getElementById('gemini-key')?.value.trim()  || '',
+    geminiModel: document.getElementById('gemini-model')?.value        || 'gemini-2.0-flash',
+    claudeKey:   document.getElementById('claude-key')?.value.trim()  || '',
+    claudeModel: document.getElementById('claude-model')?.value        || 'claude-haiku-4-5-20251001',
+  };
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
+  updateAIBadge(settings);
+  const msg = document.getElementById('settings-save-msg');
+  if (msg) { msg.textContent = '✓ 已儲存'; setTimeout(() => msg.textContent = '', 2000); }
+}
+
+function updateAIBadge(settings) {
+  const badge = document.getElementById('ai-badge');
+  if (!badge) return;
+  const s = settings || loadAISettings();
+  if (s.provider === 'gemini') {
+    badge.textContent = '🔵 Gemini'; badge.style.color = '#4285f4';
+  } else if (s.provider === 'claude') {
+    badge.textContent = '🟠 Claude'; badge.style.color = '#d97706';
+  } else {
+    badge.textContent = '✦ 內建 Claude'; badge.style.color = '#6b7280';
+  }
+}
+
+function onProviderChange() {
+  const v = document.querySelector('input[name="ai-provider"]:checked')?.value || 'none';
+  document.getElementById('settings-gemini').style.display = v === 'gemini' ? 'block' : 'none';
+  document.getElementById('settings-claude').style.display = v === 'claude' ? 'block' : 'none';
+}
+
+function toggleKeyVisibility(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+function initSettingsPage() {
+  const s = loadAISettings();
+  const radio = document.querySelector(`input[name="ai-provider"][value="${s.provider || 'none'}"]`);
+  if (radio) radio.checked = true;
+  if (s.geminiKey)   document.getElementById('gemini-key').value   = s.geminiKey;
+  if (s.geminiModel) document.getElementById('gemini-model').value = s.geminiModel;
+  if (s.claudeKey)   document.getElementById('claude-key').value   = s.claudeKey;
+  if (s.claudeModel) document.getElementById('claude-model').value = s.claudeModel;
+  onProviderChange();
+}
+
+async function testAI(provider) {
+  const resultEl = document.getElementById(`${provider}-test-result`);
+  resultEl.textContent = '測試中…';
+  try {
+    const testPrompt = 'Reply only: OK';
+    let result;
+    if (provider === 'gemini') {
+      const key   = document.getElementById('gemini-key').value.trim();
+      const model = document.getElementById('gemini-model').value;
+      result = await callGeminiRaw(key, model, testPrompt);
+    } else {
+      const key   = document.getElementById('claude-key').value.trim();
+      const model = document.getElementById('claude-model').value;
+      result = await callClaudeRaw(key, model, testPrompt);
+    }
+    resultEl.textContent = '✅ 連線成功';
+    resultEl.style.color = 'var(--green)';
+  } catch(e) {
+    resultEl.textContent = '❌ ' + e.message;
+    resultEl.style.color = 'var(--accent)';
+  }
+}
+
+// ── 統一 AI 呼叫入口 ──
+async function callAI(prompt) {
+  const s = loadAISettings();
+
+  // 1. 使用者設定 Gemini（需下載到本地才能用，claude.ai 有 CORS 限制）
+  if (s.provider === 'gemini' && s.geminiKey) {
+    return callGeminiRaw(s.geminiKey, s.geminiModel || 'gemini-2.0-flash', prompt);
+  }
+
+  // 2. 使用者設定 Claude + 自己的 key
+  if (s.provider === 'claude' && s.claudeKey) {
+    return callClaudeRaw(s.claudeKey, s.claudeModel || 'claude-haiku-4-5-20251001', prompt);
+  }
+
+  // 3. 預設：使用 claude.ai 內建（不需 key，僅在此環境有效）
+  return callClaudeRaw('', 'claude-sonnet-4-20250514', prompt);
+}
+
+async function callGeminiRaw(key, model, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `Gemini error ${res.status}`);
+  let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+  return text;
+}
+
+async function callClaudeRaw(key, model, prompt) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (key) { headers['x-api-key'] = key; headers['anthropic-version'] = '2023-06-01'; }
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ model, max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `Claude error ${res.status}`);
+  let text = data.content.map(b => b.type === 'text' ? b.text : '').join('').trim();
+  text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+  return text;
+}
+
+// ── 保留舊名稱相容性 ──
+async function callClaude(prompt) { return callAI(prompt); }
+
+
+async function fetchWordDetail(word) {
+  const prompt = `You are an English dictionary assistant. Return ONLY valid JSON (no markdown, no extra text) for the English word "${word}" using this exact structure:
+{
+  "word": "",
+  "phonetic": "",
+  "part_of_speech": "",
+  "part_of_speech_zh": "",
+  "definitions_zh": ["（繁體中文定義）"],
+  "synonyms": [{"word": "englishWord", "zh": "繁體中文"}],
+  "antonyms": [{"word": "englishWord", "zh": "繁體中文"}],
+  "forms": {"noun": "", "verb": "", "adjective": "", "adverb": ""},
+  "phrases": [{"phrase": "英文片語", "zh": "繁體中文意義"}],
+  "examples": [{"en": "", "zh": ""}]
+}
+Rules:
+- definitions_zh: write definitions in Traditional Chinese only
+- synonyms/antonyms: each item must have "word" (English) and "zh" (Traditional Chinese meaning)
+- part_of_speech_zh: Chinese label e.g. 動詞、名詞、形容詞、副詞
+- phrases: provide 4-6 common phrases or collocations using this word, each with "phrase" (English) and "zh" (Traditional Chinese meaning)
+- Provide exactly 3 examples with Traditional Chinese translations`;
+  const json = await callClaude(prompt);
+  JSON.parse(json);
+  return json;
+}
+
+async function batchTranslateAI(words) {
+  const prompt = `Translate these English words to Traditional Chinese (繁體中文). Return ONLY a JSON array: [{"word":"...","translation":"..."}]. No markdown.\n\n${words.join('\n')}`;
+  const json = await callClaude(prompt);
+  return JSON.parse(json);
+}
+
+async function generateClozeStory(words) {
+  const prompt = `You are a creative English teacher. Write a ~100 word story using ALL these words: ${words.join(', ')}. Replace each target word with ___. Return ONLY valid JSON:\n{"story":"... with ___ blanks ...","blanks":[{"index":0,"answer":"word","options":["word","decoy1","decoy2","decoy3"]}]}\nBlanks in story order, 4 options each.`;
+  const json = await callClaude(prompt);
+  return JSON.parse(json);
+}
+
+// AI always available (no key needed)
+function getApiKey() { return 'built-in'; }
+
+// ═══════════════════════════════════════
+// UI STATE
+// ═══════════════════════════════════════
+let activeListId = null;
+let mcWords = [], mcIdx = 0, mcScore = 0, mcAnswered = false;
+let clozeData = null, clozeWordIds = [];
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function goto(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  // 用 onclick 內容比對，不依賴固定 index
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.getAttribute('onclick')?.includes(`'${page}'`)) t.classList.add('active');
+  });
+  if (page==='home')     refreshHome();
+  if (page==='words')    renderLists();
+  if (page==='practice') populatePracticeList();
+  if (page==='cache')    loadCache();
+  if (page==='history')  loadHistory();
+  if (page==='dict')     renderDictPage();
+  if (page==='settings') initSettingsPage();
+}
+
+// ═══════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════
+async function refreshHome() {
+  const lists = await getAllLists();
+  const words = await getAll('words');
+  const pc    = await getTotalPracticeCount();
+  document.getElementById('stat-lists').textContent = lists.length;
+  document.getElementById('stat-words').textContent = words.length;
+  document.getElementById('stat-practice').textContent = pc;
+  const cacheEl = document.getElementById('stat-cache');
+  if (cacheEl) cacheEl.textContent = countLocalCache();
+}
+
+// ═══════════════════════════════════════
+// WORD LISTS
+// ═══════════════════════════════════════
+async function renderLists() {
+  let lists = await getAllLists();
+  const grid = document.getElementById('list-grid');
+
+  // ── 搜尋 ──
+  const q = (document.getElementById('list-search')?.value || '').trim().toLowerCase();
+  if (q) lists = lists.filter(l => l.name.toLowerCase().includes(q));
+
+  if (!lists.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:.85rem;grid-column:1/-1">' +
+      (q ? '找不到符合的清單。' : '尚無清單。點擊「新增清單」開始！') + '</p>';
+    return;
+  }
+
+  // ── 取得所有單字數 ──
+  const wordCounts = {};
+  await Promise.all(lists.map(async l => {
+    const ws = await getWordsForList(l.id);
+    wordCounts[l.id] = ws.length;
+  }));
+
+  // ── 排序 ──
+  const sortBy = document.getElementById('list-sort')?.value || 'newest';
+  lists.sort((a, b) => {
+    if (sortBy === 'newest') return b.id - a.id;
+    if (sortBy === 'oldest') return a.id - b.id;
+    if (sortBy === 'name')   return a.name.localeCompare(b.name, 'zh-TW');
+    if (sortBy === 'count')  return wordCounts[b.id] - wordCounts[a.id];
+    return 0;
+  });
+
+  grid.innerHTML = '';
+  for (const l of lists) {
+    const div = document.createElement('div');
+    div.className = 'list-card' + (l.id===activeListId?' active-list':'');
+    div.innerHTML = `
+      <button class="del" onclick="event.stopPropagation();deleteList(${l.id})">刪除</button>
+      <h3>${l.name}</h3>
+      <div class="wc">${wordCounts[l.id]} 個單字</div>
+    `;
+    div.onclick = () => selectList(l.id, l.name);
+    grid.appendChild(div);
+  }
+}
+
+async function selectList(id, name) {
+  activeListId = id;
+  document.getElementById('word-section').style.display = 'block';
+  document.getElementById('active-list-name').textContent = name;
+  renderLists();
+  loadWords();
+}
+
+// ── 單字排序狀態 ──
+let wordSortState = ['last', 'desc']; // 預設：最近練習降序
+
+function sortWords(key) {
+  const [curKey, curDir] = wordSortState;
+  wordSortState = [key, curKey === key && curDir === 'desc' ? 'asc' : 'desc'];
+  loadWords();
+}
+
+async function loadWords() {
+  const tbody = document.getElementById('word-tbody');
+  document.getElementById('word-loading').style.display = 'block';
+  document.getElementById('word-empty').style.display = 'none';
+  tbody.innerHTML = '';
+  let words = await getWordsForList(activeListId);
+  document.getElementById('word-loading').style.display = 'none';
+
+  // ── 搜尋過濾 ──
+  const q = (document.getElementById('word-search')?.value || '').trim().toLowerCase();
+  if (q) words = words.filter(w =>
+    w.word.toLowerCase().includes(q) || (w.translation||'').toLowerCase().includes(q)
+  );
+
+  document.getElementById('active-list-count').textContent = `${words.length} 個單字`;
+  if (!words.length) { document.getElementById('word-empty').style.display='block'; return; }
+
+  // ── 取得所有練習記錄 ──
+  const recs = {};
+  await Promise.all(words.map(async w => {
+    recs[w.id] = await getPracticeRecord(w.id) || {practice_count:0, error_count:0, last_practice_time:null};
+  }));
+
+  // ── 排序 ──
+  const [sortKey, sortDir] = wordSortState;
+  words.sort((a, b) => {
+    let va, vb;
+    if (sortKey === 'word')       { va = a.word.toLowerCase(); vb = b.word.toLowerCase(); }
+    else if (sortKey === 'importance') { va = a.importance||0; vb = b.importance||0; }
+    else if (sortKey === 'practice')   { va = recs[a.id].practice_count||0; vb = recs[b.id].practice_count||0; }
+    else if (sortKey === 'last')  { va = recs[a.id].last_practice_time||''; vb = recs[b.id].last_practice_time||''; }
+    else { return 0; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // ── 更新排序 icon ──
+  ['word','importance','practice','last'].forEach(k => {
+    const th = document.getElementById('th-' + k);
+    if (!th) return;
+    const icon = th.querySelector('.sort-icon');
+    if (!icon) return;
+    icon.textContent = sortKey !== k ? '⇅' : sortDir === 'asc' ? '↑' : '↓';
+  });
+
+  for (const w of words) {
+    const rec = recs[w.id];
+    const stars = '★'.repeat(w.importance) + '☆'.repeat(5-w.importance);
+    const lastPrac = rec.last_practice_time
+      ? (() => {
+          const d = new Date(rec.last_practice_time);
+          const now = new Date();
+          const diff = Math.floor((now - d) / 86400000);
+          if (diff === 0) return '今天';
+          if (diff === 1) return '昨天';
+          if (diff < 7)  return diff + '天前';
+          if (diff < 30) return Math.floor(diff/7) + '週前';
+          return d.toLocaleDateString('zh-TW', {month:'numeric', day:'numeric'});
+        })()
+      : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="word-chip" onclick="showWordDetail('${w.word}')">${w.word}</span></td>
+      <td>${w.translation
+        ? w.translation
+        : `<button class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:3px 8px;color:var(--accent2)" onclick="fillTranslation(${w.id},'${w.word}',this)">✦ AI 補翻譯</button>`
+      }</td>
+      <td><span class="stars">${stars}</span></td>
+      <td>${rec.practice_count ? `<span class="badge-mc">${rec.practice_count}次</span>` : '—'}</td>
+      <td>${rec.error_count ? `<span class="badge-err">${rec.error_count}錯</span>` : '—'}</td>
+      <td>${scoreBadge(rec)}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${lastPrac}</td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="openEditWordModal(${w.id},'${w.word.replace(/'/g,"\\'")}')">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteWord(${w.id})">🗑</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+async function createList() {
+  const name = document.getElementById('new-list-name').value.trim();
+  if (!name) { toast('請輸入清單名稱'); return; }
+  await createListDB(name);
+  closeModal('modal-add-list');
+  document.getElementById('new-list-name').value='';
+  renderLists();
+  toast('清單已建立 ✓');
+}
+
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  const btn = document.getElementById('confirm-ok');
+  btn.onclick = () => { closeModal('modal-confirm'); onOk(); };
+  openModal('modal-confirm');
+}
+
+async function deleteList(id) {
+  showConfirm(
+    '刪除清單',
+    '此清單及所有單字將永久刪除，快取與練習記錄將保留。',
+    async () => {
+      await deleteListDB(id);
+      if (activeListId === id) { activeListId=null; document.getElementById('word-section').style.display='none'; }
+      renderLists();
+      toast('清單已刪除');
+    }
+  );
+}
+
+async function addWord() {
+  if (!activeListId) { toast('請先選擇清單'); return; }
+  let word = document.getElementById('new-word').value.trim();
+  let trans = document.getElementById('new-trans').value.trim();
+  const imp  = +document.getElementById('new-imp').value;
+  const freq = +document.getElementById('new-freq').value;
+  if (!word) { toast('請輸入單字'); return; }
+
+  // AI translate if missing
+  if (!trans && getApiKey()) {
+    toast('AI 正在翻譯…');
+    try {
+      const res = await batchTranslateAI([word]);
+      trans = res[0]?.translation || '';
+    } catch(e) {}
+  }
+
+  const id = await insertWordDB({list_id:activeListId, word, translation:trans, importance:imp, frequency:freq, examples:''});
+  if (id === -1) { toast('此單字已存在'); return; }
+  closeModal('modal-add-word');
+  document.getElementById('new-word').value='';
+  document.getElementById('new-trans').value='';
+  loadWords();
+  toast('單字已新增 ✓');
+}
+
+async function openEditWordModal(wordId, wordText) {
+  const w = await getItem('words', wordId);
+  if (!w) return;
+  document.getElementById('edit-word-id').value  = w.id;
+  document.getElementById('edit-word').value      = w.word;
+  document.getElementById('edit-trans').value     = w.translation || '';
+  document.getElementById('edit-imp').value       = w.importance || 3;
+  document.getElementById('edit-freq').value      = w.frequency || 3;
+  openModal('modal-edit-word');
+}
+
+async function saveEditWord() {
+  const id    = +document.getElementById('edit-word-id').value;
+  const word  = document.getElementById('edit-word').value.trim();
+  let   trans = document.getElementById('edit-trans').value.trim();
+  const imp   = +document.getElementById('edit-imp').value;
+  const freq  = +document.getElementById('edit-freq').value;
+  if (!word) { toast('請輸入單字'); return; }
+
+  const existing = await getItem('words', id);
+  if (!existing) return;
+
+  const wordChanged = word.toLowerCase() !== existing.word.toLowerCase();
+
+  // 單字本身有變更：清除舊快取、重新 AI 翻譯
+  if (wordChanged) {
+    // 清除舊單字的 AI 詳細快取
+    await deleteCachedDetail(existing.word);
+
+    // 若未手動填入新翻譯，呼叫 AI 自動翻譯
+    if (!trans) {
+      const saveBtn = document.querySelector('#modal-edit-word .btn-primary');
+      const origText = saveBtn.textContent;
+      saveBtn.textContent = '⏳ AI 翻譯中…';
+      saveBtn.disabled = true;
+      try {
+        const res = await batchTranslateAI([word]);
+        trans = res[0]?.translation || '';
+      } catch(e) { /* 翻譯失敗不擋儲存 */ }
+      saveBtn.textContent = origText;
+      saveBtn.disabled = false;
+    }
+  }
+
+  await req2p(store('words','readwrite').put({
+    ...existing, word, translation: trans, importance: imp, frequency: freq
+  }));
+
+  closeModal('modal-edit-word');
+  loadWords();
+  toast(wordChanged
+    ? `✓「${word}」已更新，舊快取已清除`
+    : `✓「${word}」已更新`);
+}
+
+async function deleteWord(id) {
+  showConfirm(
+    '刪除單字',
+    '此單字將從單字庫中移除，快取與練習記錄將保留。',
+    async () => {
+      await deleteWordDB(id);
+      loadWords();
+      toast('已刪除');
+    }
+  );
+}
+
+async function fillTranslation(wordId, word, btn) {
+  btn.textContent = '⏳…';
+  btn.disabled = true;
+  try {
+    const res = await batchTranslateAI([word]);
+    const trans = res[0]?.translation || '';
+    if (trans) {
+      await req2p(store('words','readwrite').put(
+        Object.assign(await getItem('words', wordId), {translation: trans})
+      ));
+      loadWords();
+      toast(`✓ "${word}" 翻譯完成`);
+    }
+  } catch(e) {
+    btn.textContent = '✦ AI 補翻譯';
+    btn.disabled = false;
+    toast('翻譯失敗，請稍後再試');
+  }
+}
+
+// ═══════════════════════════════════════
+// IMPORT
+// ═══════════════════════════════════════
+function loadTxtFile(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => document.getElementById('import-text').value = ev.target.result;
+  r.readAsText(f);
+}
+
+async function runImport() {
+  const listId = +document.getElementById('import-list-sel').value;
+  const raw = document.getElementById('import-text').value.trim();
+  if (!listId || !raw) { toast('請選擇清單並輸入內容'); return; }
+
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const parsed = lines.map(line => {
+    const sep = line.includes('\t') ? '\t' : ',';
+    const parts = line.split(sep);
+    return {word: parts[0].trim(), translation: (parts[1]||'').trim()};
+  });
+
+  const btn = document.getElementById('import-btn');
+  btn.textContent = '處理中…'; btn.disabled = true;
+
+  // 找出需要翻譯的單字（匯入時未附翻譯）
+  const noTrans = parsed.filter(w => !w.translation);
+
+  if (noTrans.length) {
+    const dictId = getActiveDictId();
+    const aiSettings = loadAISettings();
+    const hasAI = aiSettings.provider !== 'none';
+
+    // ── 1. 先查字典 ──
+    if (dictId) {
+      toast(`查詢字典中（${noTrans.length} 個單字）…`);
+      try {
+        const dict = await ensureDictLoaded(dictId, null);
+        for (const w of noTrans) {
+          try {
+            const rawHtml = await mdxLookup(dict, w.word);
+            if (rawHtml) {
+              const parsed2 = parseDictEntry(rawHtml, w.word);
+              if (parsed2?.definitions_zh?.length) {
+                w.translation = parsed2.definitions_zh[0].replace(/^[（(][^）)]*[）)]\s*/, '').slice(0, 40);
+              }
+            }
+          } catch(e) {}
+        }
+      } catch(e) { toast('字典查詢失敗，嘗試 AI'); }
+    }
+
+    // ── 2. 字典未能補全的，再用 AI ──
+    const stillNoTrans = noTrans.filter(w => !w.translation);
+    if (stillNoTrans.length && hasAI) {
+      toast(`AI 翻譯剩餘 ${stillNoTrans.length} 個單字…`);
+      try {
+        const translated = await batchTranslateAI(stillNoTrans.map(w => w.word));
+        const map = {};
+        translated.forEach(t => map[t.word.toLowerCase()] = t.translation);
+        stillNoTrans.forEach(w => { w.translation = map[w.word.toLowerCase()] || ''; });
+      } catch(e) { toast('AI 翻譯失敗，繼續匯入'); }
+    }
+  }
+
+  const inserted = await batchInsertWords(listId, parsed);
+  btn.textContent = '匯入'; btn.disabled = false;
+  closeModal('modal-import');
+  document.getElementById('import-text').value = '';
+  if (activeListId === listId) loadWords();
+  renderLists();
+  toast(`✓ 匯入完成：${inserted} 新增，${parsed.length-inserted} 跳過`);
+}
+
+// ═══════════════════════════════════════
+// SCORE BADGE
+// ═══════════════════════════════════════
+function scoreBadge(rec) {
+  if (!rec || rec.practice_count === 0) {
+    return '<span class="score-pill score-none">未練習</span>';
+  }
+  const correct = rec.practice_count - rec.error_count;
+  const pct = Math.round(correct / rec.practice_count * 100);
+  let cls, label;
+  if (pct === 100) {
+    cls = 'score-perfect'; label = '100%';
+  } else if (pct >= 75) {
+    cls = 'score-good'; label = pct + '%';
+  } else if (pct >= 50) {
+    cls = 'score-mid'; label = pct + '%';
+  } else if (pct > 0) {
+    cls = 'score-low'; label = pct + '%';
+  } else {
+    cls = 'score-zero'; label = '0%';
+  }
+  return `<span class="score-pill ${cls}">${label}</span>`;
+}
+
+// ═══════════════════════════════════════
+// CACHE PAGE
+// ═══════════════════════════════════════
+let _cacheItems = [];   // full list for filter
+
+async function loadCache() {
+  _cacheItems = [];
+  // Collect from localStorage
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(DETAIL_LS_PREFIX)) keys.push(k);
+  }
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const rec = JSON.parse(raw);
+      // detail_json 可能是物件或字串
+      const detail = typeof rec.detail_json === 'string'
+        ? JSON.parse(rec.detail_json || '{}')
+        : (rec.detail_json || {});
+      _cacheItems.push({
+        word:  detail.word || k.replace(DETAIL_LS_PREFIX,''),
+        pos:   detail.part_of_speech_zh || detail.part_of_speech || '',
+        def:   (detail.definitions_zh || detail.definitions || []).join('；'),
+        date:  rec.created_at ? rec.created_at.slice(0,10) : '',
+        lsKey: k,
+      });
+    } catch(e) {}
+  }
+  _cacheItems.sort((a,b)=>b.date.localeCompare(a.date));
+  renderCacheList(_cacheItems);
+}
+
+function filterCache(q) {
+  const lq = q.toLowerCase();
+  renderCacheList(lq ? _cacheItems.filter(x=>x.word.toLowerCase().includes(lq)) : _cacheItems);
+}
+
+function renderCacheList(items) {
+  const container = document.getElementById('cache-list');
+  const empty     = document.getElementById('cache-empty');
+  container.innerHTML = '';
+  if (!items.length) { empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'cache-card';
+    div.innerHTML = `
+      <button class="cc-del" onclick="event.stopPropagation();deleteCacheItem('${item.lsKey}','${item.word}')">✕</button>
+      <div class="cc-word">${item.word}</div>
+      <div class="cc-pos">${item.pos}</div>
+      <div class="cc-def">${item.def || '（點擊查看詳細）'}</div>
+      <div class="cc-date">快取於 ${item.date}</div>
+    `;
+    div.onclick = () => showWordDetail(item.word);
+    container.appendChild(div);
+  });
+}
+
+async function deleteCacheItem(lsKey, word) {
+  await deleteCachedDetail(word);
+  loadCache();
+  refreshHome();
+  toast(`已清除「${word}」快取`);
+}
+
+function clearAllCache() {
+  showConfirm('清除全部快取', '將刪除所有已儲存的 AI 單字詳解快取，無法復原。', async () => {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(DETAIL_LS_PREFIX)) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+    try { await req2p(store('word_details','readwrite').clear()); } catch(e) {}
+    loadCache();
+    refreshHome();
+    toast(`已清除 ${keys.length} 筆快取`);
+  });
+}
+
+// ═══════════════════════════════════════
+// HISTORY PAGE
+// ═══════════════════════════════════════
+async function loadHistory() {
+  document.getElementById('history-loading').style.display = 'block';
+  document.getElementById('history-empty').style.display   = 'none';
+  document.getElementById('history-tbody').innerHTML       = '';
+
+  const filter = document.getElementById('history-filter').value;
+  const sort   = document.getElementById('history-sort').value;
+
+  // Fetch all data
+  const allWords      = await getAll('words');
+  const allRecords    = await getAll('practice_records');
+  const allHistory    = await getAll('practice_history');
+  const recMap        = {};
+  allRecords.forEach(r => recMap[r.word_id] = r);
+
+  // ── 今日統計 ──
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayH   = allHistory.filter(h => (h.timestamp||'').startsWith(todayStr));
+  const todayTotal   = todayH.length;
+  const todayCorrect = todayH.filter(h => h.is_correct).length;
+  const todayWrong   = todayTotal - todayCorrect;
+  const todayAcc     = todayTotal > 0 ? Math.round(todayCorrect / todayTotal * 100) : 0;
+  // 今日練習的不重複單字數
+  const todayWordIds = new Set(todayH.map(h => h.word_id));
+  const todayWords   = todayWordIds.size;
+  // 今日練習時段（最早～最晚）
+  const todayTimes   = todayH.map(h => h.timestamp).sort();
+  const todaySpan    = todayTimes.length >= 2
+    ? todayTimes[0].slice(11,16) + ' – ' + todayTimes[todayTimes.length-1].slice(11,16)
+    : (todayTimes[0] ? todayTimes[0].slice(11,16) : '—');
+
+  const cardStyle = 'cursor:pointer;transition:opacity .15s' ;
+  const todayEl = document.getElementById('today-summary');
+  if (todayTotal === 0) {
+    todayEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:.82rem;padding:8px 0">今日尚無練習記錄</div>';
+  } else {
+    todayEl.innerHTML = `
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-words','今日練習單字',\'${todayStr}\')">
+        <div class="hs-n" style="color:var(--accent)">${todayWords}</div>
+        <div class="hs-l">練習單字數</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','今日作答明細',\'${todayStr}\')">
+        <div class="hs-n">${todayTotal}</div>
+        <div class="hs-l">作答次數</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-correct','今日答對明細',\'${todayStr}\')">
+        <div class="hs-n" style="color:var(--green)">${todayCorrect}</div>
+        <div class="hs-l">答對</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-wrong','今日答錯明細',\'${todayStr}\')">
+        <div class="hs-n" style="color:var(--red,#e74c3c)">${todayWrong}</div>
+        <div class="hs-l">答錯</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','今日作答明細',\'${todayStr}\')">
+        <div class="hs-n" style="color:${todayAcc>=80?'var(--green)':todayAcc>=50?'var(--accent)':'var(--red,#e74c3c)'}">${todayAcc}%</div>
+        <div class="hs-l">今日正確率</div>
+      </div>
+    `;
+  }
+
+  // ── 累計統計 ──
+  const total      = allWords.length;
+  const practiced  = allWords.filter(w => recMap[w.id]?.practice_count > 0).length;
+  const totalPrac  = allRecords.reduce((s,r) => s + r.practice_count, 0);
+  const totalErr   = allRecords.reduce((s,r) => s + r.error_count, 0);
+  const overallAcc = totalPrac > 0 ? Math.round((totalPrac - totalErr) / totalPrac * 100) : 0;
+  // 連續練習天數
+  const daySet = new Set(allHistory.map(h => (h.timestamp||'').slice(0,10)).filter(Boolean));
+  let streak = 0;
+  for (let d = new Date(); ; d.setDate(d.getDate()-1)) {
+    const ds = d.toISOString().slice(0,10);
+    if (daySet.has(ds)) streak++;
+    else break;
+    if (streak > 365) break;
+  }
+
+  document.getElementById('history-summary').innerHTML = `
+    <div class="hist-summary-card" style="cursor:pointer" onclick="showStatsDetail('practiced','已練習單字')">
+      <div class="hs-n">${practiced}/${total}</div><div class="hs-l">已練習單字</div>
+    </div>
+    <div class="hist-summary-card" style="cursor:pointer" onclick="showStatsDetail('all-practiced','全部練習記錄')">
+      <div class="hs-n">${totalPrac}</div><div class="hs-l">總練習次數</div>
+    </div>
+    <div class="hist-summary-card" style="cursor:pointer" onclick="showStatsDetail('errors','有錯誤的單字')">
+      <div class="hs-n" style="color:var(--accent)">${totalErr}</div><div class="hs-l">總錯誤次數</div>
+    </div>
+    <div class="hist-summary-card" style="cursor:pointer" onclick="showStatsDetail('all-practiced','整體練習統計')">
+      <div class="hs-n" style="color:var(--green)">${overallAcc}%</div><div class="hs-l">整體正確率</div>
+    </div>
+  `;
+
+  // ── 顯示連續天數 banner（有練習才顯示）──
+  let streakBanner = document.getElementById('streak-banner');
+  if (!streakBanner) {
+    streakBanner = document.createElement('div');
+    streakBanner.id = 'streak-banner';
+    document.getElementById('today-stats').appendChild(streakBanner);
+  }
+  if (streak > 0) {
+    const fire = streak >= 7 ? '🔥' : streak >= 3 ? '⚡' : '📌';
+    streakBanner.innerHTML = `<div style="margin-top:8px;padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:.8rem;display:inline-flex;align-items:center;gap:6px">${fire} 連續練習 <strong>${streak}</strong> 天</div>`;
+  } else {
+    streakBanner.innerHTML = '';
+  }
+
+  document.getElementById('history-loading').style.display = 'none';
+
+  // ── Build joined rows ──
+  let rows = allWords.map(w => {
+    const rec = recMap[w.id] || {practice_count:0, error_count:0, last_practice_time:null, last_practice_method:null};
+    const correct = rec.practice_count - rec.error_count;
+    const acc = rec.practice_count > 0 ? correct / rec.practice_count : -1;
+    return { w, rec, acc };
+  });
+
+  // Filter
+  if (filter === 'wrong')    rows = rows.filter(r => r.rec.error_count > 0);
+  if (filter === 'perfect')  rows = rows.filter(r => r.rec.practice_count > 0 && r.acc === 1);
+  if (filter === 'unplayed') rows = rows.filter(r => r.rec.practice_count === 0);
+
+  // Sort
+  if (sort === 'recent')   rows.sort((a,b) => (b.rec.last_practice_time||'').localeCompare(a.rec.last_practice_time||''));
+  if (sort === 'errors')   rows.sort((a,b) => b.rec.error_count - a.rec.error_count);
+  if (sort === 'accuracy') rows.sort((a,b) => a.acc - b.acc);
+  if (sort === 'count')    rows.sort((a,b) => b.rec.practice_count - a.rec.practice_count);
+
+  if (!rows.length) { document.getElementById('history-empty').style.display='block'; return; }
+
+  const tbody = document.getElementById('history-tbody');
+  const allLists = await getAllLists();
+  const listMap  = {};
+  allLists.forEach(l => listMap[l.id] = l.name);
+
+  rows.forEach(({w, rec, acc}) => {
+    const tr = document.createElement('tr');
+    const dateStr = rec.last_practice_time ? rec.last_practice_time.slice(0,10) : '—';
+    const methodBadge = rec.last_practice_method
+      ? `<span class="method-badge method-${rec.last_practice_method}">${rec.last_practice_method==='mc'?'單選題':rec.last_practice_method==='cloze'?'克漏字':'補翻譯'}</span>`
+      : '—';
+    tr.innerHTML = `
+      <td><span class="word-chip" onclick="showWordDetail('${w.word}')">${w.word}</span></td>
+      <td style="font-size:.8rem;color:var(--muted)">${w.translation||'—'}</td>
+      <td>${rec.practice_count > 0 ? `<span class="badge-mc">${rec.practice_count}次</span>` : '—'}</td>
+      <td>${rec.error_count > 0 ? `<span class="badge-err">${rec.error_count}錯</span>` : (rec.practice_count > 0 ? '<span style="color:var(--green);font-size:.78rem">✓ 全對</span>' : '—')}</td>
+      <td>${scoreBadge(rec)}</td>
+      <td style="font-size:.75rem;color:var(--muted)">${dateStr}</td>
+      <td>${methodBadge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+async function showStatsDetail(type, title, dateStr) {
+  document.getElementById('stats-detail-title').textContent = title;
+  const body = document.getElementById('stats-detail-body');
+  body.innerHTML = '<div style="color:var(--muted)">載入中…</div>';
+  openModal('modal-stats-detail');
+
+  const allWords   = await getAll('words');
+  const allRecords = await getAll('practice_records');
+  const allHistory = await getAll('practice_history');
+  const wordMap    = {};
+  allWords.forEach(w => wordMap[w.id] = w);
+  const recMap = {};
+  allRecords.forEach(r => recMap[r.word_id] = r);
+
+  const methodLabel = m => m === 'mc' ? '單選題' : m === 'cloze' ? '克漏字' : m === 'vocab' ? '文意字彙' : m || '—';
+  const timeStr = t => t ? t.slice(11,16) : '—';
+  let html = '';
+
+  if (type.startsWith('today-')) {
+    const filter = type === 'today-correct' ? h => h.is_correct
+                 : type === 'today-wrong'   ? h => !h.is_correct : () => true;
+    const todayH = allHistory
+      .filter(h => (h.timestamp||'').startsWith(dateStr) && filter(h))
+      .sort((a,b) => (a.timestamp||'').localeCompare(b.timestamp||''));
+
+    if (type === 'today-words') {
+      const seen = {};
+      todayH.forEach(h => {
+        if (!seen[h.word_id]) seen[h.word_id] = { correct:0, wrong:0, word: wordMap[h.word_id]?.word || h.word || String(h.word_id) };
+        if (h.is_correct) seen[h.word_id].correct++; else seen[h.word_id].wrong++;
+      });
+      html = `<table style="width:100%;border-collapse:collapse">
+        <thead><tr style="font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:6px 4px">單字</th>
+          <th style="text-align:center;padding:6px 4px">答對</th>
+          <th style="text-align:center;padding:6px 4px">答錯</th>
+        </tr></thead><tbody>`;
+      Object.values(seen).forEach(r => {
+        html += `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:7px 4px"><span class="word-chip" onclick="showWordDetail('${r.word}','modal-stats-detail')">${r.word}</span></td>
+          <td style="text-align:center;color:var(--green);padding:7px 4px">${r.correct || '—'}</td>
+          <td style="text-align:center;color:var(--red,#e74c3c);padding:7px 4px">${r.wrong || '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+    } else {
+      if (!todayH.length) { body.innerHTML = '<div style="color:var(--muted)">無資料</div>'; return; }
+      html = `<table style="width:100%;border-collapse:collapse">
+        <thead><tr style="font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:6px 4px">時間</th>
+          <th style="text-align:left;padding:6px 4px">單字</th>
+          <th style="text-align:center;padding:6px 4px">結果</th>
+          <th style="text-align:left;padding:6px 4px">方式</th>
+        </tr></thead><tbody>`;
+      todayH.forEach(h => {
+        const w = wordMap[h.word_id]?.word || h.word || String(h.word_id);
+        html += `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:7px 4px;color:var(--muted);font-size:.78rem">${timeStr(h.timestamp)}</td>
+          <td style="padding:7px 4px"><span class="word-chip" onclick="showWordDetail('${w}','modal-stats-detail')">${w}</span></td>
+          <td style="text-align:center;padding:7px 4px">${h.is_correct ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red,#e74c3c)">✗</span>'}</td>
+          <td style="padding:7px 4px;font-size:.78rem;color:var(--muted)">${methodLabel(h.method)}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+    }
+
+  } else if (type === 'practiced') {
+    const rows = allWords.filter(w => (recMap[w.id]?.practice_count||0) > 0)
+      .sort((a,b) => (recMap[b.id]?.practice_count||0) - (recMap[a.id]?.practice_count||0));
+    if (!rows.length) { body.innerHTML = '<div style="color:var(--muted)">無資料</div>'; return; }
+    html = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 4px">單字</th>
+        <th style="text-align:center;padding:6px 4px">練習</th>
+        <th style="text-align:center;padding:6px 4px">錯誤</th>
+        <th style="text-align:center;padding:6px 4px">正確率</th>
+      </tr></thead><tbody>`;
+    rows.forEach(w => {
+      const rec = recMap[w.id];
+      const acc = rec.practice_count > 0 ? Math.round((rec.practice_count - rec.error_count) / rec.practice_count * 100) : 0;
+      html += `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:7px 4px"><span class="word-chip" onclick="showWordDetail('${w.word}','modal-stats-detail')">${w.word}</span></td>
+        <td style="text-align:center;padding:7px 4px">${rec.practice_count}</td>
+        <td style="text-align:center;padding:7px 4px;color:var(--red,#e74c3c)">${rec.error_count || '—'}</td>
+        <td style="text-align:center;padding:7px 4px;color:${acc>=80?'var(--green)':acc>=50?'var(--accent)':'var(--red,#e74c3c)'}">${acc}%</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+
+  } else if (type === 'errors') {
+    const rows = allWords.filter(w => (recMap[w.id]?.error_count||0) > 0)
+      .sort((a,b) => (recMap[b.id]?.error_count||0) - (recMap[a.id]?.error_count||0));
+    if (!rows.length) { body.innerHTML = '<div style="color:var(--muted)">尚無錯誤記錄</div>'; return; }
+    html = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 4px">單字</th>
+        <th style="text-align:center;padding:6px 4px">錯誤次數</th>
+        <th style="text-align:center;padding:6px 4px">正確率</th>
+      </tr></thead><tbody>`;
+    rows.forEach(w => {
+      const rec = recMap[w.id];
+      const acc = rec.practice_count > 0 ? Math.round((rec.practice_count - rec.error_count) / rec.practice_count * 100) : 0;
+      html += `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:7px 4px"><span class="word-chip" onclick="showWordDetail('${w.word}','modal-stats-detail')">${w.word}</span></td>
+        <td style="text-align:center;padding:7px 4px;color:var(--red,#e74c3c);font-weight:700">${rec.error_count}</td>
+        <td style="text-align:center;padding:7px 4px;color:${acc>=80?'var(--green)':acc>=50?'var(--accent)':'var(--red,#e74c3c)'}">${acc}%</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+
+  } else {
+    // all-practiced：各方式練習次數分布
+    const methodCount = {};
+    allHistory.forEach(h => { methodCount[h.method||'unknown'] = (methodCount[h.method||'unknown']||0) + 1; });
+    const total = allHistory.length;
+    html = `<div style="margin-bottom:16px;font-size:.82rem;color:var(--muted)">共 ${total} 筆作答記錄</div>`;
+    html += `<table style="width:100%;border-collapse:collapse">
+      <thead><tr style="font-size:.75rem;color:var(--muted);border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:6px 4px">練習方式</th>
+        <th style="text-align:center;padding:6px 4px">次數</th>
+        <th style="text-align:center;padding:6px 4px">佔比</th>
+      </tr></thead><tbody>`;
+    Object.entries(methodCount).sort((a,b)=>b[1]-a[1]).forEach(([m,cnt]) => {
+      html += `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px 4px">${methodLabel(m)}</td>
+        <td style="text-align:center;padding:8px 4px">${cnt}</td>
+        <td style="text-align:center;padding:8px 4px;color:var(--muted)">${Math.round(cnt/total*100)}%</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+  }
+
+  body.innerHTML = html || '<div style="color:var(--muted)">無資料</div>';
+}
+
+let _batchCacheRunning = false;
+let _batchCacheStop = false;
+
+async function startBatchCache() {
+  if (!activeListId) { toast('請先選擇一個單字庫'); return; }
+
+  openModal('modal-batch-cache');
+  _batchCacheStop = false;
+  _batchCacheRunning = true;
+  document.getElementById('batch-cache-close-btn').textContent = '停止';
+  document.getElementById('batch-cache-log').innerHTML = '';
+  document.getElementById('batch-cache-skip').textContent = '';
+
+  const allWords = await getWordsForList(activeListId);
+  const total = allWords.length;
+  let done = 0, skipped = 0, failed = 0;
+
+  const setStatus = (msg) => document.getElementById('batch-cache-status').textContent = msg;
+  const setBar = (pct) => document.getElementById('batch-cache-bar').style.width = pct + '%';
+  const setCount = () => document.getElementById('batch-cache-count').textContent = `${done} / ${total}`;
+  const setSkip = () => document.getElementById('batch-cache-skip').textContent =
+    `已跳過 ${skipped} 筆 · 失敗 ${failed} 筆`;
+  const addLog = (msg) => {
+    const el = document.getElementById('batch-cache-log');
+    el.innerHTML += msg + '<br>';
+    el.scrollTop = el.scrollHeight;
+  };
+
+  setStatus(`共 ${total} 個單字，檢查快取中…`);
+  setCount();
+
+  for (const w of allWords) {
+    if (_batchCacheStop) break;
+
+    // 先查快取，有就跳過
+    const cached = await getCachedDetail(w.word);
+    if (cached?.detail_json) {
+      try {
+        const d = typeof cached.detail_json === 'string' ? JSON.parse(cached.detail_json) : cached.detail_json;
+        if (d?.definitions_zh?.length) {
+          skipped++;
+          done++;
+          setBar(Math.round(done / total * 100));
+          setCount();
+          setSkip();
+          continue;
+        }
+      } catch(e) {}
+    }
+
+    setStatus(`處理中：${w.word}`);
+    try {
+      const json = await lookupWord(w.word);
+      // lookupWord 內部已存快取，確認一下有無內容
+      const d = JSON.parse(json);
+      if (d?.definitions_zh?.length) {
+        addLog(`<span style="color:var(--green)">✓</span> ${w.word}`);
+      } else {
+        addLog(`<span style="color:var(--muted)">— ${w.word}（無定義）</span>`);
+        failed++;
+      }
+    } catch(e) {
+      addLog(`<span style="color:var(--red,#e74c3c)">✗</span> ${w.word}：${e.message}`);
+      failed++;
+    }
+
+    done++;
+    setBar(Math.round(done / total * 100));
+    setCount();
+    setSkip();
+
+    // 每筆之間稍作暫停，避免 API 過速
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  _batchCacheRunning = false;
+  const stopped = _batchCacheStop;
+  document.getElementById('batch-cache-close-btn').textContent = '✕';
+  document.getElementById('batch-cache-close-btn').onclick = () => closeModal('modal-batch-cache');
+  if (stopped) {
+    setStatus(`已停止（完成 ${done}/${total}，跳過 ${skipped}）`);
+  } else {
+    setStatus(`✅ 完成！共處理 ${total} 個單字，跳過 ${skipped} 筆快取`);
+    setBar(100);
+  }
+}
+
+function stopBatchCache() {
+  if (_batchCacheRunning) {
+    _batchCacheStop = true;
+    document.getElementById('batch-cache-status').textContent = '停止中…';
+  } else {
+    closeModal('modal-batch-cache');
+  }
+}
+
+
+
+
+
+// ═══════════════════════════════════════
+// WORD DETAIL
+// ═══════════════════════════════════════
+let currentDetailWord = null;
+
+async function showWordDetail(word, callerModalId) {
+  currentDetailWord = word;
+  document.getElementById('detail-word').textContent = word;
+  document.getElementById('detail-phonetic').textContent = '';
+  document.getElementById('detail-pos').textContent = '';
+  document.getElementById('btn-regen').disabled = false;
+  document.getElementById('btn-regen').textContent = '🔄 重新產生';
+
+  // 記錄從哪個 modal 開啟，關閉時回到上一層
+  const closeBtn = document.querySelector('#modal-detail .modal-close');
+  if (callerModalId) {
+    closeBtn.onclick = () => { closeModal('modal-detail'); openModal(callerModalId); };
+  } else {
+    closeBtn.onclick = () => closeModal('modal-detail');
+  }
+
+  const lsKey = DETAIL_LS_PREFIX + word.toLowerCase();
+  const lsCached = (() => { try { return localStorage.getItem(lsKey); } catch(e) { return null; } })();
+  if (lsCached) {
+    document.getElementById('detail-body').innerHTML = '<div class="loading-row" style="padding:8px"><span style="font-size:.75rem;color:var(--green)">⚡ 快取載入</span></div>';
+  } else {
+    document.getElementById('detail-body').innerHTML = '<div class="loading-row"><span class="spinner"></span> 查詢快取中…</div>';
+  }
+  openModal('modal-detail');
+  await loadWordDetail(word, false);
+}
+
+async function regenWordDetail() {
+  if (!currentDetailWord) return;
+  const btn = document.getElementById('btn-regen');
+  btn.disabled = true;
+  btn.textContent = '⏳ 產生中…';
+  await deleteCachedDetail(currentDetailWord);
+  await loadWordDetail(currentDetailWord, true);
+  btn.disabled = false;
+  btn.textContent = '🔄 重新產生';
+}
+
+async function loadWordDetail(word, forceRefresh) {
+  let detail = null;
+  if (!forceRefresh) {
+    const cached = await getCachedDetail(word);
+    if (cached?.detail_json) {
+      detail = typeof cached.detail_json === 'string'
+        ? JSON.parse(cached.detail_json) : cached.detail_json;
+    }
+  }
+  if (!detail) {
+    try {
+      const dictId = getActiveDictId();
+      const aiSettings = loadAISettings();
+      const hasAI = aiSettings.provider !== 'none';
+      if (dictId) {
+        document.getElementById('detail-body').innerHTML = '<div class="loading-row"><span class="spinner"></span> 查詢字典中…</div>';
+      } else if (hasAI) {
+        document.getElementById('detail-body').innerHTML = '<div class="loading-row"><span class="spinner"></span> AI 分析中…</div>';
+      } else {
+        document.getElementById('detail-body').innerHTML = '<div class="loading-row"><span class="spinner"></span> 查詢中…</div>';
+      }
+      const json = await lookupWord(word);
+      await cacheWordDetail(word, json);
+      detail = typeof json === 'string' ? JSON.parse(json) : json;
+    } catch(e) {
+      document.getElementById('detail-body').innerHTML = `<p style="color:var(--accent)">查詢錯誤：${e.message}</p>`;
+      return;
+    }
+  }
+  renderDetail(detail);
+}
+
+function renderDetail(d) {
+  document.getElementById('detail-word').textContent = d.word || '';
+  // Show dict/AI source indicator
+  const srcEl = document.getElementById('detail-source');
+  if (srcEl) {
+    if (d._from_dict) srcEl.textContent = '📖 字典';
+    else srcEl.textContent = '✦ Claude AI';
+    srcEl.style.display = 'inline-block';
+  }
+  document.getElementById('detail-phonetic').textContent = d.phonetic || '';
+  document.getElementById('detail-pos').textContent = s2t(d.part_of_speech_zh || d.part_of_speech || '');
+
+  let html = '';
+
+  // 定義（中文）
+  if (d.definitions_zh?.length) {
+    html += `<div class="detail-section"><h4>意義</h4>${d.definitions_zh.map(def=>`<p style="margin-bottom:6px;font-size:.88rem">• ${s2t(def)}</p>`).join('')}</div>`;
+  } else if (d.definitions?.length) {
+    html += `<div class="detail-section"><h4>意義</h4>${d.definitions.map(def=>`<p style="margin-bottom:6px;font-size:.88rem">• ${def}</p>`).join('')}</div>`;
+  }
+
+  // 同義詞（獨立一列）
+  if (d.synonyms?.length) {
+    html += `<div class="detail-section"><h4>同義詞</h4><div class="tag-row">`;
+    d.synonyms.forEach(s => {
+      const label = typeof s === 'object' ? `${s.word}（${s2t(s.zh)}）` : s;
+      html += `<span class="tag syn">${label}</span>`;
+    });
+    html += '</div></div>';
+  }
+
+  // 反義詞（獨立一列）
+  if (d.antonyms?.length) {
+    html += `<div class="detail-section"><h4>反義詞</h4><div class="tag-row">`;
+    d.antonyms.forEach(s => {
+      const label = typeof s === 'object' ? `${s.word}（${s2t(s.zh)}）` : s;
+      html += `<span class="tag ant">${label}</span>`;
+    });
+    html += '</div></div>';
+  }
+
+  // 詞形變化
+  if (d.forms) {
+    const formLabels = {noun:'名詞',verb:'動詞',adjective:'形容詞',adverb:'副詞'};
+    const forms = Object.entries(d.forms).filter(([,v])=>v);
+    if (forms.length) {
+      html += `<div class="detail-section"><h4>詞形變化</h4><div class="tag-row">`;
+      forms.forEach(([k,v]) => html+=`<span class="tag"><b>${formLabels[k]||k}</b>: ${v}</span>`);
+      html += '</div></div>';
+    }
+  }
+
+  // 片語
+  if (d.phrases?.length) {
+    html += `<div class="detail-section"><h4>常用片語</h4>`;
+    d.phrases.forEach(p => {
+      html += `<div class="phrase-item">
+        <span class="phrase-en">${p.phrase}</span>
+        <span class="phrase-zh">${s2t(p.zh)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // 例句（目標單字加粗）
+  if (d.examples?.length) {
+    html += `<div class="detail-section"><h4>例句</h4>`;
+    const wordVariants = [d.word];
+    if (d.forms) Object.values(d.forms).filter(Boolean).forEach(v => wordVariants.push(v));
+    const boldRegex = new RegExp(`\\b(${wordVariants.map(w => w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})\\b`, 'gi');
+    d.examples.forEach(ex => {
+      const boldEn = ex.en.replace(boldRegex, '<strong>$1</strong>');
+      html += `<div class="example-item"><div class="en">${boldEn}</div><div class="zh">${s2t(ex.zh)}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('detail-body').innerHTML = html || '<p style="color:var(--muted)">無詳細資料</p>';
+}
+
+// ═══════════════════════════════════════
+// PRACTICE – MC
+// ═══════════════════════════════════════
+let selectedPracticeListId = null;
+let selectedPracticeCount = 10;  // default 10 題
+let selectedScope = 'all';         // all | new | wrong | imperfect
+let lastWrongWords = [];          // 上次答錯的單字
+
+function selectScope(el) {
+  document.querySelectorAll('#scope-cards .count-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedScope = el.dataset.scope;
+}
+
+function selectCount(el) {
+  document.querySelectorAll('.count-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPracticeCount = +el.dataset.n;  // 0 = 全部
+}
+
+async function populatePracticeList() {
+  const lists = await getAllLists();
+  // update hidden select
+  const sel = document.getElementById('practice-list-sel');
+  sel.innerHTML = lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+
+  const container = document.getElementById('practice-list-cards');
+  if (!lists.length) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:.83rem;grid-column:1/-1">尚無單字庫，請先到「單字庫」建立清單。</p>';
+    return;
+  }
+
+  container.innerHTML = '';
+  for (const l of lists.sort((a,b)=>b.id-a.id)) {
+    const words = await getWordsForList(l.id);
+    const div = document.createElement('div');
+    div.className = 'plist-card' + (selectedPracticeListId===l.id ? ' selected' : '');
+    div.dataset.listId = l.id;
+    div.innerHTML = `
+      <span class="pl-check">✓</span>
+      <div class="pl-name">${l.name}</div>
+      <div class="pl-count">${words.length} 個單字</div>
+    `;
+    div.onclick = () => {
+      document.querySelectorAll('.plist-card').forEach(c=>c.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedPracticeListId = l.id;
+      sel.value = l.id;
+      const wc = words.length;
+      const newCount  = words.filter(w=>!w.practice_count||w.practice_count===0).length;
+      const errCount  = words.filter(w=>w.error_count>0).length;
+      const impCount  = words.filter(w=>!w.practice_count||w.error_count>0).length;
+      const hint = document.getElementById('scope-hint');
+      hint.style.display = 'block';
+      hint.innerHTML = `共 ${wc} 字　⭐ 未練 <b>${newCount}</b>　❌ 有錯 <b>${errCount}</b>　📈 未全對 <b>${impCount}</b>`;
+      const btn = document.getElementById('start-btn');
+      btn.disabled = wc < 4;
+      btn.textContent = wc < 4
+        ? `⚠ 此清單需至少 4 個單字`
+        : `開始練習「${l.name}」🚀`;
+    };
+    container.appendChild(div);
+  }
+
+  // Auto-select first list
+  if (!selectedPracticeListId && lists.length) {
+    container.firstChild.click();
+  }
+}
+
+function selectMode(el) {
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('practice-mode-sel').value = el.dataset.mode;
+}
+
+async function startPractice() {
+  const listId = selectedPracticeListId || +document.getElementById('practice-list-sel').value;
+  const mode   = document.getElementById('practice-mode-sel').value;
+  if (!listId) { toast('請先選擇單字庫'); return; }
+
+  const allWords = await getWordsForList(listId);
+  if (allWords.length < 4) { toast('此清單至少需要 4 個單字'); return; }
+
+  // Apply scope filter
+  let words = allWords;
+  if (selectedScope === 'new') {
+    words = allWords.filter(w => !w.practice_count || w.practice_count === 0);
+    if (!words.length) { toast('此清單沒有未練過的單字 🎉'); return; }
+  } else if (selectedScope === 'wrong') {
+    words = allWords.filter(w => w.error_count > 0);
+    if (!words.length) { toast('此清單沒有答錯過的單字 🎉'); return; }
+  } else if (selectedScope === 'imperfect') {
+    words = allWords.filter(w => {
+      if (!w.practice_count) return true;  // 未練過也算
+      return w.error_count > 0;            // 有錯誤 = 未全對
+    });
+    if (!words.length) { toast('此清單所有單字都已全對！🎉'); return; }
+  }
+
+  if (words.length < 4) {
+    toast(`符合條件的單字只有 ${words.length} 個，至少需要 4 個`);
+    return;
+  }
+
+  document.getElementById('practice-setup').style.display='none';
+  document.getElementById('practice-result').style.display='none';
+
+  if (mode === 'mc')    await startMC(allWords, words);
+  else if (mode === 'cloze') await startCloze(words);
+  else if (mode === 'vocab') await startVocab(allWords, words);
+  else if (mode === 'spell') await startSpell(words);
+}
+
+async function startMC(allWords, practicePool=null) {
+  lastWrongWords = [];
+  const pool = practicePool || allWords;
+  const shuffled = [...pool].sort(()=>Math.random()-.5);
+  const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
+  mcWords = shuffled.slice(0, n);
+  mcIdx=0; mcScore=0; mcAnswered=false;
+  // Keep full list for distractors
+  window._mcAllWords = allWords;
+  document.getElementById('practice-mc').style.display='block';
+  renderMCQuestion(allWords);
+}
+
+async function renderMCQuestion(allWords) {
+  const target = mcWords[mcIdx];
+  document.getElementById('mc-word').textContent = target.word;
+  document.getElementById('mc-progress').textContent = `題目 ${mcIdx+1} / ${mcWords.length}`;
+  document.getElementById('mc-score').textContent = `${mcScore} 分`;
+  document.getElementById('mc-bar').style.width = (mcIdx/mcWords.length*100)+'%';
+  document.getElementById('mc-next').style.display='none';
+  document.getElementById('mc-detail-btn').style.display='none';
+  mcAnswered = false;
+
+  // Use full list for distractors (not just practice subset)
+  const fullPool = window._mcAllWords || allWords;
+  const distractors = fullPool.filter(w=>w.id!==target.id).sort(()=>Math.random()-.5).slice(0,3);
+  const options = [{text:target.translation, correct:true}, ...distractors.map(d=>({text:d.translation,correct:false}))].sort(()=>Math.random()-.5);
+
+  const grid = document.getElementById('mc-options');
+  grid.innerHTML = '';
+  options.forEach(opt => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt.text || '（無翻譯）';
+    div.onclick = () => selectMCOption(div, opt, target);
+    grid.appendChild(div);
+  });
+}
+
+let mcCurrentWord = null;
+
+function mcShowDetail() {
+  if (mcCurrentWord) showWordDetail(mcCurrentWord.word);
+}
+
+async function selectMCOption(el, opt, word) {
+  if (mcAnswered) return;
+  mcAnswered = true;
+  mcCurrentWord = word;
+  document.querySelectorAll('.option').forEach(o=>o.classList.add('disabled'));
+  if (opt.correct) {
+    el.classList.add('correct');
+    mcScore++;
+    document.getElementById('mc-detail-btn').style.display = 'none';
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('.option').forEach(o=>{
+      if(o.textContent===word.translation) o.classList.add('correct');
+    });
+    // Record wrong word
+    if (!lastWrongWords.find(w=>w.id===word.id)) lastWrongWords.push(word);
+    // Show detail icon on wrong answer
+    const btn = document.getElementById('mc-detail-btn');
+    btn.style.display = 'inline-block';
+    // Subtle pulse animation
+    btn.animate([
+      {transform:'scale(1)',opacity:.5},
+      {transform:'scale(1.3)',opacity:1},
+      {transform:'scale(1)',opacity:.75}
+    ], {duration:500, easing:'ease-out'});
+  }
+  await recordAttempt(word.id, opt.correct, 'mc', word.word);
+  document.getElementById('mc-next').style.display = mcIdx < mcWords.length-1 ? 'inline-flex' : 'none';
+  if (mcIdx >= mcWords.length-1) setTimeout(showMCResult, 1200);
+}
+
+async function nextMC() {
+  mcIdx++;
+  const allWords = window._mcAllWords || await getWordsForList(selectedPracticeListId || +document.getElementById('practice-list-sel').value);
+  renderMCQuestion(allWords);
+}
+
+function showMCResult() {
+  document.getElementById('practice-mc').style.display='none';
+  const pct = Math.round(mcScore/mcWords.length*100);
+  document.getElementById('result-emoji').textContent = pct>=80?'🎉':pct>=50?'💪':'📚';
+  document.getElementById('result-title').textContent = pct>=80?'太棒了！':'繼續加油！';
+  document.getElementById('result-sub').textContent = `${mcWords.length} 題中答對 ${mcScore} 題（${pct}%）`;
+
+  // Show wrong words
+  const wrongSection = document.getElementById('result-wrong-section');
+  const wrongList    = document.getElementById('result-wrong-list');
+  const retryBtn     = document.getElementById('retry-wrong-btn');
+  if (lastWrongWords.length) {
+    wrongSection.style.display = 'block';
+    wrongList.innerHTML = lastWrongWords.map(w=>
+      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">${w.word}</span>`
+    ).join('');
+    retryBtn.style.display = 'inline-flex';
+    retryBtn.textContent = `🔁 再練錯題（${lastWrongWords.length} 題）`;
+  } else {
+    wrongSection.style.display = 'none';
+    retryBtn.style.display = 'none';
+  }
+
+  document.getElementById('practice-result').style.display='block';
+}
+
+async function retryWrongWords() {
+  if (!lastWrongWords.length) return;
+  const allWords = await getWordsForList(selectedPracticeListId || +document.getElementById('practice-list-sel').value);
+  document.getElementById('practice-result').style.display='none';
+  document.getElementById('practice-setup').style.display='none';
+  // Use wrong words as pool, full list as distractor source
+  await startMC(allWords, lastWrongWords);
+}
+
+// ═══════════════════════════════════════
+// PRACTICE – CLOZE
+// ═══════════════════════════════════════
+async function startCloze(words) {
+  document.getElementById('practice-cloze').style.display='block';
+  document.getElementById('cloze-loading').style.display='block';
+  document.getElementById('cloze-content').style.display='none';
+
+  const targets = words.sort(()=>Math.random()-.5).slice(0, Math.min(5, words.length));
+  clozeWordIds = targets.map(w=>w.id);
+
+  // ── 快取 key：依單字組合排序後雜湊 ──
+  const clozeKey = 'wf_cloze_' + targets.map(w=>w.word).sort().join('|');
+  try {
+    const cached = localStorage.getItem(clozeKey);
+    if (cached) {
+      clozeData = JSON.parse(cached);
+      renderCloze(clozeData, targets);
+      return;
+    }
+  } catch(e) {}
+
+  // ── 無快取才呼叫 AI ──
+  try {
+    const data = await generateClozeStory(targets.map(w=>w.word));
+    clozeData = data;
+    // 存快取（每組單字的故事只生成一次）
+    try { localStorage.setItem(clozeKey, JSON.stringify(data)); } catch(e) {}
+    renderCloze(data, targets);
+  } catch(e) {
+    toast('克漏字生成失敗：'+e.message);
+    endPractice();
+  }
+}
+
+function renderCloze(data, targets) {
+  document.getElementById('cloze-loading').style.display='none';
+  document.getElementById('cloze-content').style.display='block';
+
+  let story = data.story;
+  data.blanks.forEach((b,i) => {
+    const opts = b.options.map(o=>`<option value="${o}">${o}</option>`).join('');
+    const sel = `<select class="blank-select" id="blank-${i}"><option value="">— 選擇 —</option>${opts}</select>`;
+    story = story.replace('___', sel);
+  });
+  document.getElementById('cloze-story').innerHTML = story;
+}
+
+async function submitCloze() {
+  let correct=0, total=clozeData.blanks.length;
+  for (let i=0; i<total; i++) {
+    const sel = document.getElementById('blank-'+i);
+    if (!sel) continue;
+    const ans = clozeData.blanks[i].answer;
+    const chosen = sel.value;
+    sel.disabled = true;
+    if (chosen.toLowerCase()===ans.toLowerCase()) { sel.classList.add('correct'); correct++; }
+    else { sel.classList.add('wrong'); }
+    if (clozeWordIds[i]) await recordAttempt(clozeWordIds[i], chosen.toLowerCase()===ans.toLowerCase(), 'cloze', clozeData.blanks[i].answer);
+  }
+  document.getElementById('practice-cloze').style.display='none';
+  const pct=Math.round(correct/total*100);
+  document.getElementById('result-emoji').textContent = pct>=80?'🌟':pct>=50?'💪':'📖';
+  document.getElementById('result-title').textContent = '克漏字完成！';
+  document.getElementById('result-sub').textContent = `${total} 空格答對 ${correct} 個（${pct}%）`;
+  document.getElementById('practice-result').style.display='block';
+}
+
+// ═══════════════════════════════════════
+// VOCAB MODE (文意字彙)
+// ═══════════════════════════════════════
+let vocabWords = [];       // 本次題目清單
+let vocabIdx   = 0;
+let vocabScore = 0;
+let vocabAnswered = false;
+let vocabAllWords = [];    // 全清單，用於抽干擾選項
+
+// ── 翻譯記憶快取（本次練習 session 內）──
+const _vocabTrCache = {};
+
+
+// ═══════════════════════════════════════
+// SPELL PRACTICE
+// ═══════════════════════════════════════
+let spellWords = [], spellIdx = 0, spellScore = 0, spellAnswered = false;
+let spellCurrent = '';      // 正確答案（小寫）
+let spellTyped = [];        // 目前已按的字母陣列 [{letter, btnEl}]
+let spellLetterBtns = [];   // 字母池按鈕
+
+const DECOY_CHARS = 'abcdefghijklmnopqrstuvwxyz';
+
+async function startSpell(words) {
+  spellWords = words.sort(() => Math.random() - .5);
+  spellIdx = 0; spellScore = 0;
+  document.getElementById('practice-setup').style.display = 'none';
+  document.getElementById('practice-spell').style.display = 'block';
+  renderSpellQuestion();
+}
+
+async function renderSpellQuestion() {
+  spellAnswered = false;
+  spellTyped = [];
+  spellLetterBtns = [];
+
+  const w = spellWords[spellIdx];
+  spellCurrent = w.word.toLowerCase();
+
+  document.getElementById('spell-progress').textContent = `題目 ${spellIdx + 1} / ${spellWords.length}`;
+  document.getElementById('spell-score').textContent = `${spellScore} 分`;
+  document.getElementById('spell-bar').style.width = (spellIdx / spellWords.length * 100) + '%';
+  document.getElementById('spell-feedback').textContent = '';
+  document.getElementById('spell-feedback').style.color = '';
+  document.getElementById('spell-next').style.display = 'none';
+  document.getElementById('spell-answer-row').innerHTML = '';
+
+  // ── 中文定義 ──
+  let defText = (w.translation || '').trim();
+  if (!defText) {
+    // 查快取或字典
+    try {
+      const cached = await getCachedDetail(w.word);
+      if (cached?.detail_json) {
+        const d = typeof cached.detail_json === 'string' ? JSON.parse(cached.detail_json) : cached.detail_json;
+        defText = (d?.definitions_zh || []).slice(0, 2).join('；');
+      }
+    } catch(e) {}
+  }
+  if (!defText) {
+    // 查字典（不呼叫 AI，避免等太久）
+    try {
+      const dictId = getActiveDictId();
+      if (dictId) {
+        const dict = await ensureDictLoaded(dictId, null);
+        const rawHtml = await mdxLookup(dict, w.word);
+        if (rawHtml) {
+          const parsed = parseDictEntry(rawHtml, w.word);
+          defText = (parsed?.definitions_zh || []).slice(0, 2).join('；');
+        }
+      }
+    } catch(e) {}
+  }
+  document.getElementById('spell-definition').innerHTML =
+    defText
+      ? `<span style="color:rgba(255,255,255,.5);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em">中文意義</span><br><span style="color:#fff">${defText}</span>`
+      : `<span style="color:rgba(255,255,255,.6);font-size:.85rem">請拼出：<strong style="color:#fff">${w.word}</strong></span>`;
+
+  // ── 組合字母池：原字母 + 空白（片語需要）+ 干擾字母 ──
+  const letters = spellCurrent.split('');
+  const hasSpace = letters.includes(' ');
+
+  // 原字母（打亂）
+  const pool = [...letters].sort(() => Math.random() - .5);
+
+  // 計算干擾字母數量（3~5 個，但不超過總數讓版面太亂）
+  const decoyCount = Math.min(5, Math.max(3, Math.floor(spellCurrent.replace(/ /g,'').length * 0.4)));
+  const usedLetters = new Set(letters.filter(l => l !== ' '));
+  let added = 0;
+  const shuffled = DECOY_CHARS.split('').sort(() => Math.random() - .5);
+  for (const ch of shuffled) {
+    if (added >= decoyCount) break;
+    if (!usedLetters.has(ch)) { pool.push(ch); usedLetters.add(ch); added++; }
+  }
+
+  // 再次打亂整個池
+  pool.sort(() => Math.random() - .5);
+
+  // ── 渲染字母按鈕 ──
+  const container = document.getElementById('spell-letters');
+  container.innerHTML = '';
+
+  // 空白按鈕（片語才需要）— 固定放最後
+  const makeBtn = (letter, isSpace) => {
+    const btn = document.createElement('button');
+    btn.className = 'spell-letter-btn';
+    btn.style.cssText = `
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:${isSpace ? 56 : 40}px;height:40px;padding:0 ${isSpace ? 10 : 0}px;
+      background:var(--card);border:2px solid var(--border);border-radius:8px;
+      font-family:'Syne',sans-serif;font-size:${isSpace ? '.75rem' : '1rem'};font-weight:700;
+      cursor:pointer;transition:all .12s;user-select:none;
+    `;
+    btn.textContent = isSpace ? '␣ space' : letter.toUpperCase();
+    btn.dataset.letter = letter;
+    btn.onclick = () => spellType(letter, btn);
+    return btn;
+  };
+
+  pool.forEach(ch => {
+    const btn = makeBtn(ch, false);
+    spellLetterBtns.push(btn);
+    container.appendChild(btn);
+  });
+
+  // 空白按鈕
+  const spaceBtn = makeBtn(' ', true);
+  spellLetterBtns.push(spaceBtn);
+  container.appendChild(spaceBtn);
+}
+
+function spellType(letter, btn) {
+  if (spellAnswered) return;
+  // 停用此按鈕
+  btn.disabled = true;
+  btn.style.opacity = '0.35';
+
+  spellTyped.push({ letter, btn });
+
+  // 更新答案槽
+  const row = document.getElementById('spell-answer-row');
+  const slot = document.createElement('span');
+  slot.style.cssText = `
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:${letter === ' ' ? 24 : 32}px;height:36px;
+    background:var(--accent);color:#fff;border-radius:6px;
+    font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
+    padding:0 6px;cursor:pointer;
+  `;
+  slot.textContent = letter === ' ' ? '·' : letter.toUpperCase();
+  slot.title = '點擊撤回';
+  slot.onclick = () => spellRetract(spellTyped.indexOf(spellTyped.find(t => t.slot === slot)));
+  slot.dataset.idx = spellTyped.length - 1;
+  spellTyped[spellTyped.length - 1].slot = slot;
+  row.appendChild(slot);
+
+  // 自動檢查：長度符合時驗證
+  const typed = spellTyped.map(t => t.letter).join('');
+  if (typed.length === spellCurrent.length) {
+    spellCheck(typed);
+  }
+}
+
+function spellRetract(idx) {
+  if (spellAnswered) return;
+  // 找最後一個（不允許中間撤回，保持順序）
+  // 改為只能撤回最後一個
+  if (spellTyped.length === 0) return;
+  const last = spellTyped[spellTyped.length - 1];
+  last.slot.remove();
+  last.btn.disabled = false;
+  last.btn.style.opacity = '1';
+  spellTyped.pop();
+}
+
+function spellClear() {
+  if (spellAnswered) return;
+  // 撤回全部
+  while (spellTyped.length > 0) spellRetract(spellTyped.length - 1);
+}
+
+function spellCheck(typed) {
+  spellAnswered = true;
+  const correct = typed === spellCurrent;
+  const fb = document.getElementById('spell-feedback');
+
+  if (correct) {
+    spellScore++;
+    fb.textContent = '✓ 正確！';
+    fb.style.color = 'var(--green)';
+    // 答案槽變綠
+    document.getElementById('spell-answer-row').querySelectorAll('span').forEach(s => {
+      s.style.background = 'var(--green)';
+    });
+    recordAttempt(spellWords[spellIdx].id, true, 'spell', spellWords[spellIdx].word);
+  } else {
+    fb.textContent = `✗ 正確答案：${spellCurrent.toUpperCase()}`;
+    fb.style.color = 'var(--accent)';
+    // 答案槽變紅
+    document.getElementById('spell-answer-row').querySelectorAll('span').forEach(s => {
+      s.style.background = 'var(--accent)';
+    });
+    recordAttempt(spellWords[spellIdx].id, false, 'spell', spellWords[spellIdx].word);
+  }
+
+  document.getElementById('spell-next').style.display = 'block';
+  // 禁用所有字母按鈕
+  spellLetterBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.35'; });
+}
+
+function spellSkip() {
+  if (spellAnswered) { spellNext(); return; }
+  spellAnswered = true;
+  const fb = document.getElementById('spell-feedback');
+  fb.textContent = `略過 — 答案：${spellCurrent.toUpperCase()}`;
+  fb.style.color = 'var(--muted)';
+  spellLetterBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.35'; });
+  document.getElementById('spell-next').style.display = 'block';
+}
+
+function spellNext() {
+  spellIdx++;
+  if (spellIdx >= spellWords.length) {
+    showSpellResult();
+  } else {
+    renderSpellQuestion();
+  }
+}
+
+function showSpellResult() {
+  document.getElementById('practice-spell').style.display = 'none';
+  const el = document.getElementById('practice-result');
+  el.style.display = 'block';
+  const pct = spellWords.length > 0 ? Math.round(spellScore / spellWords.length * 100) : 0;
+  el.querySelector('.card-body').innerHTML = `
+    <div style="text-align:center;padding:12px 0">
+      <div style="font-size:3rem;margin-bottom:12px">${pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚'}</div>
+      <h3 style="font-size:1.3rem;margin-bottom:8px">拼字練習完成！</h3>
+      <div style="font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:4px">${spellScore} / ${spellWords.length}</div>
+      <div style="font-size:1rem;color:var(--muted);margin-bottom:24px">正確率 ${pct}%</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="startSpell(spellWords)">再練一次</button>
+        <button class="btn btn-ghost" onclick="endPractice()">返回設定</button>
+      </div>
+    </div>`;
+  gdriveAutoBackup();
+}
+
+async function startVocab(allWords, practicePool) {
+  lastWrongWords = [];
+  vocabAllWords  = allWords;
+  const shuffled = [...practicePool].sort(() => Math.random() - .5);
+  const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
+  vocabWords = shuffled.slice(0, n);
+  vocabIdx = 0; vocabScore = 0; vocabAnswered = false;
+  document.getElementById('practice-vocab').style.display = 'block';
+
+  // 預載第一題（同時在背景預載第二題）
+  await renderVocabQuestion();
+  if (vocabWords.length > 1) _prefetchVocab(1);
+}
+
+// 預載快取（背景靜默執行，不 block UI）
+const _vocabPrefetchCache = {};
+async function _prefetchVocab(idx) {
+  if (idx >= vocabWords.length) return;
+  const w = vocabWords[idx];
+  if (_vocabPrefetchCache[w.id]) return;
+  try {
+    const sentences = await getVocabSentences(w);
+    const distractors = await getDictRandomWords(w.word, 4);
+    _vocabPrefetchCache[w.id] = { sentences, distractors };
+  } catch(e) {}
+}
+
+async function renderVocabQuestion() {
+  const target   = vocabWords[vocabIdx];
+  vocabAnswered  = false;
+  document.getElementById('vocab-progress').textContent = `題目 ${vocabIdx + 1} / ${vocabWords.length}`;
+  document.getElementById('vocab-score').textContent    = `${vocabScore} 分`;
+  document.getElementById('vocab-bar').style.width      = (vocabIdx / vocabWords.length * 100) + '%';
+  document.getElementById('vocab-next').style.display   = 'none';
+  document.getElementById('vocab-explain').style.display = 'none';
+
+  const sentBox = document.getElementById('vocab-sentences');
+
+  // ── 優先使用預載快取，否則顯示 spinner 再載入 ──
+  let sentences, distractorObjs;
+  const prefetched = _vocabPrefetchCache[target.id];
+  if (prefetched) {
+    sentences     = prefetched.sentences;
+    distractorObjs = prefetched.distractors;
+  } else {
+    sentBox.innerHTML = '<span style="color:var(--muted);font-size:.85rem"><span class="spinner" style="width:14px;height:14px;border-width:2px;vertical-align:middle;margin-right:6px"></span>載入例句…</span>';
+    try {
+      [sentences, distractorObjs] = await Promise.all([
+        getVocabSentences(target),
+        getDictRandomWords(target.word, 4)
+      ]);
+    } catch(e) {
+      sentences = []; distractorObjs = [];
+    }
+  }
+
+  if (!sentences?.length) {
+    sentBox.innerHTML = `<span style="color:var(--accent);font-size:.85rem">找不到例句（字典未收錄或 AI 未設定）</span>`;
+    document.getElementById('vocab-options').innerHTML = '';
+    document.getElementById('vocab-next').style.display = 'none';
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;margin-top:14px;flex-wrap:wrap';
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn btn-secondary btn-sm';
+    skipBtn.textContent = '⏭ 跳過此題';
+    skipBtn.onclick = () => {
+      vocabIdx++;
+      if (vocabIdx >= vocabWords.length) showVocabResult();
+      else renderVocabQuestion();
+    };
+    const backBtn = document.createElement('button');
+    backBtn.className = 'btn btn-ghost btn-sm';
+    backBtn.textContent = '← 返回練習選項';
+    backBtn.onclick = endPractice;
+    btnRow.appendChild(skipBtn);
+    btnRow.appendChild(backBtn);
+    sentBox.appendChild(document.createElement('br'));
+    sentBox.appendChild(btnRow);
+    return;
+  }
+
+  // 挖空：比對單字本身及常見變形（ed/ing/s/ly/er/est/tion 等）
+  const blank = '<span style="display:inline-block;min-width:80px;border-bottom:2px solid var(--accent);text-align:center;font-weight:700;color:var(--accent)">＿＿＿</span>';
+  const base = target.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('\\b' + base + '[a-z]{0,6}\\b', 'gi');
+  // 挖空後檢查是否真的有替換到，若無則嘗試用定義造句替代
+  const renderedSentences = sentences.map((s, i) => {
+    const enBlanked = s.en.replace(re, blank);
+    const zhBlanked = s.zh ? s.zh.replace(re, '＿＿＿') : '';
+    // 若英文句沒有被挖空（單字沒出現），加上提示標記
+    const hasBlank = enBlanked.includes('＿＿＿');
+    return {
+      en: hasBlank ? enBlanked : `<span style="color:var(--muted);font-size:.8rem">（例句中未含目標單字，請依語意作答）</span><br>${enBlanked}`,
+      zh: zhBlanked,
+      hasBlank
+    };
+  });
+
+  sentBox.innerHTML = renderedSentences.map((s, i) =>
+    `<div style="margin-bottom:${i < renderedSentences.length-1 ? '10px' : '0'}">`
+    + `<div style="font-size:.95rem">${s.en}</div>`
+    + (s.zh ? `<div style="font-size:.78rem;color:var(--muted);margin-top:2px">${s.zh}</div>` : '')
+    + `</div>`
+  ).join('');
+
+  // 選項
+  const options = [
+    { word: target.word, translation: target.translation || '', correct: true },
+    ...(distractorObjs || []).map(d => ({ word: d.word, translation: d.translation || '', correct: false }))
+  ].sort(() => Math.random() - .5);
+
+  const grid = document.getElementById('vocab-options');
+  grid.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.style.cssText = 'text-align:center;padding:12px 8px;font-size:.9rem;font-weight:600';
+    btn.textContent  = opt.word;
+    btn.dataset.word = opt.word;
+    btn.dataset.translation = opt.translation;
+    btn.dataset.correct = opt.correct;
+    btn.onclick = () => selectVocabOption(btn, opt, target);
+    grid.appendChild(btn);
+  });
+
+  // ── 背景預載下一題 ──
+  if (vocabIdx + 1 < vocabWords.length) {
+    setTimeout(() => _prefetchVocab(vocabIdx + 1), 100);
+  }
+}
+
+async function selectVocabOption(el, opt, target) {
+  if (vocabAnswered) return;
+  vocabAnswered = true;
+
+  document.querySelectorAll('#vocab-options .option').forEach(o => o.classList.add('disabled'));
+
+  if (opt.correct) {
+    el.classList.add('correct');
+    vocabScore++;
+  } else {
+    el.classList.add('wrong');
+    // 標出正確答案
+    document.querySelectorAll('#vocab-options .option').forEach(o => {
+      if (o.dataset.correct === 'true') o.classList.add('correct');
+    });
+    if (!lastWrongWords.find(w => w.id === target.id)) lastWrongWords.push(target);
+
+    // ── 顯示各選項中文解析 ──
+    const explainList = document.getElementById('vocab-explain-list');
+    explainList.innerHTML = '';
+    document.querySelectorAll('#vocab-options .option').forEach(o => {
+      const isRight = o.dataset.correct === 'true';
+      const tr      = o.dataset.translation;
+      const row     = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:baseline;gap:8px;margin-bottom:6px;font-size:.82rem';
+      row.innerHTML = `
+        <span style="font-weight:700;min-width:90px;color:${isRight ? 'var(--green)' : 'var(--fg)'}">${isRight ? '✓ ' : ''}${o.dataset.word}</span>
+        <span style="color:var(--muted)">${tr ? s2t(tr) : '（無中文翻譯）'}</span>
+      `;
+      explainList.appendChild(row);
+    });
+    document.getElementById('vocab-explain').style.display = 'block';
+  }
+
+  try { await recordAttempt(target.id, opt.correct, 'vocab', target.word); } catch(e) {}
+
+  const isLast = vocabIdx >= vocabWords.length - 1;
+  document.getElementById('vocab-next').style.display = isLast ? 'none' : 'inline-flex';
+  if (isLast) setTimeout(showVocabResult, 1400);
+}
+
+function vocabNext() {
+  vocabIdx++;
+  renderVocabQuestion().catch(e => {
+    toast('載入題目失敗：' + e.message);
+    endPractice();
+  });
+}
+
+function showVocabResult() {
+  document.getElementById('practice-vocab').style.display = 'none';
+  const pct = Math.round(vocabScore / vocabWords.length * 100);
+  document.getElementById('result-emoji').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '💪' : '📚';
+  document.getElementById('result-title').textContent = pct >= 80 ? '太棒了！' : '繼續加油！';
+  document.getElementById('result-sub').textContent   = `${vocabWords.length} 題中答對 ${vocabScore} 題（${pct}%）`;
+
+  const wrongSection = document.getElementById('result-wrong-section');
+  const wrongList    = document.getElementById('result-wrong-list');
+  const retryBtn     = document.getElementById('retry-wrong-btn');
+  if (lastWrongWords.length) {
+    wrongSection.style.display = 'block';
+    wrongList.innerHTML = lastWrongWords.map(w =>
+      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">${w.word}</span>`
+    ).join('');
+    retryBtn.style.display = 'inline-flex';
+    retryBtn.textContent = `🔁 再練錯題（${lastWrongWords.length} 題）`;
+  } else {
+    wrongSection.style.display = 'none';
+    retryBtn.style.display = 'none';
+  }
+  document.getElementById('practice-result').style.display = 'block';
+}
+
+// ── 取得例句（優先字典快取，fallback AI）──
+async function getVocabSentences(word) {
+  // 1. 先查 IndexedDB / localStorage 快取（最快）
+  const cached = await getCachedDetail(word.word);
+  if (cached?.detail_json) {
+    try {
+      const detail = typeof cached.detail_json === 'string'
+        ? JSON.parse(cached.detail_json) : cached.detail_json;
+      if (detail?.examples?.length) {
+        return detail.examples.slice(0, 1).map(e => ({ en: e.en, zh: e.zh }));
+      }
+    } catch(e) {}
+  }
+
+  // 2. 查字典（中等速度）
+  const dictId = getActiveDictId();
+  if (dictId) {
+    try {
+      const dict    = await ensureDictLoaded(dictId, null);
+      const rawHtml = await mdxLookup(dict, word.word);
+      if (rawHtml) {
+        const parsed = parseDictEntry(rawHtml, word.word);
+        if (parsed?.examples?.length) {
+          // 存入快取，下次直接命中
+          await cacheWordDetail(word.word, JSON.stringify(parsed));
+          return parsed.examples.slice(0, 1).map(e => ({ en: e.en, zh: e.zh }));
+        }
+        // 字典有此字但無例句 → 繼續往下用 AI 補
+      }
+      // 字典查無此字 → 繼續往下用 AI 補
+    } catch(e) {}
+  }
+
+  // 3. 無字典時才考慮 AI（provider 為 'none' 時才跳過，未設定則用內建 Claude）
+  const aiSettings = loadAISettings();
+  if (aiSettings.provider === 'none') return [];
+
+  try {
+    const prompt = `Give 1 short example sentence using the English word "${word.word}". The word "${word.word}" MUST appear in the sentence exactly as written (or as a common inflection like ${word.word}s, ${word.word}ed, ${word.word}ing).
+Return ONLY valid JSON array, no markdown:
+[{"en":"example sentence containing ${word.word}","zh":"繁體中文翻譯"}]`;
+    const json  = await callAI(prompt);
+    const clean = json.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
+    return JSON.parse(clean).slice(0, 1);
+  } catch(e) {
+    return [];
+  }
+}
+
+// ── 從字典亂數取 N 個單字（排除指定詞）──
+async function getDictRandomWords(excludeWord, count) {
+  const exclude = excludeWord.toLowerCase();
+
+  // ── 先從單字庫取 1-2 個（有翻譯，增加干擾性）──
+  const listPool = vocabAllWords
+    .filter(w => w.word.toLowerCase() !== exclude)
+    .sort(() => Math.random() - .5);
+  const listCount = Math.min(listPool.length, Math.floor(Math.random() * 2) + 1); // 1 或 2
+  const fromList  = listPool.slice(0, listCount)
+    .map(w => ({ word: w.word, translation: w.translation || '', _fromList: true }));
+
+  const dictCount = count - fromList.length; // 剩下從字典補
+
+  const dictId = getActiveDictId();
+  if (dictId && dictCount > 0) {
+    try {
+      const dict = await ensureDictLoaded(dictId, null);
+      const keys = dict.keyList;
+      const listWords = new Set(fromList.map(w => w.word.toLowerCase()));
+      if (keys.length > dictCount * 3) {
+        const picked = [];
+        const tried  = new Set([...listWords, exclude]);
+        let attempts = 0;
+        while (picked.length < dictCount && attempts < dictCount * 20) {
+          attempts++;
+          const i   = Math.floor(Math.random() * keys.length);
+          const key = keys[i].key;
+          if (tried.has(key) || key.includes(' ') || key.length < 3) continue;
+          tried.add(key);
+          picked.push(key);
+        }
+        if (picked.length >= dictCount) {
+          const fromDict = await Promise.all(picked.map(async key => {
+            try {
+              const raw = await mdxLookup(dict, key);
+              if (raw) {
+                const parsed = parseDictEntry(raw, key);
+                const tr = parsed?.definitions_zh?.[0] || parsed?.part_of_speech_zh || '';
+                return { word: key, translation: tr };
+              }
+            } catch(e) {}
+            return { word: key, translation: '' };
+          }));
+          return [...fromList, ...fromDict].sort(() => Math.random() - .5);
+        }
+      }
+    } catch(e) {}
+  }
+
+  // fallback：全從單字庫取
+  return vocabAllWords
+    .filter(w => w.word.toLowerCase() !== exclude)
+    .sort(() => Math.random() - .5)
+    .slice(0, count)
+    .map(w => ({ word: w.word, translation: w.translation || '' }));
+}
+
+function endPractice() {
+  document.getElementById('practice-mc').style.display='none';
+  document.getElementById('practice-cloze').style.display='none';
+  document.getElementById('practice-vocab').style.display='none';
+  document.getElementById('practice-spell').style.display='none';
+  document.getElementById('practice-result').style.display='none';
+  document.getElementById('practice-setup').style.display='block';
+  populatePracticeList();
+}
+
+// ═══════════════════════════════════════
+// BACKUP
+// ═══════════════════════════════════════
+async function exportBackup() {
+  const lists = await getAllLists();
+  const words = await getAll('words');
+  const details = await getAll('word_details');
+  const records = await getAll('practice_records');
+  const history = await getAll('practice_history');
+  const payload = JSON.stringify({lists,words,details,records,history}, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `wordfun-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('備份匯出成功 ✓');
+}
+
+async function importBackup(e) {
+  const f = e.target.files[0]; if (!f) return;
+  // use showConfirm (async-friendly wrapper)
+  await new Promise(resolve => showConfirm(
+    '匯入備份',
+    '匯入將清除所有現有資料，確定繼續？',
+    resolve
+  ));
+  const text = await f.text();
+  const data = JSON.parse(text);
+
+  // Clear all
+  for (const s of ['practice_history','practice_records','word_details','words','word_lists']) {
+    await req2p(store(s,'readwrite').clear());
+  }
+  // Restore
+  for (const l of (data.lists||[])) await req2p(store('word_lists','readwrite').add(l));
+  for (const w of (data.words||[])) await req2p(store('words','readwrite').add(w));
+  for (const d of (data.details||[])) await req2p(store('word_details','readwrite').add(d));
+  for (const r of (data.records||[])) await req2p(store('practice_records','readwrite').add(r));
+  for (const h of (data.history||[])) await req2p(store('practice_history','readwrite').add(h));
+
+  toast('備份匯入成功 ✓');
+  refreshHome();
+}
+
+// ═══════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════
+let _modalZ = 200;
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.style.zIndex = ++_modalZ;
+  el.classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// API key functions removed - Claude AI is built-in
+
+function openAddListModal() { openModal('modal-add-list') }
+function openAddWordModal() {
+  if (!activeListId) { toast('請先選擇清單'); return; }
+  openModal('modal-add-word');
+}
+
+async function openImportModal() {
+  const lists = await getAllLists();
+  const sel = document.getElementById('import-list-sel');
+  sel.innerHTML = lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+  if (activeListId) sel.value = activeListId;
+  openModal('modal-import');
+}
+
+// Close on bg click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open') });
+});
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE DRIVE BACKUP SYNC
+// ═══════════════════════════════════════════════════════
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FILENAME = 'wordfun-backup.json';
+let _gdriveToken = null;
+
+function gdriveMsg(msg, color='var(--muted)') {
+  const el = document.getElementById('gdrive-msg');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+function saveGDriveClientId() {
+  const val = document.getElementById('gdrive-client-id').value.trim();
+  if (!val) { gdriveMsg('請輸入 Client ID', 'var(--accent)'); return; }
+  localStorage.setItem('gdrive_client_id', val);
+  gdriveMsg('✓ Client ID 已儲存', 'var(--green)');
+}
+
+function showGDriveHelp() { openModal('modal-gdrive-help'); }
+
+function getGDriveClientId() {
+  return localStorage.getItem('gdrive_client_id') || '';
+}
+
+function gdriveLogin() {
+  const clientId = getGDriveClientId();
+  if (!clientId) {
+    gdriveMsg('請先填入 Google OAuth Client ID', 'var(--accent)');
+    document.getElementById('gdrive-client-id').focus();
+    return;
+  }
+  const redirectUri = location.origin + location.pathname;
+  const url = `https://accounts.google.com/o/oauth2/v2/auth` +
+    `?client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_type=token` +
+    `&scope=${encodeURIComponent(GDRIVE_SCOPE)}` +
+    `&include_granted_scopes=true`;
+  // Store that we initiated login
+  localStorage.setItem('gdrive_login_pending', '1');
+  window.location.href = url;
+}
+
+function gdriveLogout() {
+  _gdriveToken = null;
+  localStorage.removeItem('gdrive_token');
+  localStorage.removeItem('gdrive_token_exp');
+  updateGDriveUI(false);
+  gdriveMsg('已登出 Google 帳號');
+}
+
+function toggleGDriveAuto(on) {
+  localStorage.setItem('gdrive_auto', on ? '1' : '0');
+  gdriveMsg(on ? '✓ 已開啟自動備份' : '自動備份已關閉', on ? 'var(--green)' : 'var(--muted)');
+}
+
+function updateGDriveUI(loggedIn) {
+  const status = document.getElementById('gdrive-status');
+  const loginBtn = document.getElementById('gdrive-login-btn');
+  const logoutBtn = document.getElementById('gdrive-logout-btn');
+  const backupBtn = document.getElementById('gdrive-backup-btn');
+  const restoreBtn = document.getElementById('gdrive-restore-btn');
+  if (!status) return;
+  if (loggedIn) {
+    status.textContent = '✅ 已連結 Google 帳號';
+    status.style.background = '#dcfce7';
+    status.style.color = '#166534';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = '';
+    backupBtn.disabled = false;
+    restoreBtn.disabled = false;
+    document.getElementById('gdrive-auto').checked = localStorage.getItem('gdrive_auto') === '1';
+  } else {
+    status.textContent = '⬜ 尚未連結 Google 帳號';
+    status.style.background = '#f3f4f6';
+    status.style.color = 'var(--muted)';
+    loginBtn.style.display = '';
+    logoutBtn.style.display = 'none';
+    backupBtn.disabled = true;
+    restoreBtn.disabled = true;
+  }
+}
+
+// ── OAuth token handling ──
+function initGDriveFromHash() {
+  // Handle OAuth redirect with #access_token=...
+  const hash = window.location.hash;
+  if (hash.includes('access_token=')) {
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '3600');
+    if (token) {
+      _gdriveToken = token;
+      localStorage.setItem('gdrive_token', token);
+      localStorage.setItem('gdrive_token_exp', Date.now() + expiresIn * 1000);
+      localStorage.removeItem('gdrive_login_pending');
+      // Clean up URL
+      history.replaceState(null, '', location.pathname + location.search);
+      updateGDriveUI(true);
+      gdriveMsg('✅ 連結成功！', 'var(--green)');
+      // Auto-restore if first login
+      toast('Google 帳號連結成功！');
+      return true;
+    }
+  }
+  // Check saved token
+  const saved = localStorage.getItem('gdrive_token');
+  const exp = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
+  if (saved && Date.now() < exp) {
+    _gdriveToken = saved;
+    updateGDriveUI(true);
+    return true;
+  }
+  updateGDriveUI(false);
+  return false;
+}
+
+// ── Export all data to JSON ──
+async function exportAllData() {
+  const lists = await getAllLists();
+  const allWords = [];
+  for (const list of lists) {
+    const ws = await getWordsForList(list.id);
+    allWords.push(...ws.map(w => ({...w, list_id: list.id})));
+  }
+  const records = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res([]);
+  });
+  const history = await new Promise(res => {
+    const req = store('practice_history','readonly').getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res([]);
+  });
+  return {
+    version: 2,
+    exported_at: new Date().toISOString(),
+    lists,
+    words: allWords,
+    practice_records: records,
+    practice_history: history,
+  };
+}
+
+// ── Upload to Drive appdata folder ──
+async function gdriveUploadFile(json) {
+  const token = _gdriveToken;
+  if (!token) throw new Error('未登入');
+
+  // Check if file exists
+  const listRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${GDRIVE_FILENAME}%27&fields=files(id)`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const listData = await listRes.json();
+  const fileId = listData.files?.[0]?.id;
+
+  const blob = new Blob([JSON.stringify(json)], {type: 'application/json'});
+  const meta = JSON.stringify({
+    name: GDRIVE_FILENAME,
+    parents: fileId ? undefined : ['appDataFolder'],
+  });
+
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], {type:'application/json'}));
+  form.append('file', blob);
+
+  const url = fileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+
+  const method = fileId ? 'PATCH' : 'POST';
+  const res = await fetch(url, {
+    method,
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  return await res.json();
+}
+
+// ── Download from Drive ──
+async function gdriveDownloadFile() {
+  const token = _gdriveToken;
+  if (!token) throw new Error('未登入');
+
+  const listRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${GDRIVE_FILENAME}%27&fields=files(id,modifiedTime)`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const listData = await listRes.json();
+  const file = listData.files?.[0];
+  if (!file) return null;
+
+  const dlRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!dlRes.ok) throw new Error(`Download failed: ${dlRes.status}`);
+  return { data: await dlRes.json(), modifiedTime: file.modifiedTime };
+}
+
+// ── Backup ──
+async function gdriveBackup() {
+  if (!_gdriveToken) { toast('請先連結 Google 帳號'); return; }
+  gdriveMsg('備份中…', 'var(--muted)');
+  try {
+    const data = await exportAllData();
+    await gdriveUploadFile(data);
+    const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+    localStorage.setItem('gdrive_last_backup', time);
+    gdriveMsg(`✅ 備份完成 ${time}`, 'var(--green)');
+    toast('☁️ 備份到 Google Drive 完成！');
+  } catch(e) {
+    console.error(e);
+    if (e.message?.includes('401') || e.message?.includes('未登入')) {
+      gdriveLogout();
+      gdriveMsg('⚠️ 登入已過期，請重新連結', 'var(--accent)');
+    } else {
+      gdriveMsg('⚠️ 備份失敗：' + e.message, 'var(--accent)');
+    }
+  }
+}
+
+// ── Restore ──
+async function gdriveRestore() {
+  if (!_gdriveToken) { toast('請先連結 Google 帳號'); return; }
+  gdriveMsg('讀取雲端資料中…', 'var(--muted)');
+  try {
+    const result = await gdriveDownloadFile();
+    if (!result) { gdriveMsg('雲端尚無備份資料', 'var(--muted)'); return; }
+
+    const { data, modifiedTime } = result;
+    const timeStr = new Date(modifiedTime).toLocaleString('zh-TW');
+
+    if (!confirm(`確定要從雲端還原？\n備份時間：${timeStr}\n\n⚠️ 這將合併雲端資料（不覆蓋現有單字）`)) return;
+
+    gdriveMsg('還原中…', 'var(--muted)');
+    await importBackupData(data);
+    gdriveMsg('✅ 還原完成！', 'var(--green)');
+    toast('☁️ 從 Google Drive 還原完成！');
+    refreshHome();
+    renderLists();
+  } catch(e) {
+    console.error(e);
+    gdriveMsg('⚠️ 還原失敗：' + e.message, 'var(--accent)');
+  }
+}
+
+// ── Import backup data (merge, not overwrite) ──
+async function importBackupData(data) {
+  if (!data?.lists) throw new Error('備份格式不正確');
+
+  for (const list of data.lists) {
+    // Find or create list by name
+    const existing = (await getAllLists()).find(l => l.name === list.name);
+    let listId = existing?.id;
+    if (!listId) {
+      listId = await createListDB(list.name);
+    }
+    // Import words
+    const words = (data.words || []).filter(w => w.list_id === list.id);
+    const existingWords = await getWordsForList(listId);
+    const existingSet = new Set(existingWords.map(w => w.word.toLowerCase()));
+    const newWords = words.filter(w => !existingSet.has(w.word.toLowerCase()));
+    if (newWords.length) {
+      await batchInsertWords(listId, newWords);
+    }
+  }
+
+  // Merge practice records
+  for (const rec of (data.practice_records || [])) {
+    try {
+      const existing = await getItem('practice_records', rec.word_id);
+      if (!existing || rec.practice_count > existing.practice_count) {
+        await putItem('practice_records', rec);
+      }
+    } catch(e) {}
+  }
+
+  // Merge practice history (skip duplicates by timestamp)
+  const allHistory = await new Promise(res => {
+    const req = store('practice_history','readonly').getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res([]);
+  });
+  const existingTs = new Set(allHistory.map(h => h.timestamp));
+  for (const h of (data.practice_history || [])) {
+    if (!existingTs.has(h.timestamp)) {
+      try {
+        await req2p(store('practice_history','readwrite').add(h));
+      } catch(e) {}
+    }
+  }
+}
+
+// ── Auto-backup after practice ──
+async function gdriveAutoBackup() {
+  if (localStorage.getItem('gdrive_auto') === '1' && _gdriveToken) {
+    try { await gdriveBackup(); } catch(e) {}
+  }
+}
+
+// Init on page load
+window.addEventListener('load', () => {
+  initGDriveFromHash();
+  const saved = localStorage.getItem('gdrive_client_id');
+  if (saved) document.getElementById('gdrive-client-id').value = saved;
+  const lastBackup = localStorage.getItem('gdrive_last_backup');
+  if (lastBackup && _gdriveToken) gdriveMsg(`上次備份：${lastBackup}`);
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+openDB().then(() => {
+  updateAIBadge();
+  refreshHome();
+  getAllLists().then(async lists => {
+    if (!lists.length) {
+      // Fresh install: seed demo list with translations
+      const id = await createListDB('多益 700 示範');
+      const demo = [
+        {word:'ephemeral',    translation:'短暫的'},
+        {word:'serendipity',  translation:'意外發現美好事物'},
+        {word:'resilience',   translation:'韌性'},
+        {word:'eloquent',     translation:'口才流利的'},
+        {word:'meticulous',   translation:'一絲不苟的'},
+        {word:'ambiguous',    translation:'模糊的'},
+        {word:'gregarious',   translation:'愛社交的'},
+        {word:'tenacious',    translation:'頑強的'},
+      ];
+      await batchInsertWords(id, demo.map(d=>({...d, importance:3, frequency:3, examples:''})));
+      renderLists();
+      refreshHome();
+    } else {
+      // Existing data: fix any words that are missing translations
+      for (const list of lists) {
+        const words = await getWordsForList(list.id);
+        const missing = words.filter(w => !w.translation);
+        if (missing.length) {
+          try {
+            const results = await batchTranslateAI(missing.map(w => w.word));
+            const map = {};
+            results.forEach(r => map[r.word.toLowerCase()] = r.translation);
+            for (const w of missing) {
+              const trans = map[w.word.toLowerCase()];
+              if (trans) {
+                await req2p(store('words','readwrite').put({...w, translation: trans}));
+              }
+            }
+            if (activeListId) loadWords();
+          } catch(e) { /* silently skip if AI unavailable */ }
+        }
+      }
+    }
+  });
+});
+
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// MDX PARSER  (MDict 2.0 — correct implementation, supports Encrypted=2)
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── RIPEMD-128 (pure JS, needed for MDX Encrypted=2 key derivation) ──
+function ripemd128(msgBytes) {
+  const msg = [...msgBytes];
+  const origBitLen = msg.length * 8;
+  msg.push(0x80);
+  while (msg.length % 64 !== 56) msg.push(0);
+  // append 64-bit LE length
+  let lo = origBitLen >>> 0, hi = Math.floor(origBitLen / 0x100000000) >>> 0;
+  for (let i = 0; i < 4; i++) { msg.push(lo & 0xFF); lo >>= 8; }
+  for (let i = 0; i < 4; i++) { msg.push(hi & 0xFF); hi >>= 8; }
+
+  let A=0x67452301, B=0xEFCDAB89, C=0x98BADCFE, D=0x10325476;
+  const add32 = (...a) => a.reduce((s,v) => (s + v) | 0, 0) >>> 0;
+  const rol32 = (x,n) => ((x << n) | (x >>> (32-n))) >>> 0;
+  const F=(x,y,z)=>((x^y^z)>>>0), G=(x,y,z)=>(((x&y)|(~x&z))>>>0);
+  const H=(x,y,z)=>(((x|(~y>>>0))^z)>>>0), I=(x,y,z)=>(((x&z)|(y&(~z>>>0)))>>>0);
+  const KL=[0,0x5A827999,0x6ED9EBA1,0x8F1BBCDC], KR=[0x50A28BE6,0x5C4DD124,0x6D703EF3,0];
+  const SL=[[11,14,15,12,5,8,7,9,11,13,14,15,6,7,9,8],[7,6,8,13,11,9,7,15,7,12,15,9,11,7,13,12],[11,13,6,7,14,9,13,15,14,8,13,6,5,12,7,5],[11,12,14,15,14,15,9,8,9,14,5,6,8,6,5,12]];
+  const SR=[[8,9,9,11,13,15,15,5,7,7,8,11,14,14,12,6],[9,13,15,7,12,8,9,11,7,7,12,7,6,15,13,11],[9,7,15,11,8,6,6,14,12,13,5,14,13,13,7,5],[15,5,8,11,14,14,6,14,6,9,12,9,12,5,15,8]];
+  const RL=[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],[7,4,13,1,10,6,15,3,12,0,9,5,2,14,11,8],[3,10,14,4,9,15,8,1,2,7,0,6,13,11,5,12],[1,9,11,10,0,8,12,4,13,3,7,15,14,5,6,2]];
+  const RR=[[5,14,7,0,9,2,11,4,13,6,15,8,1,10,3,12],[6,11,3,7,0,13,5,10,14,15,8,12,4,9,1,2],[15,5,1,3,7,14,6,9,11,8,12,2,10,0,4,13],[8,6,4,1,3,11,15,0,5,12,2,13,9,7,10,14]];
+  const FL=[F,G,H,I], FR=[I,H,G,F];
+
+  for (let bs = 0; bs < msg.length; bs += 64) {
+    const X = [];
+    for (let i = 0; i < 16; i++) {
+      X.push((msg[bs+i*4]) | (msg[bs+i*4+1]<<8) | (msg[bs+i*4+2]<<16) | (msg[bs+i*4+3]<<24));
+      X[i] = X[i] >>> 0;
+    }
+    let al=A,bl=B,cl=C,dl=D, ar=A,br=B,cr=C,dr=D;
+    for (let r = 0; r < 4; r++) {
+      for (let j = 0; j < 16; j++) {
+        let T = rol32(add32(al, FL[r](bl,cl,dl), X[RL[r][j]], KL[r]), SL[r][j]);
+        al=dl; dl=cl; cl=bl; bl=T;
+        T = rol32(add32(ar, FR[r](br,cr,dr), X[RR[r][j]], KR[r]), SR[r][j]);
+        ar=dr; dr=cr; cr=br; br=T;
+      }
+    }
+    const T=add32(B,cl,dr); B=add32(C,dl,ar); C=add32(D,al,br); D=add32(A,bl,cr); A=T;
+  }
+  const out = new Uint8Array(16);
+  const dv = new DataView(out.buffer);
+  dv.setUint32(0, A, true); dv.setUint32(4, B, true);
+  dv.setUint32(8, C, true); dv.setUint32(12, D, true);
+  return out;
+}
+
+// ── MDX fast_decrypt (nibble-rotate XOR stream cipher) ──
+function mdxFastDecrypt(data, key) {
+  const b = new Uint8Array(data);
+  const k = key instanceof Uint8Array ? key : new Uint8Array(key);
+  let prev = 0x36;
+  for (let i = 0; i < b.length; i++) {
+    let t = ((b[i] >> 4) | (b[i] << 4)) & 0xFF;
+    t = t ^ prev ^ (i & 0xFF) ^ k[i % k.length];
+    prev = b[i];
+    b[i] = t;
+  }
+  return b;
+}
+
+// ── Decompress a zlib block (DecompressionStream) ──
+async function zlibDecompress(buffer) {
+  for (const fmt of ['deflate', 'deflate-raw']) {
+    try {
+      const ds = new DecompressionStream(fmt);
+      const w = ds.writable.getWriter();
+      w.write(buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer));
+      w.close();
+      const chunks = []; const r = ds.readable.getReader();
+      while (true) { const {done,value} = await r.read(); if (done) break; chunks.push(value); }
+      const total = chunks.reduce((n,c) => n+c.length, 0);
+      const out = new Uint8Array(total); let off = 0;
+      for (const ch of chunks) { out.set(ch, off); off += ch.length; }
+      return out;
+    } catch(e) {}
+  }
+  throw new Error('zlib decompress failed');
+}
+
+// ── Decompress an MDX block (comp_type(4LE) + adler32(4) + payload) ──
+// encrypted=true: apply fast_decrypt using adler32 as key seed
+async function mdxDecompBlock(raw, encrypted = false) {
+  const dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+  const compType = dv.getUint32(0, true);   // LE: 0=none, 1=LZO, 2=zlib
+  if (encrypted) {
+    const key = ripemd128([...raw.slice(4, 8), 0x95, 0x36, 0x00, 0x00]);
+    raw = new Uint8Array([...raw.slice(0, 8), ...mdxFastDecrypt(raw.slice(8), key)]);
+  }
+  const payload = raw.slice(8);
+  if (compType === 0) return payload;
+  if (compType === 2) return await zlibDecompress(payload);
+  throw new Error(`LZO compression not supported (compType=${compType}). Please use a non-LZO dictionary.`);
+}
+
+// ── Read big-endian uint64 (as JS number, max safe ~9 PB) ──
+function readU64BE(dv, off) {
+  return dv.getUint32(off, false) * 0x100000000 + dv.getUint32(off+4, false);
+}
+
+// ── Read null-terminated UTF-8 string ──
+function readNullStr(data, off) {
+  let end = off;
+  while (end < data.length && data[end] !== 0) end++;
+  return { str: new TextDecoder('utf-8').decode(data.slice(off, end)), next: end + 1 };
+}
+
+/**
+ * Parse MDX v2 file into in-memory index.
+ * Returns: { title, description, keyList, recBlkMeta, recBlocksRaw, recBlocksStart }
+ * keyList: [{key (lowercase), offset}] sorted
+ */
+async function parseMdx(arrayBuffer, onProgress) {
+  const data = new Uint8Array(arrayBuffer);
+  const dv   = new DataView(arrayBuffer);
+  let off = 0;
+
+  onProgress && onProgress(5, '解析標頭…');
+
+  // ── Header: BE uint32 length + UTF-16LE XML + 4-byte checksum ──
+  const headerLen = dv.getUint32(0, false);  // BIG-endian
+  if (headerLen < 10 || headerLen > 100000) throw new Error(`Header length invalid: ${headerLen}`);
+  const headerXml = new TextDecoder('utf-16le').decode(data.slice(4, 4 + headerLen));
+  off = 4 + headerLen + 4;
+
+  const getAttr = (xml, attr) => { const m = xml.match(new RegExp(`${attr}="([^"]*)"`, 'i')); return m ? m[1] : ''; };
+  const title       = getAttr(headerXml, 'Title') || 'Unknown';
+  const description = getAttr(headerXml, 'Description') || '';
+  const encrypted   = parseInt(getAttr(headerXml, 'Encrypted') || '0');
+  const keyIndexEncrypted = (encrypted & 2) !== 0;  // bit 1 = key index encrypted
+
+  onProgress && onProgress(10, `讀取索引 (${title})…`);
+
+  // ── Key section header (5 × BE uint64 + 4-byte checksum) ──
+  const numKeyBlocks   = readU64BE(dv, off);       off += 8;
+  const numEntries     = readU64BE(dv, off);       off += 8;
+  /* keyIdxDecomp */    readU64BE(dv, off);         off += 8;
+  const keyIdxComp     = readU64BE(dv, off);       off += 8;
+  const keyBlocksTotal = readU64BE(dv, off);       off += 8;
+  off += 4;  // checksum
+
+  if (numKeyBlocks === 0 || numKeyBlocks > 100000) throw new Error(`numKeyBlocks invalid: ${numKeyBlocks}`);
+
+  // ── Key index: decrypt (if Encrypted&2) then decompress ──
+  const kidxRaw = data.slice(off, off + keyIdxComp);
+  off += keyIdxComp;
+  const kidx = await mdxDecompBlock(kidxRaw, keyIndexEncrypted);
+
+  // ── Parse key index → block metadata ──
+  let ki = 0;
+  const kdv = new DataView(kidx.buffer, kidx.byteOffset);
+  const keyBlockMeta = [];
+  for (let i = 0; i < numKeyBlocks; i++) {
+    const numKeys = readU64BE(kdv, ki); ki += 8;
+    // v2 key index stores 2-byte (BE uint16) key text sizes
+    const fkSz = kdv.getUint16(ki, false); ki += 2 + fkSz + 1;  // size + text + null
+    const lkSz = kdv.getUint16(ki, false); ki += 2 + lkSz + 1;
+    const compSz   = readU64BE(kdv, ki); ki += 8;
+    const decompSz = readU64BE(kdv, ki); ki += 8;
+    keyBlockMeta.push({ numKeys, compSz, decompSz });
+  }
+
+  onProgress && onProgress(20, '解析關鍵字區塊…');
+
+  // ── Decompress key blocks (NOT encrypted, even for Encrypted=2) ──
+  const keyList = [];
+  let kbOff = 0;
+  const keyBlocksStart = off;
+
+  for (let i = 0; i < keyBlockMeta.length; i++) {
+    const { numKeys, compSz } = keyBlockMeta[i];
+    const blkRaw = data.slice(keyBlocksStart + kbOff, keyBlocksStart + kbOff + compSz);
+    kbOff += compSz;
+    const blk = await mdxDecompBlock(blkRaw, false);  // NOT encrypted
+
+    let p = 0;
+    const bdv = new DataView(blk.buffer, blk.byteOffset);
+    for (let j = 0; j < numKeys; j++) {
+      const recOff = readU64BE(bdv, p); p += 8;
+      const { str: key, next } = readNullStr(blk, p); p = next;
+      keyList.push({ key: key.toLowerCase(), offset: recOff });
+    }
+    if (i % 5 === 0) onProgress && onProgress(20 + Math.round(50 * i / keyBlockMeta.length), `解析關鍵字 ${keyList.length}…`);
+  }
+  off = keyBlocksStart + kbOff;
+  keyList.sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+
+  onProgress && onProgress(75, '解析記錄區塊索引…');
+
+  // ── Record section header ──
+  const numRecBlocks = readU64BE(dv, off); off += 8;
+  /* numRecEntries */  readU64BE(dv, off); off += 8;
+  /* recIdxSize */     readU64BE(dv, off); off += 8;
+  /* recBlksTotalSz */ readU64BE(dv, off); off += 8;
+
+  // ── Record block index ──
+  const recBlkMeta = [];
+  let cumDecomp = 0;
+  for (let i = 0; i < numRecBlocks; i++) {
+    const cs = readU64BE(dv, off); off += 8;
+    const ds = readU64BE(dv, off); off += 8;
+    recBlkMeta.push({ compSize: cs, decompSize: ds, decompOffset: cumDecomp });
+    cumDecomp += ds;
+  }
+
+  // Store raw slices for lazy lookup
+  const recBlocksRaw = [];
+  let rbOff = 0;
+  for (const m of recBlkMeta) {
+    recBlocksRaw.push(new Uint8Array(arrayBuffer, off + rbOff, m.compSize));
+    rbOff += m.compSize;
+  }
+
+  onProgress && onProgress(100, `✓ ${title}  ${keyList.length.toLocaleString()} 詞條`);
+
+  return { title, description, keyList, recBlkMeta, recBlocksRaw };
+}
+
+/**
+ * Lookup a word in a parsed MDX dict.
+ * Returns raw HTML string or null.
+ */
+async function mdxLookup(dict, word) {
+  const target = word.toLowerCase().trim();
+  const { keyList, recBlkMeta, recBlocksRaw } = dict;
+
+  // Binary search
+  let lo = 0, hi = keyList.length - 1, idx = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (keyList[mid].key === target) { idx = mid; break; }
+    else if (keyList[mid].key < target) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  if (idx === -1) return null;
+
+  const recOff  = keyList[idx].offset;
+  const nextOff = idx + 1 < keyList.length ? keyList[idx+1].offset : Infinity;
+
+  // Find which record block
+  let blkIdx = 0;
+  for (let i = 0; i < recBlkMeta.length; i++) {
+    if (recBlkMeta[i].decompOffset + recBlkMeta[i].decompSize > recOff) { blkIdx = i; break; }
+  }
+
+  const meta = recBlkMeta[blkIdx];
+  const blk  = await mdxDecompBlock(recBlocksRaw[blkIdx], false);
+
+  const start = recOff - meta.decompOffset;
+  const end   = Math.min(nextOff === Infinity ? blk.length : nextOff - meta.decompOffset, blk.length);
+
+  return new TextDecoder('utf-8').decode(blk.slice(start, end)).replace(/\0$/, '').trim();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DICT MANAGER// ═══════════════════════════════════════════════════════════════════════
+// DICT MANAGER  — IndexedDB storage for parsed dicts
+// ═══════════════════════════════════════════════════════════════════════
+
+// In-memory cache of loaded (parsed) dicts  {id: {title, keyList, ...}}
+const _dictCache = {};
+let _activeDictId = null;
+
+// Load dict metadata list from IDB
+async function getAllDicts() {
+  return getAll('dicts');
+}
+
+async function saveDict(id, title, description, entryCount, sizeBytes) {
+  await putItem('dicts', { id, title, description, entryCount, sizeBytes, addedAt: new Date().toISOString() });
+}
+
+async function deleteDictFromDB(id) {
+  await delItem('dicts', id);
+  // Also delete the raw binary
+  try { await delItem('dict_data', id); } catch(e) {}
+  if (_activeDictId === id) {
+    _activeDictId = null;
+    try { localStorage.removeItem('wf_active_dict'); } catch(e) {}
+  }
+  delete _dictCache[id];
+}
+
+async function saveDictData(id, arrayBuffer) {
+  await putItem('dict_data', { id, data: arrayBuffer });
+}
+
+async function loadDictData(id) {
+  const rec = await getItem('dict_data', id);
+  return rec ? rec.data : null;
+}
+
+// Load & cache a dict for lookup
+async function ensureDictLoaded(id, onProgress) {
+  if (_dictCache[id]) return _dictCache[id];
+  const ab = await loadDictData(id);
+  if (!ab) throw new Error('字典資料不存在');
+  const parsed = await parseMdx(ab, onProgress);
+  _dictCache[id] = parsed;
+  return parsed;
+}
+
+function getActiveDictId() {
+  if (_activeDictId) return _activeDictId;
+  try { return localStorage.getItem('wf_active_dict') || null; } catch(e) { return null; }
+}
+
+function setActiveDictId(id) {
+  _activeDictId = id;
+  try { 
+    if (id) localStorage.setItem('wf_active_dict', id);
+    else localStorage.removeItem('wf_active_dict');
+  } catch(e) {}
+}
+
+// ── Parse HTML entry from dictionary into structured data ─────────────
+// ── Simplified → Traditional Chinese ──
+const _S2T = (() => {
+  const m = {}, p = "万萬丑醜专專业業东東丝絲两兩个個丰豐临臨为為丽麗举舉么麼义義乐樂习習书書买買乱亂争爭产產亲親亿億仅僅从從仓倉们們价價众眾优優会會传傳伤傷伪偽体體佥僉侠俠侦偵侧側侨僑侩儈侬儂俩倆俪儷俭儉债債倾傾偿償储儲儿兒兰蘭关關兹茲养養兽獸册冊写寫农農决決净淨准準凤鳳刚剛创創删刪剂劑剧劇劝勸办辦动動励勵劳勞势勢匮匱区區华華协協单單卖賣厂廠厅廳历歷压壓发發变變叶葉号號后後听聽响響喷噴嘱囑团團园園围圍国國图圖圆圓场場坏壞块塊坚堅坛壇墙牆声聲处處备備复復够夠头頭奋奮奖獎奸姦妆妝妇婦妈媽娱娛婴嬰孙孫学學宝寶实實对對寻尋导導将將尝嘗层層岛島币幣师師带帶帮幫应應废廢开開异異弃棄张張弥彌弹彈强強归歸当當录錄彻徹征徵径徑忆憶志誌忧憂怀懷态態恋戀恳懇恼惱惊驚惧懼惨慘愿願懒懶戏戲战戰扫掃拟擬拥擁挥揮损損换換据據摄攝摆擺摊攤数數斗鬥无無旧舊时時显顯机機杂雜权權条條来來杰傑极極构構柜櫃标標栏欄树樹样樣档檔桥橋梦夢楼樓欢歡毁毀汉漢浅淺浏瀏涌湧灯燈灾災烦煩热熱爱愛爷爺牺犧环環现現电電画畫疗療监監盘盤码碼确確碍礙礼禮祸禍离離秘祕积積竞競笔筆签簽简簡类類约約级級纪紀纯純纳納纷紛纸紙线線组組细細终終经經绑綁结結绕繞络絡统統继繼绩績绪緒续續绳繩维維综綜绿綠缘緣缩縮网網罗羅职職联聯肠腸肾腎胆膽脏髒脑腦腊臘腾騰节節苹蘋获獲见見观觀览覽觉覺计計认認让讓记記论論设設访訪证證识識诉訴词詞诗詩诚誠话話该該语語说說请請读讀课課调調谢謝负負贡貢财財责責败敗账帳货貨贪貪贯貫贵貴贷貸贸貿费費赔賠赵趙赶趕跃躍轨軌转轉软軟较較辅輔辆輛辉輝输輸辞辭辩辯辫辮过過运運还還这這进進远遠连連迟遲适適选選邮郵释釋针針钟鐘钱錢铁鐵链鏈错錯键鍵长長问問间間闻聞队隊际際难難雾霧项項须須顾顧领領颜顏风風飞飛饮飲马馬驱驅验驗鱼魚鸟鳥鸡雞齐齊龙龍";
+  for (let i = 0; i < p.length; i += 2) m[p[i]] = p[i+1];
+  return m;
+})();
+function s2t(str) {
+  if (!str) return str;
+  return str.replace(/[\u4e00-\u9fff]/g, ch => _S2T[ch] || ch);
+}
+
+function parseDictEntry(html, word) {
+  if (!html) return null;
+
+  const result = {
+    word,
+    phonetic:         '',
+    part_of_speech:   '',
+    part_of_speech_zh:'',
+    definitions_zh:   [],
+    synonyms:         [],
+    antonyms:         [],
+    forms:            { noun:'', verb:'', adjective:'', adverb:'' },
+    phrases:          [],
+    examples:         [],
+    _raw_html:        html,
+    _from_dict:       true,
+  };
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const zhRe = /[\u4e00-\u9fff\u3400-\u4dbf]/;
+
+  const posMap = {
+    'noun':'\u540d\u8a5e','verb':'\u52d5\u8a5e','adjective':'\u5f62\u5bb9\u8a5e','adverb':'\u526f\u8a5e',
+    'exclamation':'\u611f\u6b4e\u8a5e','preposition':'\u4ecb\u7cfb\u8a5e','conjunction':'\u9023\u63a5\u8a5e',
+    'pronoun':'\u4ee3\u540d\u8a5e','determiner':'\u9650\u5b9a\u8a5e','number':'\u6578\u8a5e',
+    'phrase':'\u7247\u8a9e','abbreviation':'\u7e2e\u5beb','prefix':'\u524d\u7db4','suffix':'\u5f8c\u7db4',
+    'adj':'\u5f62\u5bb9\u8a5e','adv':'\u526f\u8a5e','n.':'\u540d\u8a5e','v.':'\u52d5\u8a5e',
+    'vt.':'\u53ca\u7269\u52d5\u8a5e','vi.':'\u4e0d\u53ca\u7269\u52d5\u8a5e',
+  };
+
+  // ── 1. Cambridge-style CSS classes ──
+  const ukIpa  = div.querySelector('.uk .ipa');
+  const anyIpa = div.querySelector('.ipa');
+  const ipaEl  = ukIpa || anyIpa;
+  if (ipaEl) result.phonetic = '/' + ipaEl.textContent.replace(/[\[\]\/]/g,'').trim() + '/';
+
+  const posEl = div.querySelector('.pos');
+  if (posEl) {
+    const pt = posEl.textContent.trim().toLowerCase();
+    result.part_of_speech    = pt;
+    result.part_of_speech_zh = posMap[pt] || pt;
+  }
+
+  div.querySelectorAll('.cn_def').forEach(el => {
+    const t = el.textContent.trim();
+    if (t && t.length < 100 && zhRe.test(t)) result.definitions_zh.push(t);
+  });
+
+  div.querySelectorAll('.example').forEach(el => {
+    if (result.examples.length >= 4) return;
+    const en = el.querySelector('.en_example')?.textContent.trim() || '';
+    const zh = el.querySelector('.cn_example')?.textContent.trim() || '';
+    if (en) result.examples.push({ en, zh });
+  });
+
+  // ── 2. Fallback for other dict formats ──
+  if (!result.phonetic) {
+    const pEl = div.querySelector('[class*="pron"],[class*="phon"]');
+    if (pEl) result.phonetic = pEl.textContent.trim();
+  }
+  if (!result.part_of_speech) {
+    const pEl = div.querySelector('[class*="pos"],[class*="gram"]');
+    if (pEl) {
+      const pt = pEl.textContent.trim().toLowerCase();
+      result.part_of_speech    = pt;
+      result.part_of_speech_zh = posMap[pt] || pt;
+    }
+  }
+  if (!result.definitions_zh.length) {
+    div.querySelectorAll('[class*="def"],[class*="mean"],[class*="trans"]').forEach(el => {
+      const t = el.textContent.trim();
+      if (zhRe.test(t) && t.length < 80) result.definitions_zh.push(t);
+    });
+    if (!result.definitions_zh.length) {
+      (div.textContent||'').split(/\n|\u3002|\uff1b/).forEach(line => {
+        if (result.definitions_zh.length >= 4) return;
+        const t = line.trim();
+        if (zhRe.test(t) && t.length > 1 && t.length < 60) result.definitions_zh.push(t);
+      });
+    }
+  }
+  if (!result.examples.length) {
+    div.querySelectorAll('[class*="exam"],[class*="sent"]').forEach(el => {
+      if (result.examples.length >= 3) return;
+      const t = el.textContent.trim();
+      if (t.length > 5) result.examples.push({ en: t, zh: '' });
+    });
+  }
+  div.querySelectorAll('[class*="phrase"],[class*="idiom"]').forEach(el => {
+    if (result.phrases.length >= 5) return;
+    const en = el.querySelector('[class*="en"]')?.textContent.trim()
+             || el.textContent.replace(/[\u4e00-\u9fff]+/g,'').trim();
+    const zh = s2t(el.querySelector('[class*="cn"],[class*="zh"]')?.textContent.trim() || '');
+    if (en.length > 2 && zh.length > 0) result.phrases.push({ phrase: en, zh });
+  });
+
+  return result;
+}
+
+// ── Main lookup function: dict first, AI fills gaps ────────────────────
+async function lookupWord(word) {
+  // ── 1. 先查快取（最快，不耗 AI）──
+  const cached = await getCachedDetail(word);
+  if (cached?.detail_json) {
+    try {
+      const detail = typeof cached.detail_json === 'string'
+        ? JSON.parse(cached.detail_json) : cached.detail_json;
+      if (detail?.definitions_zh?.length) return JSON.stringify(detail);
+    } catch(e) {}
+  }
+
+  // ── 2. 查字典 ──
+  const dictId = getActiveDictId();
+  if (dictId) {
+    try {
+      const dict = await ensureDictLoaded(dictId, null);
+      const rawHtml = await mdxLookup(dict, word);
+      if (rawHtml) {
+        const dictResult = parseDictEntry(rawHtml, word);
+        if (dictResult?.definitions_zh?.length) {
+          await cacheWordDetail(word, JSON.stringify(dictResult));
+          return JSON.stringify(dictResult);
+        }
+        // 字典有此字但解析不到定義 → 繼續往 AI fallback
+      }
+    } catch(e) { console.warn('Dict lookup failed:', e.message); }
+    // 字典查無此字 → 嘗試 AI；若無 AI 則回傳提示
+  }
+
+  // ── 3. 無字典：AI 補充（需已設定）──
+  const _aiSettings = loadAISettings();
+  if (_aiSettings.provider !== 'none') {
+    const aiJson = await fetchWordDetail(word);
+    try { await cacheWordDetail(word, aiJson); } catch(e) {}
+    return aiJson;
+  }
+
+  return JSON.stringify({ word, definitions_zh: ['請先在「字典」頁面上傳字典，或在「設定」頁面設定 AI 功能'],
+    phonetic:'', part_of_speech:'', part_of_speech_zh:'',
+    synonyms:[], antonyms:[], forms:{}, phrases:[], examples:[], _from_dict:false });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DICT PAGE UI
+// ═══════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════
+// DICT SEARCH
+// ═══════════════════════════════════════
+let _dictSearchTimer = null;
+function dictSearchDebounce() {
+  clearTimeout(_dictSearchTimer);
+  _dictSearchTimer = setTimeout(dictSearch, 400);
+}
+
+async function dictSearch() {
+  const input = document.getElementById('dict-query-input');
+  const resultEl = document.getElementById('dict-result');
+  if (!input || !resultEl) return;
+
+  const word = input.value.trim();
+  if (!word) { resultEl.innerHTML = ''; return; }
+
+  const dictId = getActiveDictId();
+  if (!dictId) {
+    resultEl.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:10px 0">請先啟用一本字典。</div>';
+    return;
+  }
+
+  resultEl.innerHTML = '<div style="color:var(--muted);font-size:.83rem;padding:10px 0"><span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;vertical-align:middle"></span>查詢中…</div>';
+
+  try {
+    const dict = await ensureDictLoaded(dictId, null);
+    const rawHtml = await mdxLookup(dict, word);
+
+    if (!rawHtml) {
+      // Try prefix suggestions
+      const suggestions = dictSuggest(dict, word, 8);
+      if (suggestions.length) {
+        const chips = suggestions.map(s =>
+          `<span class="word-chip" style="cursor:pointer" onclick="document.getElementById('dict-query-input').value='${s}';dictSearch()">${s}</span>`
+        ).join('');
+        resultEl.innerHTML = `
+          <div style="color:var(--muted);font-size:.82rem;margin-bottom:8px">找不到「${word}」，您是否要找：</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${chips}</div>`;
+      } else {
+        resultEl.innerHTML = `<div style="color:var(--muted);font-size:.85rem;padding:10px 0">字典中找不到「${word}」。</div>`;
+      }
+      return;
+    }
+
+    // Render result card
+    const parsed = parseDictEntry(rawHtml, word);
+    resultEl.innerHTML = renderDictResultCard(word, rawHtml, parsed);
+  } catch(e) {
+    resultEl.innerHTML = `<div style="color:var(--accent);font-size:.82rem;padding:10px 0">查詢失敗：${e.message}</div>`;
+  }
+}
+
+function dictSuggest(dict, prefix, limit = 8) {
+  const p = prefix.toLowerCase();
+  const results = [];
+  // Binary search to first match
+  let lo = 0, hi = dict.keyList.length - 1, start = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (dict.keyList[mid].key >= p) { start = mid; hi = mid - 1; }
+    else lo = mid + 1;
+  }
+  if (start === -1) return results;
+  for (let i = start; i < dict.keyList.length && results.length < limit; i++) {
+    if (!dict.keyList[i].key.startsWith(p)) break;
+    results.push(dict.keyList[i].key);
+  }
+  return results;
+}
+
+function renderDictResultCard(word, rawHtml, parsed) {
+  const pos = parsed?.part_of_speech_zh || parsed?.part_of_speech || '';
+  const phonetic = parsed?.phonetic || '';
+
+  // Build structured display if parsed successfully
+  let body = '';
+  if (parsed && (parsed.definitions_zh?.length || parsed.examples?.length)) {
+    // 定義
+    if (parsed.definitions_zh?.length) {
+      body += `<div style="margin-bottom:10px">`;
+      parsed.definitions_zh.forEach(d => {
+        body += `<div style="font-size:.88rem;margin-bottom:4px;padding-left:10px;border-left:3px solid var(--accent2)">• ${s2t(d)}</div>`;
+      });
+      body += `</div>`;
+    }
+    // 例句
+    if (parsed.examples?.length) {
+      body += `<div style="margin-top:8px">`;
+      parsed.examples.slice(0,3).forEach(ex => {
+        body += `<div style="font-size:.82rem;margin-bottom:6px;padding:6px 10px;background:var(--bg);border-radius:6px">
+          <div style="color:var(--fg)">${ex.en}</div>
+          ${ex.zh ? `<div style="color:var(--muted);margin-top:2px">${s2t(ex.zh)}</div>` : ''}
+        </div>`;
+      });
+      body += `</div>`;
+    }
+    // 片語
+    if (parsed.phrases?.length) {
+      body += `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">`;
+      parsed.phrases.slice(0,5).forEach(p => {
+        body += `<span style="font-size:.78rem;padding:3px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border)">${p.phrase} <span style="color:var(--muted)">${s2t(p.zh)}</span></span>`;
+      });
+      body += `</div>`;
+    }
+    // 原始 HTML 折疊
+    body += `<details style="margin-top:10px">
+      <summary style="font-size:.75rem;color:var(--muted);cursor:pointer">顯示原始字典內容</summary>
+      <div style="margin-top:8px;padding:10px;background:var(--bg);border-radius:6px;font-size:.8rem;max-height:300px;overflow-y:auto">${rawHtml}</div>
+    </details>`;
+  } else {
+    // Fallback: raw HTML
+    body = `<div style="padding:10px;background:var(--bg);border-radius:6px;font-size:.82rem;max-height:400px;overflow-y:auto">${rawHtml}</div>`;
+  }
+
+  return `<div class="card" style="padding:16px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-size:1.3rem;font-weight:700">${word}</span>
+      ${phonetic ? `<span style="font-size:.85rem;color:var(--muted)">${phonetic}</span>` : ''}
+      ${pos ? `<span style="font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border)">${s2t(pos)}</span>` : ''}
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:.72rem" onclick="showWordDetail('${word}')">📋 完整詳解</button>
+    </div>
+    ${body}
+  </div>`;
+}
+
+async function renderDictPage() {
+  const dicts = await getAllDicts();
+  const list  = document.getElementById('dict-list');
+  const empty = document.getElementById('dict-empty');
+  const activeId = getActiveDictId();
+
+  list.innerHTML = '';
+  if (!dicts.length) { empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  // Update active bar
+  const activeDict = dicts.find(d => d.id === activeId);
+  const bar = document.getElementById('dict-active-bar');
+  if (activeDict) {
+    bar.style.display = 'flex';
+    document.getElementById('dict-active-name').textContent = activeDict.title;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  dicts.sort((a,b) => b.addedAt.localeCompare(a.addedAt)).forEach(d => {
+    const isActive = d.id === activeId;
+    const div = document.createElement('div');
+    div.className = 'dict-card' + (isActive ? ' active' : '');
+    const sizeMB = (d.sizeBytes / 1024 / 1024).toFixed(1);
+    div.innerHTML = `
+      <div class="dc-icon">📖</div>
+      <div class="dc-info">
+        <div class="dc-name">${d.title}</div>
+        <div class="dc-meta">${d.entryCount.toLocaleString()} 詞條　${sizeMB} MB　加入於 ${d.addedAt.slice(0,10)}</div>
+        ${d.description ? `<div class="dc-meta" style="margin-top:3px;font-style:italic">${d.description.slice(0,80)}</div>` : ''}
+      </div>
+      <div class="dc-actions">
+        ${isActive
+          ? `<button class="dc-use" style="background:#dcfce7;color:#15803d">✓ 使用中</button>`
+          : `<button class="dc-use" onclick="activateDict('${d.id}')">選用</button>`}
+        <button class="dc-del" onclick="confirmDeleteDict('${d.id}','${d.title.replace(/'/g,"\\'")}')">刪除</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+async function uploadDicts(event) {
+  const files = [...event.target.files];
+  if (!files.length) return;
+  event.target.value = '';  // reset so same file can be re-uploaded
+
+  const progress = document.getElementById('dict-upload-progress');
+  const msgEl    = document.getElementById('dict-upload-msg');
+  const barEl    = document.getElementById('dict-upload-bar');
+  progress.style.display = 'block';
+
+  for (const file of files) {
+    msgEl.textContent = `解析「${file.name}」…`;
+    barEl.style.width = '0%';
+
+    try {
+      const ab = await file.arrayBuffer();
+      const id = 'dict_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+
+      const parsed = await parseMdx(ab, (pct, msg) => {
+        barEl.style.width = pct + '%';
+        msgEl.textContent = msg;
+      });
+
+      barEl.style.width = '95%';
+      msgEl.textContent = '儲存字典資料…';
+
+      // Save to IDB
+      await saveDictData(id, ab);
+      await saveDict(id, parsed.title, parsed.description, parsed.keyList.length, ab.byteLength);
+
+      // Cache in memory
+      _dictCache[id] = parsed;
+
+      barEl.style.width = '100%';
+      msgEl.textContent = `✓ 「${parsed.title}」已匯入，${parsed.keyList.length.toLocaleString()} 詞條`;
+      toast(`✓ 字典「${parsed.title}」匯入成功`);
+
+      // Auto-activate if no active dict
+      if (!getActiveDictId()) {
+        setActiveDictId(id);
+      }
+    } catch(e) {
+      msgEl.textContent = `✕ 解析失敗：${e.message}`;
+      toast(`字典解析失敗：${e.message}`);
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  progress.style.display = 'none';
+  renderDictPage();
+}
+
+async function activateDict(id) {
+  setActiveDictId(id);
+  // Pre-load into memory
+  try {
+    toast('載入字典中…');
+    await ensureDictLoaded(id, null);
+    toast('字典已啟用 ✓');
+  } catch(e) {
+    toast('字典載入失敗：' + e.message);
+  }
+  renderDictPage();
+}
+
+function deactivateDict() {
+  setActiveDictId(null);
+  renderDictPage();
+  toast('字典已停用');
+}
+
+function confirmDeleteDict(id, title) {
+  showConfirm('刪除字典', `確定刪除「${title}」？字典資料將從裝置中移除。`, async () => {
+    await deleteDictFromDB(id);
+    delete _dictCache[id];
+    renderDictPage();
+    toast(`已刪除「${title}」`);
+  });
+}
+
+</script>
+</body>
+</html>
