@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun – 智慧單字學習</title>
+<title>WordFun v1.0 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -582,7 +582,7 @@ nav {
 <div id="page-home" class="page active">
   <div id="api-banner" style="display:none"></div>
   <div class="hero">
-    <h1>WordFun<br><em>學習工具</em></h1>
+    <h1>WordFun <span id="app-version" style="font-size:.9rem;font-weight:400;color:#9ca3af;vertical-align:middle;letter-spacing:0"></span><br><em>學習工具</em></h1>
     <p>結合 Claude AI，深度解析單字、克漏字練習、批次匯入管理。</p>
     <div class="hero-stats" style="flex-wrap:wrap">
       <div class="stat"><div class="stat-n" id="stat-lists">0</div><div class="stat-l">單字清單</div></div>
@@ -1051,6 +1051,10 @@ nav {
             <input type="radio" name="ai-provider" value="claude" onchange="onProviderChange()">
             <span>🟠 Anthropic Claude</span>
           </label>
+          <label class="provider-option" id="opt-deepseek">
+            <input type="radio" name="ai-provider" value="deepseek" onchange="onProviderChange()">
+            <span>🟢 DeepSeek</span>
+          </label>
         </div>
         <!-- 環境說明 -->
         <div style="margin-top:10px;padding:10px 12px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;font-size:.78rem;line-height:1.7;color:#713f12">
@@ -1081,9 +1085,9 @@ nav {
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
           <select id="gemini-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
             <option value="gemini-2.0-flash">gemini-2.0-flash（免費・每日 1500 次）</option>
+            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite（免費・最快）</option>
             <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview（免費・較慢）</option>
             <option value="gemini-2.5-pro-preview-05-06">gemini-2.5-pro-preview（高品質）</option>
-            <option value="gemini-1.5-flash">gemini-1.5-flash（舊版免費）</option>
           </select>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="testAI('gemini')" style="font-size:.78rem">🧪 測試連線</button>
@@ -1113,6 +1117,33 @@ nav {
         </div>
         <button class="btn btn-ghost btn-sm" onclick="testAI('claude')" style="font-size:.78rem">🧪 測試連線</button>
         <span id="claude-test-result" style="font-size:.78rem;margin-left:8px"></span>
+      </div>
+
+      <!-- DeepSeek 設定 -->
+      <div id="settings-deepseek" style="display:none;margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="font-size:.82rem;font-weight:600;margin-bottom:6px;color:#10b981">🟢 DeepSeek 設定</div>
+        <div style="font-size:.75rem;color:#065f46;background:#d1fae5;border:1px solid #6ee7b7;border-radius:6px;padding:6px 10px;margin-bottom:10px">
+          ✓ DeepSeek 支援跨域請求，可在任何環境使用。免費額度充裕，推薦使用。
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">API Key
+            <a href="https://platform.deepseek.com/api_keys" target="_blank" style="margin-left:6px;font-size:.72rem;color:var(--accent)">(取得 Key ↗)</a>
+          </label>
+          <div style="display:flex;gap:6px">
+            <input id="deepseek-key" type="password" placeholder="sk-..." autocomplete="off"
+              style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem;font-family:monospace">
+            <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('deepseek-key', this)">👁</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
+          <select id="deepseek-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
+            <option value="deepseek-chat">deepseek-chat（V3，均衡）</option>
+            <option value="deepseek-reasoner">deepseek-reasoner（R1，推理強）</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="testAI('deepseek')" style="font-size:.78rem">🧪 測試連線</button>
+        <span id="deepseek-test-result" style="font-size:.78rem;margin-left:8px"></span>
       </div>
 
       <!-- 儲存按鈕 -->
@@ -1385,6 +1416,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
+const APP_VERSION = 'v1.0';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1568,10 +1600,12 @@ function saveAISettings() {
   const provider = document.querySelector('input[name="ai-provider"]:checked')?.value || 'none';
   const settings = {
     provider,
-    geminiKey:   document.getElementById('gemini-key')?.value.trim()  || '',
-    geminiModel: document.getElementById('gemini-model')?.value        || 'gemini-2.0-flash',
-    claudeKey:   document.getElementById('claude-key')?.value.trim()  || '',
-    claudeModel: document.getElementById('claude-model')?.value        || 'claude-haiku-4-5-20251001',
+    geminiKey:      document.getElementById('gemini-key')?.value.trim()     || '',
+    geminiModel:    document.getElementById('gemini-model')?.value           || 'gemini-2.0-flash',
+    claudeKey:      document.getElementById('claude-key')?.value.trim()     || '',
+    claudeModel:    document.getElementById('claude-model')?.value           || 'claude-haiku-4-5-20251001',
+    deepseekKey:    document.getElementById('deepseek-key')?.value.trim()   || '',
+    deepseekModel:  document.getElementById('deepseek-model')?.value         || 'deepseek-chat',
   };
   localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
   updateAIBadge(settings);
@@ -1587,6 +1621,8 @@ function updateAIBadge(settings) {
     badge.textContent = '🔵 Gemini'; badge.style.color = '#4285f4';
   } else if (s.provider === 'claude') {
     badge.textContent = '🟠 Claude'; badge.style.color = '#d97706';
+  } else if (s.provider === 'deepseek') {
+    badge.textContent = '🟢 DeepSeek'; badge.style.color = '#10b981';
   } else {
     badge.textContent = '✦ 內建 Claude'; badge.style.color = '#6b7280';
   }
@@ -1594,8 +1630,9 @@ function updateAIBadge(settings) {
 
 function onProviderChange() {
   const v = document.querySelector('input[name="ai-provider"]:checked')?.value || 'none';
-  document.getElementById('settings-gemini').style.display = v === 'gemini' ? 'block' : 'none';
-  document.getElementById('settings-claude').style.display = v === 'claude' ? 'block' : 'none';
+  document.getElementById('settings-gemini').style.display   = v === 'gemini'   ? 'block' : 'none';
+  document.getElementById('settings-claude').style.display   = v === 'claude'   ? 'block' : 'none';
+  document.getElementById('settings-deepseek').style.display = v === 'deepseek' ? 'block' : 'none';
 }
 
 function toggleKeyVisibility(id, btn) {
@@ -1609,10 +1646,12 @@ function initSettingsPage() {
   const s = loadAISettings();
   const radio = document.querySelector(`input[name="ai-provider"][value="${s.provider || 'none'}"]`);
   if (radio) radio.checked = true;
-  if (s.geminiKey)   document.getElementById('gemini-key').value   = s.geminiKey;
-  if (s.geminiModel) document.getElementById('gemini-model').value = s.geminiModel;
-  if (s.claudeKey)   document.getElementById('claude-key').value   = s.claudeKey;
-  if (s.claudeModel) document.getElementById('claude-model').value = s.claudeModel;
+  if (s.geminiKey)     document.getElementById('gemini-key').value      = s.geminiKey;
+  if (s.geminiModel)   document.getElementById('gemini-model').value    = s.geminiModel;
+  if (s.claudeKey)     document.getElementById('claude-key').value      = s.claudeKey;
+  if (s.claudeModel)   document.getElementById('claude-model').value    = s.claudeModel;
+  if (s.deepseekKey)   document.getElementById('deepseek-key').value    = s.deepseekKey;
+  if (s.deepseekModel) document.getElementById('deepseek-model').value  = s.deepseekModel;
   onProviderChange();
 }
 
@@ -1626,6 +1665,10 @@ async function testAI(provider) {
       const key   = document.getElementById('gemini-key').value.trim();
       const model = document.getElementById('gemini-model').value;
       result = await callGeminiRaw(key, model, testPrompt);
+    } else if (provider === 'deepseek') {
+      const key   = document.getElementById('deepseek-key').value.trim();
+      const model = document.getElementById('deepseek-model').value;
+      result = await callDeepSeekRaw(key, model, testPrompt);
     } else {
       const key   = document.getElementById('claude-key').value.trim();
       const model = document.getElementById('claude-model').value;
@@ -1653,7 +1696,12 @@ async function callAI(prompt) {
     return callClaudeRaw(s.claudeKey, s.claudeModel || 'claude-haiku-4-5-20251001', prompt);
   }
 
-  // 3. 預設：使用 claude.ai 內建（不需 key，僅在此環境有效）
+  // 3. DeepSeek
+  if (s.provider === 'deepseek' && s.deepseekKey) {
+    return callDeepSeekRaw(s.deepseekKey, s.deepseekModel || 'deepseek-chat', prompt);
+  }
+
+  // 4. 預設：使用 claude.ai 內建（不需 key，僅在此環境有效）
   return callClaudeRaw('', 'claude-sonnet-4-20250514', prompt);
 }
 
@@ -1684,6 +1732,30 @@ async function callClaudeRaw(key, model, prompt) {
   let text = data.content.map(b => b.type === 'text' ? b.text : '').join('').trim();
   text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '').trim();
   return text;
+}
+
+// ── DeepSeek ──
+async function callDeepSeekRaw(apiKey, model, prompt) {
+  const res = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: model || 'deepseek-chat',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2000,
+      temperature: 0.3,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`DeepSeek API error ${res.status}: ${err}`);
+  }
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  return text.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
 }
 
 // ── 保留舊名稱相容性 ──
@@ -1762,6 +1834,8 @@ function goto(page) {
 // HOME
 // ═══════════════════════════════════════
 async function refreshHome() {
+  const verEl = document.getElementById('app-version');
+  if (verEl) verEl.textContent = APP_VERSION;
   const lists = await getAllLists();
   const words = await getAll('words');
   const pc    = await getTotalPracticeCount();
