@@ -1266,6 +1266,26 @@ nav {
   </div>
 </div>
 
+<!-- Rename List Modal -->
+<div class="modal-bg" id="modal-rename-list">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">重新命名單字庫</h3>
+      <button class="modal-close" onclick="closeModal('modal-rename-list')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">新名稱</label>
+        <input id="rename-list-input" placeholder="輸入新名稱" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmRenameList()">確認</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-rename-list')">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODALS -->
 <div class="modal-bg" id="modal-add-list">
   <div class="modal" style="max-width:400px">
@@ -1432,7 +1452,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v3.0';
+const APP_VERSION = 'v3.3';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1916,6 +1936,7 @@ async function renderLists() {
     const lastStudy = studySessions[studySessions.length-1];
     div.innerHTML = `
       <button class="del" onclick="event.stopPropagation();deleteList(${l.id})">刪除</button>
+      <button class="del" style="right:46px;background:#e0eaff;color:#1d4ed8" onclick="event.stopPropagation();renameList(${l.id},'${l.name.replace(/'/g,"\\'").replace(/`/g,'\\`')}')">改名</button>
       <h3>${l.name}</h3>
       <div class="wc">${wordCounts[l.id]} 個單字</div>
       <div class="wc" style="margin-top:4px;color:var(--accent2)">
@@ -2051,7 +2072,7 @@ function speakWord() {
   if (!word) return;
 
   if (!window.speechSynthesis) {
-    toast('此瀏覽器不支援發音，請調高系統音量後到 GitHub Pages 使用');
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
     return;
   }
 
@@ -2061,25 +2082,19 @@ function speakWord() {
     const utter = new SpeechSynthesisUtterance(word);
     utter.lang = 'en-US';
     utter.rate = 0.85;
-    utter.pitch = 1;
     utter.volume = 1;
-
-    // 選英文語音
     const voices = window.speechSynthesis.getVoices();
     const enVoice = voices.find(v => v.lang === 'en-US' && v.localService)
                  || voices.find(v => v.lang.startsWith('en-') && v.localService)
                  || voices.find(v => v.lang.startsWith('en'));
     if (enVoice) utter.voice = enVoice;
-
     window.speechSynthesis.speak(utter);
   };
 
-  // 語音清單可能非同步載入
   if (window.speechSynthesis.getVoices().length > 0) {
     speak();
   } else {
     window.speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
-    // 某些瀏覽器不觸發 voiceschanged，直接嘗試
     setTimeout(speak, 100);
   }
 }
@@ -2100,6 +2115,43 @@ function showConfirm(title, msg, onOk) {
         b.onclick = () => { closeModal('modal-confirm'); resolve(false); };
       });
     });
+  }
+}
+
+
+// ── Rename List ──
+let _renameListId = null;
+
+function renameList(id, currentName) {
+  _renameListId = id;
+  document.getElementById('rename-list-input').value = currentName;
+  openModal('modal-rename-list');
+  setTimeout(() => {
+    const inp = document.getElementById('rename-list-input');
+    inp.focus();
+    inp.select();
+  }, 150);
+}
+
+async function confirmRenameList() {
+  const newName = document.getElementById('rename-list-input').value.trim();
+  if (!newName) { toast('請輸入名稱'); return; }
+  if (!_renameListId) return;
+  try {
+    const list = await getItem('word_lists', _renameListId);
+    if (!list) { toast('找不到單字庫'); return; }
+    list.name = newName;
+    await req2p(store('word_lists','readwrite').put(list));
+    closeModal('modal-rename-list');
+    toast(`✓ 已改名為「${newName}」`);
+    renderLists();
+    refreshHome();
+    // 更新已開啟的單字庫標題
+    if (activeListId === _renameListId) {
+      document.getElementById('active-list-name').textContent = newName;
+    }
+  } catch(e) {
+    toast('改名失敗：' + e.message);
   }
 }
 
