@@ -1432,7 +1432,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v2.8';
+const APP_VERSION = 'v3.0';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2050,67 +2050,37 @@ function speakWord() {
   const word = document.getElementById('detail-word').textContent.trim();
   if (!word) return;
 
-  // 方法1：Web Speech API（本機/GitHub Pages 可用）
-  if (window.speechSynthesis) {
-    try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(word);
-      utter.lang = 'en-US';
-      utter.rate = 0.9;
-      utter.volume = 1;
-      const trySpeak = () => {
-        const voices = window.speechSynthesis.getVoices();
-        const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService)
-                     || voices.find(v => v.lang.startsWith('en'));
-        if (enVoice) utter.voice = enVoice;
-        window.speechSynthesis.speak(utter);
-      };
-      if (window.speechSynthesis.getVoices().length > 0) {
-        trySpeak();
-      } else {
-        window.speechSynthesis.onvoiceschanged = trySpeak;
-        trySpeak();
-      }
-      return;
-    } catch(e) {}
+  if (!window.speechSynthesis) {
+    toast('此瀏覽器不支援發音，請調高系統音量後到 GitHub Pages 使用');
+    return;
   }
 
-  // 方法2：Google Dictionary TTS + Web Audio 放大
-  try {
-    const url = `https://ssl.gstatic.com/dictionary/static/sounds/oxford/${encodeURIComponent(word.toLowerCase())}.mp3`;
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      fetch(url)
-        .then(r => r.arrayBuffer())
-        .then(buf => {
-          const ctx = new AudioCtx();
-          ctx.decodeAudioData(buf, decoded => {
-            const source = ctx.createBufferSource();
-            const gain   = ctx.createGain();
-            gain.gain.value = 20.0; // 放大 20 倍
-            source.buffer = decoded;
-            source.connect(gain);
-            gain.connect(ctx.destination);
-            source.start(0);
-          });
-        })
-        .catch(() => {
-          // fetch 失敗（CORS），改用 Audio 元素
-          const audio = new Audio(url);
-          audio.volume = 1.0;
-          audio.play().catch(() => {
-            window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
-          });
-        });
-    } else {
-      const audio = new Audio(url);
-      audio.volume = 1.0;
-      audio.play().catch(() => {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
-      });
-    }
-  } catch(e) {
-    window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
+  window.speechSynthesis.cancel();
+
+  const speak = () => {
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.85;
+    utter.pitch = 1;
+    utter.volume = 1;
+
+    // 選英文語音
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice = voices.find(v => v.lang === 'en-US' && v.localService)
+                 || voices.find(v => v.lang.startsWith('en-') && v.localService)
+                 || voices.find(v => v.lang.startsWith('en'));
+    if (enVoice) utter.voice = enVoice;
+
+    window.speechSynthesis.speak(utter);
+  };
+
+  // 語音清單可能非同步載入
+  if (window.speechSynthesis.getVoices().length > 0) {
+    speak();
+  } else {
+    window.speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
+    // 某些瀏覽器不觸發 voiceschanged，直接嘗試
+    setTimeout(speak, 100);
   }
 }
 
