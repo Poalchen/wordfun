@@ -1432,7 +1432,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v2.7';
+const APP_VERSION = 'v2.8';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2087,7 +2087,7 @@ function speakWord() {
           ctx.decodeAudioData(buf, decoded => {
             const source = ctx.createBufferSource();
             const gain   = ctx.createGain();
-            gain.gain.value = 6.0; // 放大 6 倍
+            gain.gain.value = 20.0; // 放大 20 倍
             source.buffer = decoded;
             source.connect(gain);
             gain.connect(ctx.destination);
