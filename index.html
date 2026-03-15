@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v2.1 – 智慧單字學習</title>
+<title>WordFun v2.2 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1092,9 +1092,11 @@ nav {
         <div style="margin-bottom:10px">
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
           <select id="gemini-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
-            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite（免費・最快）</option>
-            <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview（免費・均衡）</option>
-            <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro-preview（高品質）</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash（穩定・推薦・免費）</option>
+            <option value="gemini-2.5-flash-lite-preview-06-17">gemini-2.5-flash-lite（輕量・最快・免費）</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro（高品質）</option>
+            <option value="gemini-3.1-flash-lite-preview">gemini-3.1-flash-lite（最新・輕量）</option>
+            <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview（最新・高品質）</option>
           </select>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="testAI('gemini')" style="font-size:.78rem">🧪 測試連線</button>
@@ -1362,6 +1364,7 @@ nav {
     <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
         <span id="detail-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.01em"></span>
+        <button id="btn-speak" onclick="speakWord()" title="發音" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0 2px;line-height:1;opacity:.7;transition:.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">🔊</button>
         <span class="phonetic" id="detail-phonetic"></span>
         <span class="pos-badge" id="detail-pos"></span>
       </div>
@@ -1429,7 +1432,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v2.1';
+const APP_VERSION = 'v2.5';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1614,7 +1617,7 @@ function saveAISettings() {
   const settings = {
     provider,
     geminiKey:      document.getElementById('gemini-key')?.value.trim()     || '',
-    geminiModel:    document.getElementById('gemini-model')?.value           || 'gemini-2.0-flash-lite',
+    geminiModel:    document.getElementById('gemini-model')?.value           || 'gemini-2.5-flash',
     claudeKey:      document.getElementById('claude-key')?.value.trim()     || '',
     claudeModel:    document.getElementById('claude-model')?.value           || 'claude-haiku-4-5-20251001',
     deepseekKey:    document.getElementById('deepseek-key')?.value.trim()   || '',
@@ -1701,7 +1704,7 @@ async function callAI(prompt) {
 
   // 1. 使用者設定 Gemini（需下載到本地才能用，claude.ai 有 CORS 限制）
   if (s.provider === 'gemini' && s.geminiKey) {
-    return callGeminiRaw(s.geminiKey, s.geminiModel || 'gemini-2.0-flash', prompt);
+    return callGeminiRaw(s.geminiKey, s.geminiModel || 'gemini-2.5-flash', prompt);
   }
 
   // 2. 使用者設定 Claude + 自己的 key
@@ -2039,19 +2042,64 @@ async function createList() {
   toast('清單已建立 ✓');
 }
 
+
+
+
+
+function speakWord() {
+  const word = document.getElementById('detail-word').textContent.trim();
+  if (!word) return;
+
+  // 方法1：Web Speech API（本機/GitHub Pages 可用）
+  if (window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(word);
+      utter.lang = 'en-US';
+      utter.rate = 0.9;
+      // 等語音清單載入
+      const trySpeak = () => {
+        const voices = window.speechSynthesis.getVoices();
+        const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService)
+                     || voices.find(v => v.lang.startsWith('en'));
+        if (enVoice) utter.voice = enVoice;
+        window.speechSynthesis.speak(utter);
+      };
+      if (window.speechSynthesis.getVoices().length > 0) {
+        trySpeak();
+      } else {
+        window.speechSynthesis.onvoiceschanged = trySpeak;
+        trySpeak();
+      }
+      return;
+    } catch(e) {}
+  }
+
+  // 方法2：Google Dictionary TTS（任何環境可用）
+  try {
+    const audio = new Audio(`https://ssl.gstatic.com/dictionary/static/sounds/oxford/${encodeURIComponent(word.toLowerCase())}.mp3`);
+    audio.onerror = () => {
+      // 方法3：開啟 Google 字典發音頁
+      window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
+    };
+    audio.play();
+  } catch(e) {
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
+  }
+}
+
 function showConfirm(title, msg, onOk) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-msg').textContent   = msg;
   const btn = document.getElementById('confirm-ok');
-  btn.onclick = () => { closeModal('modal-confirm'); if (onOk) onOk(); };
-  openModal('modal-confirm');
-  // Promise 版本支援 await
-  if (!onOk) {
+  if (onOk) {
+    btn.onclick = () => { closeModal('modal-confirm'); onOk(); };
+    openModal('modal-confirm');
+  } else {
+    openModal('modal-confirm');
     return new Promise(resolve => {
       btn.onclick = () => { closeModal('modal-confirm'); resolve(true); };
-      // 取消按鈕
       const cancelBtns = document.querySelectorAll('#modal-confirm .modal-close, #modal-confirm .btn-ghost');
-      const origOnclicks = [...cancelBtns].map(b => b.onclick);
       cancelBtns.forEach(b => {
         b.onclick = () => { closeModal('modal-confirm'); resolve(false); };
       });
