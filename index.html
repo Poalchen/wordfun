@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v1.3 – 智慧單字學習</title>
+<title>WordFun v2.0 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -631,6 +631,14 @@ nav {
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input id="word-search" type="text" placeholder="🔍 搜尋單字..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:160px" oninput="loadWords()">
           <button class="btn btn-ghost btn-sm" onclick="openAddWordModal()">＋ 新增單字</button>
+          <div style="position:relative;display:inline-block">
+            <button class="btn btn-ghost btn-sm" onclick="toggleClearMenu(this)" style="color:var(--muted)">🗑 清除記錄 ▾</button>
+            <div id="clear-menu" style="display:none;position:absolute;right:0;top:110%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);z-index:50;min-width:160px;overflow:hidden">
+              <button onclick="clearRecords('study')" style="display:block;width:100%;padding:10px 16px;text-align:left;background:none;border:none;font-size:.82rem;cursor:pointer;color:var(--ink)" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">📖 清除學習記錄</button>
+              <button onclick="clearRecords('practice')" style="display:block;width:100%;padding:10px 16px;text-align:left;background:none;border:none;font-size:.82rem;cursor:pointer;color:var(--ink)" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">🎯 清除練習記錄</button>
+              <button onclick="clearRecords('all')" style="display:block;width:100%;padding:10px 16px;text-align:left;background:none;border:none;font-size:.82rem;cursor:pointer;color:var(--accent)" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='none'">⚠️ 清除全部記錄</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto">
@@ -1172,6 +1180,9 @@ nav {
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.7">
         單字庫與練習記錄自動備份至 Google Drive，手機資料被清除也能一鍵還原。
       </div>
+      <div style="font-size:.78rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:14px">
+        ⚠️ Google Drive 備份需在 <strong>GitHub Pages</strong>（poalchen.github.io/wordfun/）上使用，claude.ai 環境因安全限制無法連結 Google 帳號。
+      </div>
       <div id="gdrive-status" style="margin-bottom:14px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#f3f4f6;color:var(--muted)">
         ⬜ 尚未連結 Google 帳號
       </div>
@@ -1419,7 +1430,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v1.3';
+const APP_VERSION = 'v2.0';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2033,8 +2044,20 @@ function showConfirm(title, msg, onOk) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-msg').textContent   = msg;
   const btn = document.getElementById('confirm-ok');
-  btn.onclick = () => { closeModal('modal-confirm'); onOk(); };
+  btn.onclick = () => { closeModal('modal-confirm'); if (onOk) onOk(); };
   openModal('modal-confirm');
+  // Promise 版本支援 await
+  if (!onOk) {
+    return new Promise(resolve => {
+      btn.onclick = () => { closeModal('modal-confirm'); resolve(true); };
+      // 取消按鈕
+      const cancelBtns = document.querySelectorAll('#modal-confirm .modal-close, #modal-confirm .btn-ghost');
+      const origOnclicks = [...cancelBtns].map(b => b.onclick);
+      cancelBtns.forEach(b => {
+        b.onclick = () => { closeModal('modal-confirm'); resolve(false); };
+      });
+    });
+  }
 }
 
 async function deleteList(id) {
@@ -2632,14 +2655,21 @@ async function showStatsDetail(type, title, dateStr) {
 
   body.innerHTML = html || '<div style="color:var(--muted)">無資料</div>';
 
-  // 答錯明細才顯示複製按鈕
+  // 有單字清單的明細都顯示複製按鈕
   const copyBtn = document.getElementById('stats-copy-btn');
-  if (type === 'today-wrong') {
+  const typesWithWords = ['today-wrong', 'today-correct', 'today-words', 'practiced', 'errors'];
+  if (typesWithWords.includes(type)) {
+    const btnLabels = {
+      'today-wrong':   '📋 複製今日答錯到新單字庫',
+      'today-correct': '📋 複製今日答對到新單字庫',
+      'today-words':   '📋 複製今日練習到新單字庫',
+      'practiced':     '📋 複製已練習單字到新單字庫',
+      'errors':        '📋 複製累計答錯到新單字庫',
+    };
+    copyBtn.textContent = btnLabels[type] || '📋 複製到新單字庫';
     copyBtn.style.display = '';
-    copyBtn.dataset.scope = 'today';
-  } else if (type === 'errors') {
-    copyBtn.style.display = '';
-    copyBtn.dataset.scope = 'all';
+    copyBtn.dataset.type = type;
+    copyBtn.dataset.dateStr = dateStr || '';
   } else {
     copyBtn.style.display = 'none';
   }
@@ -3068,17 +3098,48 @@ async function renderMCQuestion(allWords) {
   document.getElementById('mc-detail-btn').style.display='none';
   mcAnswered = false;
 
-  // Use full list for distractors (not just practice subset)
-  const fullPool = window._mcAllWords || allWords;
-  const distractors = fullPool.filter(w=>w.id!==target.id).sort(()=>Math.random()-.5).slice(0,3);
-  const options = [{text:target.translation, correct:true}, ...distractors.map(d=>({text:d.translation,correct:false}))].sort(()=>Math.random()-.5);
+  // 從所有單字庫取干擾選項，範圍更大
+  let allPoolWords = window._mcAllWords || allWords;
+  try {
+    // 取全部單字庫的單字
+    const allLists = await getAllLists();
+    const extra = [];
+    for (const l of allLists) {
+      const ws = await getWordsForList(l.id);
+      extra.push(...ws);
+    }
+    if (extra.length > allPoolWords.length) allPoolWords = extra;
+  } catch(e) {}
+
+  const targetTrans = (target.translation || '').trim();
+
+  // 過濾：排除目標單字本身、翻譯為空、翻譯與目標相同
+  const usedTrans = new Set([targetTrans]);
+  const candidates = allPoolWords
+    .filter(w => w.id !== target.id && w.translation && w.translation.trim() && !usedTrans.has(w.translation.trim()))
+    .sort(() => Math.random() - .5);
+
+  const distractors = [];
+  for (const w of candidates) {
+    const t = w.translation.trim();
+    if (!usedTrans.has(t)) {
+      usedTrans.add(t);
+      distractors.push(w);
+      if (distractors.length >= 3) break;
+    }
+  }
+
+  const options = [
+    {text: targetTrans || '（無翻譯）', correct: true},
+    ...distractors.map(d => ({text: d.translation.trim(), correct: false}))
+  ].sort(() => Math.random() - .5);
 
   const grid = document.getElementById('mc-options');
   grid.innerHTML = '';
   options.forEach(opt => {
     const div = document.createElement('div');
     div.className = 'option';
-    div.textContent = opt.text || '（無翻譯）';
+    div.textContent = opt.text;
     div.onclick = () => selectMCOption(div, opt, target);
     grid.appendChild(div);
   });
@@ -4572,6 +4633,14 @@ async function exportAllData() {
     req.onsuccess = () => res(req.result);
     req.onerror = () => res([]);
   });
+
+  // 備份 localStorage 設定（AI Key、GDrive Client ID 等）
+  const settings = {
+    aiSettings:      localStorage.getItem('aiSettings')        || '',
+    gdrive_client_id: localStorage.getItem('gdrive_client_id') || '',
+    gdrive_auto:     localStorage.getItem('gdrive_auto')       || '',
+  };
+
   return {
     version: 2,
     exported_at: new Date().toISOString(),
@@ -4580,6 +4649,7 @@ async function exportAllData() {
     practice_records: records,
     practice_history: history,
     study_sessions: sessions,
+    settings,
   };
 }
 
@@ -4692,6 +4762,14 @@ async function gdriveRestore() {
 async function importBackupData(data) {
   if (!data?.lists) throw new Error('備份格式不正確');
 
+  // 還原 localStorage 設定
+  if (data.settings) {
+    if (data.settings.aiSettings)       localStorage.setItem('aiSettings', data.settings.aiSettings);
+    if (data.settings.gdrive_client_id) localStorage.setItem('gdrive_client_id', data.settings.gdrive_client_id);
+    if (data.settings.gdrive_auto)      localStorage.setItem('gdrive_auto', data.settings.gdrive_auto);
+    updateAIBadge();
+  }
+
   for (const list of data.lists) {
     // Find or create list by name
     const existing = (await getAllLists()).find(l => l.name === list.name);
@@ -4769,9 +4847,71 @@ window.addEventListener('load', () => {
 
 
 async function copyWrongFromStats() {
-  const scope = document.getElementById('stats-copy-btn').dataset.scope || 'today';
+  const btn = document.getElementById('stats-copy-btn');
+  const type = btn.dataset.type || 'errors';
+  const dateStr = btn.dataset.dateStr || '';
   closeModal('modal-stats-detail');
-  await copyWrongToList(scope);
+
+  // 收集對應單字 id
+  const allHistory = await new Promise(res => {
+    const req = store('practice_history','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  });
+  const allWords = await new Promise(res => {
+    const req = store('words','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  });
+  const allRecords = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  });
+  const wordMap = {};
+  allWords.forEach(w => wordMap[w.id] = w);
+  const recMap = {};
+  allRecords.forEach(r => recMap[r.word_id] = r);
+
+  let wordIds = [];
+  let labelHint = '';
+
+  if (type === 'today-wrong') {
+    const filtered = allHistory.filter(h => !h.is_correct && (h.timestamp||'').startsWith(dateStr));
+    wordIds = [...new Set(filtered.map(h => h.word_id).filter(Boolean))];
+    labelHint = '今日答錯';
+  } else if (type === 'today-correct') {
+    const filtered = allHistory.filter(h => h.is_correct && (h.timestamp||'').startsWith(dateStr));
+    wordIds = [...new Set(filtered.map(h => h.word_id).filter(Boolean))];
+    labelHint = '今日答對';
+  } else if (type === 'today-words') {
+    const filtered = allHistory.filter(h => (h.timestamp||'').startsWith(dateStr));
+    wordIds = [...new Set(filtered.map(h => h.word_id).filter(Boolean))];
+    labelHint = '今日練習';
+  } else if (type === 'practiced') {
+    wordIds = allWords.filter(w => (recMap[w.id]?.practice_count||0) > 0).map(w => w.id);
+    labelHint = '已練習單字';
+  } else if (type === 'errors') {
+    wordIds = allWords.filter(w => (recMap[w.id]?.error_count||0) > 0).map(w => w.id);
+    labelHint = '累計答錯';
+  }
+
+  if (!wordIds.length) { toast('沒有符合的單字'); return; }
+
+  // 組成 word 物件陣列
+  const words = wordIds.map(id => wordMap[id]).filter(Boolean);
+  if (!words.length) { toast('找不到對應單字資料'); return; }
+
+  // 設定 modal
+  const today = new Date().toLocaleDateString('zh-TW', {month:'numeric', day:'numeric'});
+  document.getElementById('copy-wrong-listname').value = `${labelHint} ${today}`;
+  document.getElementById('copy-wrong-title').textContent = `複製到新單字庫`;
+  document.getElementById('copy-wrong-info').textContent = `共 ${words.length} 個單字將複製到新單字庫`;
+  document.getElementById('copy-wrong-msg').textContent = '';
+
+  // 暫存 words 供 confirmCopyWrong 使用
+  window._copyWrongWords = words;
+  openModal('modal-copy-wrong');
 }
 
 
@@ -4835,14 +4975,17 @@ async function confirmCopyWrong() {
     // 建立新單字庫
     const newListId = await createListDB(name);
 
-    // 取得這些 word_id 對應的單字資料
-    const allWords = [];
-    for (const wid of _copyWrongWordIds) {
-      try {
-        const w = await getItem('words', wid);
-        if (w) allWords.push(w);
-      } catch(e) {}
+    // 取得單字資料（優先用 _copyWrongWords，否則用 _copyWrongWordIds）
+    let allWords = window._copyWrongWords || [];
+    if (!allWords.length) {
+      for (const wid of _copyWrongWordIds) {
+        try {
+          const w = await getItem('words', wid);
+          if (w) allWords.push(w);
+        } catch(e) {}
+      }
     }
+    window._copyWrongWords = null; // 清除暫存
 
     if (!allWords.length) {
       msgEl.textContent = '找不到對應單字資料';
@@ -4872,6 +5015,63 @@ async function confirmCopyWrong() {
     msgEl.textContent = '建立失敗：' + e.message;
     msgEl.style.color = 'var(--accent)';
   }
+}
+
+
+// ── 清除記錄 ──
+function toggleClearMenu(btn) {
+  const menu = document.getElementById('clear-menu');
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    const close = (e) => {
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.style.display = 'none';
+        document.removeEventListener('mousedown', close);
+      }
+    };
+    document.addEventListener('mousedown', close);
+  }
+}
+
+async function clearRecords(type) {
+  document.getElementById('clear-menu').style.display = 'none';
+  if (!activeListId) { toast('請先選擇單字庫'); return; }
+
+  const typeLabel = type === 'study' ? '學習記錄' : type === 'practice' ? '練習記錄' : '全部記錄';
+  const confirmed = await showConfirm(`確定要清除此單字庫的${typeLabel}？`, '此操作無法復原。');
+  if (!confirmed) return;
+
+  const words = await getWordsForList(activeListId);
+  const wordIds = new Set(words.map(w => w.id));
+  let count = 0;
+
+  if (type === 'study' || type === 'all') {
+    const sessions = await getStudySessionsForList(activeListId);
+    for (const s of sessions) {
+      try { await req2p(store('study_sessions','readwrite').delete(s.id)); count++; } catch(e) {}
+    }
+  }
+
+  if (type === 'practice' || type === 'all') {
+    for (const wid of wordIds) {
+      try { await req2p(store('practice_records','readwrite').delete(wid)); count++; } catch(e) {}
+    }
+    const allHistory = await new Promise(res => {
+      const req = store('practice_history','readonly').getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => res([]);
+    });
+    for (const h of allHistory) {
+      if (wordIds.has(h.word_id)) {
+        try { await req2p(store('practice_history','readwrite').delete(h.id)); count++; } catch(e) {}
+      }
+    }
+  }
+
+  toast(`✓ 已清除${typeLabel}（${count} 筆）`);
+  refreshHome();
+  loadWords();
 }
 
 // ═══════════════════════════════════════
