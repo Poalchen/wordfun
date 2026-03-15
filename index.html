@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>WordFun – 智慧單字學習</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
   --ink: #0e0f14;
@@ -20,7 +20,7 @@
   --shadow: 0 2px 16px rgba(0,0,0,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+body{font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
 h1,h2,h3,.syne{font-family:'Syne',sans-serif}
 
 /* ── NAV ── */
@@ -34,13 +34,13 @@ nav{
 .nav-tab{
   padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.82rem;
   font-weight:500;color:#9ca3af;transition:.2s;border:none;background:transparent;
-  font-family:'DM Sans',sans-serif;
+  font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
 }
 .nav-tab:hover{color:#fff}
 .nav-tab.active{background:#fff1;color:#fff;font-weight:600}
 .api-btn{
   padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;
-  font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
   transition:.15s;
 }
 .api-btn:hover{opacity:.85}
@@ -71,7 +71,7 @@ nav{
 .btn{
   display:inline-flex;align-items:center;gap:6px;
   padding:9px 18px;border-radius:9px;font-size:.83rem;font-weight:600;
-  cursor:pointer;border:none;transition:.15s;font-family:'DM Sans',sans-serif;
+  cursor:pointer;border:none;transition:.15s;font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
 }
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{background:#c73535}
@@ -126,7 +126,7 @@ nav{
 /* ── INPUT ── */
 input,textarea,select{
   width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;
-  font-size:.85rem;font-family:'DM Sans',sans-serif;background:#fff;color:var(--ink);
+  font-size:.85rem;font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#fff;color:var(--ink);
   transition:.15s;outline:none;
 }
 input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
@@ -168,7 +168,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
   background:var(--ink);color:#fff;border-radius:16px;
   padding:28px 30px;margin-bottom:20px;
 }
-.practice-q .qword{font-family:'DM Sans',sans-serif;font-size:2.2rem;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+.practice-q .qword{font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:2.2rem;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
 .practice-q .qlabel{font-size:.75rem;color:#9ca3af}
 .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
 .option{
@@ -300,9 +300,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 .method-badge{
   display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:700;
 }
-.method-mc{background:#dbeafe;color:#1d4ed8}
-.method-cloze{background:#ede9fe;color:#5b21b6}
-.method-fill{background:#dcfce7;color:#15803d}
+.step-label{font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.method-spell{background:#fce7f3;color:#9d174d}
+.method-study{background:#fef9c3;color:#713f12}
+
 
 
 /* ── DICT PAGE ── */
@@ -322,13 +323,122 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 .dict-card .dc-del{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;color:var(--muted);transition:.15s}
 .dict-card .dc-del:hover{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
 
-/* ── RESPONSIVE ── */
-@media(max-width:600px){
-  .options-grid{grid-template-columns:1fr}
-  nav{padding:12px 16px}
-  .page{padding:16px}
-  .hero{padding:26px 20px}
-  .hero h1{font-size:1.6rem}
+/* ── RESPONSIVE / MOBILE-FIRST ── */
+
+/* 防止左右捲動 */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Nav 手機版：緊湊橫排，可橫向捲動但不影響頁面 */
+nav {
+  padding: 8px 10px;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.nav-tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 6px 11px;
+  font-size: .78rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#ai-badge {
+  font-size: .68rem;
+  padding: 4px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Page 預設手機 padding */
+.page { padding: 14px 14px 80px; }
+
+/* Hero 緊湊 */
+.hero { padding: 22px 18px; margin-bottom: 18px; border-radius: 16px; }
+.hero h1 { font-size: 1.55rem; }
+.hero p { font-size: .82rem; }
+.hero-stats { gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.stat-n { font-size: 1.5rem; }
+.stat-l { font-size: .68rem; }
+
+/* Cards 滿版 */
+.card { border-radius: 12px; }
+.card-body { padding: 14px; }
+.card-header { padding: 12px 14px; }
+
+/* List grid 手機單欄 */
+.list-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Word table 手機自適應 */
+.word-table { font-size: .78rem; }
+.word-table th, .word-table td { padding: 8px 10px; }
+
+/* Buttons */
+.btn { padding: 8px 14px; font-size: .8rem; }
+.btn-sm { padding: 5px 10px; font-size: .72rem; }
+
+/* Practice wrap 手機全寬 */
+.practice-wrap { max-width: 100%; }
+.practice-q { padding: 18px 16px; border-radius: 14px; }
+.practice-q .qword { font-size: 1.7rem; }
+.options-grid { grid-template-columns: 1fr; gap: 8px; }
+.option { padding: 12px 14px; font-size: .85rem; }
+
+/* Mode cards 2欄 */
+#mode-cards { grid-template-columns: 1fr 1fr; }
+.mode-card { padding: 12px 10px; }
+.mode-card div:first-child { font-size: 1.3rem; margin-bottom: 4px; }
+
+/* Spell letters wrap */
+#spell-letters { gap: 6px; }
+.spell-letter-btn {
+  min-width: 36px !important;
+  height: 38px !important;
+  font-size: .9rem !important;
+}
+
+/* Modal 手機滿版 */
+.modal { border-radius: 16px; max-height: 92vh; }
+.modal-body { padding: 16px; }
+.modal-header { padding: 14px 16px; }
+
+/* Cache grid 2欄 */
+#cache-grid { grid-template-columns: 1fr 1fr !important; }
+
+/* History summary grid */
+#hist-summary-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+/* Dict card 手機調整 */
+.dict-card { padding: 12px 14px; gap: 10px; }
+.dict-card .dc-icon { font-size: 1.4rem; }
+.dict-card .dc-name { font-size: .85rem; }
+
+/* Toast 手機置底 */
+#toast { bottom: 16px; font-size: .78rem; padding: 8px 18px; max-width: 88vw; white-space: normal; text-align: center; }
+
+/* Settings */
+.provider-option { padding: 6px 10px; font-size: .78rem; }
+
+/* 大螢幕回復 */
+@media(min-width: 640px) {
+  .page { padding: 24px 28px; }
+  .hero { padding: 36px 32px; }
+  .hero h1 { font-size: 2rem; }
+  .list-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .options-grid { grid-template-columns: 1fr 1fr; }
+  .practice-q { padding: 26px 28px; }
+  .practice-q .qword { font-size: 2.2rem; }
+  .option { padding: 14px 16px; font-size: .88rem; }
+  #cache-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important; }
+  #hist-summary-grid { grid-template-columns: repeat(4, 1fr) !important; }
 }
 
   .sortable { cursor: pointer; user-select: none; white-space: nowrap; }
@@ -350,7 +460,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 <body>
 
 <nav>
-  <div class="logo">Word<span>Fun</span></div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="goto('home')">首頁</button>
     <button class="nav-tab" onclick="goto('words')">單字庫</button>
@@ -363,20 +472,126 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
   <div id="ai-badge" style="font-size:.72rem;color:#6b7280;background:#ffffff11;padding:5px 12px;border-radius:8px">✦ AI 未設定</div>
 </nav>
 
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- STUDY PAGE                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="page-study" class="page">
+
+  <!-- 設定區 -->
+  <div id="study-setup">
+    <div style="margin-bottom:18px">
+      <h2 style="font-size:1.2rem;margin-bottom:4px">📖 單字學習</h2>
+      <p style="font-size:.78rem;color:var(--muted)">卡片式學習，看英文想中文</p>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div class="step-label">STEP 1 — 選擇單字庫</div>
+      <div id="study-list-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div class="step-label">STEP 2 — 起始方式</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-mode-row">
+        <div class="count-card selected" data-smode="all"      onclick="selectStudyMode(this)">從頭開始</div>
+        <div class="count-card"          data-smode="new"      onclick="selectStudyMode(this)">未學過</div>
+        <div class="count-card"          data-smode="unknown"  onclick="selectStudyMode(this)">不認識的</div>
+        <div class="count-card"          data-smode="continue" onclick="selectStudyMode(this)">繼續上次</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:22px">
+      <div class="step-label">STEP 3 — 學習數量</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-count-row">
+        <div class="count-card"          data-n="5"  onclick="selectStudyCount(this)">5 個</div>
+        <div class="count-card selected" data-n="10" onclick="selectStudyCount(this)">10 個</div>
+        <div class="count-card"          data-n="20" onclick="selectStudyCount(this)">20 個</div>
+        <div class="count-card"          data-n="0"  onclick="selectStudyCount(this)">全部</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startStudy()" style="width:100%">開始學習 →</button>
+
+    <div style="margin-top:24px">
+      <div class="step-label">最近學習記錄</div>
+      <div id="study-history-list" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 學習卡片區 -->
+  <div id="study-session" style="display:none;margin-top:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:.8rem;color:var(--muted)" id="study-progress">1 / 10</span>
+      <div style="display:flex;gap:8px">
+        <span style="font-size:.78rem;color:var(--green);font-weight:700" id="study-known-count">✓ 0</span>
+        <span style="font-size:.78rem;color:var(--accent);font-weight:700" id="study-unknown-count">✗ 0</span>
+      </div>
+    </div>
+    <div class="score-bar"><div class="score-fill" id="study-bar" style="width:0%"></div></div>
+
+    <!-- 卡片 -->
+    <div id="study-card" style="margin-top:16px;perspective:1000px;cursor:pointer" onclick="flipStudyCard()">
+      <div id="study-card-inner" style="position:relative;width:100%;min-height:300px;transform-style:preserve-3d;transition:transform .5s">
+        <!-- 正面 -->
+        <div id="study-front" style="position:absolute;width:100%;min-height:300px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--ink);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div id="study-front-pos" style="font-size:.72rem;color:#9ca3af;margin-bottom:6px;font-weight:700;letter-spacing:.1em;text-transform:uppercase"></div>
+          <div id="study-front-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:2.2rem;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:0"></div>
+          <div id="study-front-phonetic" style="font-size:.95rem;color:#9ca3af;font-style:italic;margin-bottom:12px"></div>
+          <div style="font-size:.78rem;color:#6b7280;margin-top:auto">點擊卡片看答案 👆</div>
+        </div>
+        <!-- 背面 -->
+        <div id="study-back" style="position:absolute;width:100%;min-height:300px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);display:flex;flex-direction:column">
+          <div id="study-back-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:1.3rem;font-weight:700;color:var(--ink);margin-bottom:4px"></div>
+          <div id="study-back-pos"  style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
+          <div id="study-back-defs" style="font-size:.95rem;font-weight:600;color:var(--ink);line-height:1.6;margin-bottom:12px"></div>
+          <div id="study-back-example" style="font-size:.8rem;color:var(--muted);line-height:1.7;padding:10px 12px;background:#f9f8f6;border-radius:10px;border-left:3px solid var(--accent2);margin-bottom:10px;display:none"></div>
+          <div id="study-back-mnemonic" style="font-size:.76rem;color:#7c3aed;padding:8px 12px;background:#f5f3ff;border-radius:8px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 翻面前 -->
+    <div id="study-flip-row" style="margin-top:16px;text-align:center">
+      <button class="btn btn-primary" style="width:100%;padding:13px" onclick="flipStudyCard()">👁 翻面看答案</button>
+    </div>
+
+    <!-- 翻面後評估 -->
+    <div id="study-eval-row" style="display:none;margin-top:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button class="btn" style="background:#fee2e2;color:#991b1b;border:2px solid #fca5a5;padding:13px;font-size:.9rem;font-weight:700;border-radius:14px" onclick="evalStudy(false)">✗ 不認識</button>
+        <button class="btn" style="background:#dcfce7;color:#15803d;border:2px solid #86efac;padding:13px;font-size:.9rem;font-weight:700;border-radius:14px" onclick="evalStudy(true)">✓ 認識</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="endStudySession()">結束學習</button>
+    </div>
+
+    <!-- 複習提示 -->
+    <div id="study-review-banner" style="display:none;margin-top:14px;padding:10px 14px;background:#fef9c3;border:1px solid #fde047;border-radius:10px;font-size:.82rem;color:#713f12;text-align:center">
+      🔄 以下是本次不認識的單字，再複習一次！
+    </div>
+  </div>
+
+  <!-- 學習結果 -->
+  <div id="study-result" style="display:none;margin-top:16px">
+    <div class="card">
+      <div class="card-body" id="study-result-body" style="padding:28px 20px;text-align:center"></div>
+    </div>
+  </div>
+
+</div>
+
 <!-- HOME -->
 <div id="page-home" class="page active">
   <div id="api-banner" style="display:none"></div>
   <div class="hero">
-    <h1>智慧單字<br><em>學習工具</em></h1>
+    <h1>WordFun<br><em>學習工具</em></h1>
     <p>結合 Claude AI，深度解析單字、克漏字練習、批次匯入管理。</p>
-    <div class="hero-stats">
+    <div class="hero-stats" style="flex-wrap:wrap">
       <div class="stat"><div class="stat-n" id="stat-lists">0</div><div class="stat-l">單字清單</div></div>
       <div class="stat"><div class="stat-n" id="stat-words">0</div><div class="stat-l">已存單字</div></div>
       <div class="stat"><div class="stat-n" id="stat-practice">0</div><div class="stat-l">練習次數</div></div>
       <div class="stat"><div class="stat-n" id="stat-cache">0</div><div class="stat-l">⚡ 已快取單字</div></div>
     </div>
   </div>
-  <div style="display:flex;gap:12px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button class="btn btn-primary" onclick="goto('words')">📋 管理單字庫</button>
     <button class="btn btn-secondary" onclick="goto('practice')">🎯 開始練習</button>
     <button class="btn btn-ghost" onclick="exportBackup()">💾 匯出備份</button>
@@ -418,8 +633,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
           <button class="btn btn-ghost btn-sm" onclick="openAddWordModal()">＋ 新增單字</button>
         </div>
       </div>
-      <div class="card-body" style="padding:0">
-        <table class="word-table">
+      <div class="card-body" style="padding:0;overflow-x:auto">
+        <table class="word-table" style="min-width:400px">
           <thead><tr><th id="th-word" class="sortable" onclick="sortWords('word')">單字 <span class="sort-icon">⇅</span></th><th>翻譯</th><th id="th-importance" class="sortable" onclick="sortWords('importance')">重要度 <span class="sort-icon">⇅</span></th><th id="th-practice" class="sortable" onclick="sortWords('practice')">練習 <span class="sort-icon">⇅</span></th><th>錯誤</th><th>正確率</th><th id="th-last" class="sortable" onclick="sortWords('last')">最近練習 <span class="sort-icon">⇅</span></th><th></th></tr></thead>
           <tbody id="word-tbody"></tbody>
         </table>
@@ -429,6 +644,38 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
     </div>
   </div>
 </div>
+  <!-- ── 學習面板（嵌入單字庫頁）── -->
+  <div id="study-panel" style="display:none;margin-top:24px">
+    <!-- 學習設定 -->
+    <div id="study-panel-setup" class="card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-weight:700">📖 學習「<span id="study-panel-list-name"></span>」</span>
+        <button class="modal-close" onclick="backToStudySetup()">✕</button>
+      </div>
+      <div class="card-body">
+        <div style="margin-bottom:14px">
+          <div class="step-label">起始方式</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-mode-row">
+            <div class="count-card selected" data-smode="all"      onclick="selectStudyMode(this)">從頭開始</div>
+            <div class="count-card"          data-smode="new"      onclick="selectStudyMode(this)">未學過</div>
+            <div class="count-card"          data-smode="unknown"  onclick="selectStudyMode(this)">不認識的</div>
+            <div class="count-card"          data-smode="continue" onclick="selectStudyMode(this)">繼續上次</div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="step-label">學習數量</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-count-row">
+            <div class="count-card"          data-n="5"  onclick="selectStudyCount(this)">5 個</div>
+            <div class="count-card selected" data-n="10" onclick="selectStudyCount(this)">10 個</div>
+            <div class="count-card"          data-n="20" onclick="selectStudyCount(this)">20 個</div>
+            <div class="count-card"          data-n="0"  onclick="selectStudyCount(this)">全部</div>
+          </div>
+        </div>
+        <div id="study-panel-history" style="margin-bottom:14px;font-size:.8rem;color:var(--muted)"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="startStudy()">開始學習 →</button>
+      </div>
+    </div>
+  </div>
 
 <!-- PRACTICE -->
 <div id="page-practice" class="page">
@@ -504,6 +751,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
         <div class="count-card"          data-scope="new"     onclick="selectScope(this)">⭐ 未練過</div>
         <div class="count-card"          data-scope="wrong"   onclick="selectScope(this)">❌ 有錯誤</div>
         <div class="count-card"          data-scope="imperfect" onclick="selectScope(this)">📈 未全對</div>
+        <div class="count-card"          data-scope="last-study" onclick="selectScope(this)">📖 最近學習</div>
       </div>
       <div id="scope-hint" style="font-size:.75rem;color:var(--muted);margin-top:8px;display:none"></div>
     </div>
@@ -543,9 +791,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
       <div class="card card-body">
         <h3 style="margin-bottom:14px;font-size:1rem">閱讀故事並填入正確單字</h3>
         <div class="story-text" id="cloze-story"></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div id="cloze-btn-row" style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-green" onclick="submitCloze()">✓ 提交答案</button>
           <button class="btn btn-ghost btn-sm" onclick="endPractice()">結束練習</button>
+        </div>
+        <!-- 克漏字結果區 -->
+        <div id="cloze-result-section" style="display:none;margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+          <div id="cloze-result-summary" style="font-size:.9rem;font-weight:700;margin-bottom:12px"></div>
+          <div id="cloze-wrong-section" style="display:none">
+            <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">答錯的單字</div>
+            <div id="cloze-wrong-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="endPractice()">返回練習模式</button>
+          </div>
         </div>
       </div>
     </div>
@@ -630,7 +889,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn btn-accent" id="retry-wrong-btn" onclick="retryWrongWords()" style="display:none;background:#f59e0b;color:#fff">🔁 再練錯題</button>
         <button class="btn btn-primary" onclick="startPractice()">再練一次</button>
-        <button class="btn btn-ghost" onclick="endPractice()">返回設定</button>
+        <button class="btn btn-ghost" onclick="endPractice()">返回練習模式</button>
       </div>
     </div>
   </div>
@@ -872,9 +1131,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
       <div>字典資料存於瀏覽器本地（IndexedDB），API Key 僅存於 localStorage，不會上傳至任何伺服器。</div>
     </div>
   </div>
-</div>
-
-  <!-- Google Drive 同步 -->
+<!-- Google Drive 同步 -->
   <div class="card" style="margin-top:16px">
     <div class="card-header"><span style="font-weight:700">☁️ Google Drive 備份同步</span></div>
     <div class="card-body">
@@ -913,7 +1170,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
       <div id="gdrive-msg" style="margin-top:10px;font-size:.8rem;min-height:1.2em"></div>
     </div>
   </div>
-
+</div>
 
 <!-- GDrive Help Modal -->
 <div class="modal-bg" id="modal-gdrive-help">
@@ -941,6 +1198,28 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
     </div>
   </div>
 </div>
+<!-- Copy Wrong Words Modal -->
+<div class="modal-bg" id="modal-copy-wrong">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem" id="copy-wrong-title">複製答錯單字</h3>
+      <button class="modal-close" onclick="closeModal('modal-copy-wrong')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="copy-wrong-info" style="font-size:.82rem;color:var(--muted);margin-bottom:14px"></div>
+      <div class="form-row">
+        <label class="form-label">新單字庫名稱</label>
+        <input id="copy-wrong-listname" placeholder="例：答錯單字 2024/03" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmCopyWrong()">建立並複製</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-copy-wrong')">取消</button>
+      </div>
+      <div id="copy-wrong-msg" style="margin-top:10px;font-size:.82rem;min-height:1.2em"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODALS -->
 <div class="modal-bg" id="modal-add-list">
   <div class="modal" style="max-width:400px">
@@ -1038,7 +1317,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
   <div class="modal">
     <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:1">
       <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-        <span id="detail-word" style="font-family:'DM Sans',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.01em"></span>
+        <span id="detail-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-.01em"></span>
         <span class="phonetic" id="detail-phonetic"></span>
         <span class="pos-badge" id="detail-pos"></span>
       </div>
@@ -1091,7 +1370,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
   <div class="modal" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column">
     <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
       <h3 id="stats-detail-title" style="font-size:1rem;margin:0">明細</h3>
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-stats-detail')">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="stats-copy-btn" class="btn btn-ghost btn-sm" style="font-size:.72rem;display:none" onclick="copyWrongFromStats()">📋 複製答錯到新單字庫</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-stats-detail')">✕</button>
+      </div>
     </div>
     <div id="stats-detail-body" style="overflow-y:auto;padding:16px 20px;flex:1;font-size:.85rem"></div>
   </div>
@@ -1103,7 +1385,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const DB_NAME = 'wordfun', DB_VER = 2;
+const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
 function openDB() {
@@ -1135,6 +1417,11 @@ function openDB() {
       }
       if (!d.objectStoreNames.contains('dict_data')) {
         d.createObjectStore('dict_data', {keyPath:'id'});
+      }
+      if (!d.objectStoreNames.contains('study_sessions')) {
+        const ss = d.createObjectStore('study_sessions', {keyPath:'id', autoIncrement:true});
+        ss.createIndex('list_id','list_id');
+        ss.createIndex('started_at','started_at');
       }
     };
     req.onsuccess = e => { db = e.target.result; res(db); };
@@ -1448,7 +1735,7 @@ function getApiKey() { return 'built-in'; }
 // ═══════════════════════════════════════
 let activeListId = null;
 let mcWords = [], mcIdx = 0, mcScore = 0, mcAnswered = false;
-let clozeData = null, clozeWordIds = [];
+let clozeData = null, clozeWordIds = [], clozeWords = [];
 
 // ═══════════════════════════════════════
 // NAV
@@ -1464,6 +1751,7 @@ function goto(page) {
   if (page==='home')     refreshHome();
   if (page==='words')    renderLists();
   if (page==='practice') populatePracticeList();
+  if (page==='study')    initStudyPage();
   if (page==='cache')    loadCache();
   if (page==='history')  loadHistory();
   if (page==='dict')     renderDictPage();
@@ -1522,15 +1810,26 @@ async function renderLists() {
   for (const l of lists) {
     const div = document.createElement('div');
     div.className = 'list-card' + (l.id===activeListId?' active-list':'');
+    const studySessions = await getStudySessionsForList(l.id);
+    const lastStudy = studySessions[studySessions.length-1];
     div.innerHTML = `
       <button class="del" onclick="event.stopPropagation();deleteList(${l.id})">刪除</button>
       <h3>${l.name}</h3>
       <div class="wc">${wordCounts[l.id]} 個單字</div>
+      <div class="wc" style="margin-top:4px;color:var(--accent2)">
+        📖 學習 ${studySessions.length} 次${lastStudy ? '・' + fmtDate(lastStudy.started_at) : ''}
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%;font-size:.75rem"
+        data-lid="${l.id}" onclick="event.stopPropagation();openStudyPanel(+this.dataset.lid)">
+        📖 開始學習
+      </button>
     `;
     div.onclick = () => selectList(l.id, l.name);
     grid.appendChild(div);
   }
 }
+
+
 
 async function selectList(id, name) {
   activeListId = id;
@@ -2243,6 +2542,18 @@ async function showStatsDetail(type, title, dateStr) {
   }
 
   body.innerHTML = html || '<div style="color:var(--muted)">無資料</div>';
+
+  // 答錯明細才顯示複製按鈕
+  const copyBtn = document.getElementById('stats-copy-btn');
+  if (type === 'today-wrong') {
+    copyBtn.style.display = '';
+    copyBtn.dataset.scope = 'today';
+  } else if (type === 'errors') {
+    copyBtn.style.display = '';
+    copyBtn.dataset.scope = 'all';
+  } else {
+    copyBtn.style.display = 'none';
+  }
 }
 
 let _batchCacheRunning = false;
@@ -2556,17 +2867,27 @@ async function populatePracticeList() {
       hint.style.display = 'block';
       hint.innerHTML = `共 ${wc} 字　⭐ 未練 <b>${newCount}</b>　❌ 有錯 <b>${errCount}</b>　📈 未全對 <b>${impCount}</b>`;
       const btn = document.getElementById('start-btn');
-      btn.disabled = wc < 4;
-      btn.textContent = wc < 4
-        ? `⚠ 此清單需至少 4 個單字`
+      btn.disabled = wc < 1;
+      btn.textContent = wc < 1
+        ? `⚠ 此清單沒有單字`
         : `開始練習「${l.name}」🚀`;
     };
     container.appendChild(div);
   }
 
-  // Auto-select first list
+  // Auto-select list
   if (!selectedPracticeListId && lists.length) {
-    container.firstChild.click();
+    container.firstChild?.click();
+  } else if (selectedPracticeListId) {
+    // 選中對應的卡片
+    const target = container.querySelector(`[data-list-id="${selectedPracticeListId}"]`);
+    if (target) target.click();
+  }
+  // 若有指定 scope，更新 scope 卡片狀態
+  if (selectedScope && selectedScope !== 'all') {
+    document.querySelectorAll('#scope-cards .count-card').forEach(el => {
+      el.classList.toggle('selected', el.dataset.scope === selectedScope);
+    });
   }
 }
 
@@ -2582,7 +2903,7 @@ async function startPractice() {
   if (!listId) { toast('請先選擇單字庫'); return; }
 
   const allWords = await getWordsForList(listId);
-  if (allWords.length < 4) { toast('此清單至少需要 4 個單字'); return; }
+  if (!allWords.length) { toast('此清單沒有單字'); return; }
 
   // Apply scope filter
   let words = allWords;
@@ -2598,11 +2919,32 @@ async function startPractice() {
       return w.error_count > 0;            // 有錯誤 = 未全對
     });
     if (!words.length) { toast('此清單所有單字都已全對！🎉'); return; }
+  } else if (selectedScope === 'last-study') {
+    // 取最近一次學習 session 的單字
+    const sessions = await getStudySessionsForList(listId);
+    if (!sessions.length) { toast('此清單尚無學習記錄，請先使用學習功能'); return; }
+    const last = sessions[sessions.length - 1];
+    const lastIds = new Set(last.word_ids || []);
+    words = allWords.filter(w => lastIds.has(w.id));
+    if (!words.length) { toast('找不到最近學習的單字'); return; }
   }
 
   if (words.length < 4) {
-    toast(`符合條件的單字只有 ${words.length} 個，至少需要 4 個`);
-    return;
+    // 單字不足 4 個時，從全部單字補足（MC 需要 4 個選項）
+    const mode = document.getElementById('practice-mode-sel').value;
+    if (mode === 'mc' || mode === 'vocab') {
+      // 從 allWords 補充不在 words 裡的單字
+      const wordIds = new Set(words.map(w => w.id));
+      const extras = allWords.filter(w => !wordIds.has(w.id));
+      const needed = 4 - words.length;
+      words = [...words, ...extras.sort(() => Math.random() - .5).slice(0, needed)];
+      if (words.length < 4) {
+        toast(`單字庫不足 4 個單字，無法進行此練習模式`);
+        return;
+      }
+      toast(`符合條件的單字只有 ${words.length - needed} 個，已補充 ${needed} 個單字`);
+    }
+    // 其他模式（spell/cloze）不需要 4 個，直接繼續
   }
 
   document.getElementById('practice-setup').style.display='none';
@@ -2697,6 +3039,7 @@ async function nextMC() {
 }
 
 function showMCResult() {
+  document.getElementById('practice-setup').style.display='none';
   document.getElementById('practice-mc').style.display='none';
   const pct = Math.round(mcScore/mcWords.length*100);
   document.getElementById('result-emoji').textContent = pct>=80?'🎉':pct>=50?'💪':'📚';
@@ -2709,8 +3052,11 @@ function showMCResult() {
   const retryBtn     = document.getElementById('retry-wrong-btn');
   if (lastWrongWords.length) {
     wrongSection.style.display = 'block';
-    wrongList.innerHTML = lastWrongWords.map(w=>
-      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">${w.word}</span>`
+    wrongList.innerHTML = lastWrongWords.map(w =>
+      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">
+        <span style="font-weight:700">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#991b1b;opacity:.8;margin-left:5px">${w.translation}</span>` : ''}
+      </span>`
     ).join('');
     retryBtn.style.display = 'inline-flex';
     retryBtn.textContent = `🔁 再練錯題（${lastWrongWords.length} 題）`;
@@ -2741,6 +3087,7 @@ async function startCloze(words) {
 
   const targets = words.sort(()=>Math.random()-.5).slice(0, Math.min(5, words.length));
   clozeWordIds = targets.map(w=>w.id);
+  clozeWords   = targets;
 
   // ── 快取 key：依單字組合排序後雜湊 ──
   const clozeKey = 'wf_cloze_' + targets.map(w=>w.word).sort().join('|');
@@ -2781,22 +3128,64 @@ function renderCloze(data, targets) {
 
 async function submitCloze() {
   let correct=0, total=clozeData.blanks.length;
+  const wrongWords = [];
+
   for (let i=0; i<total; i++) {
     const sel = document.getElementById('blank-'+i);
     if (!sel) continue;
     const ans = clozeData.blanks[i].answer;
     const chosen = sel.value;
     sel.disabled = true;
-    if (chosen.toLowerCase()===ans.toLowerCase()) { sel.classList.add('correct'); correct++; }
-    else { sel.classList.add('wrong'); }
-    if (clozeWordIds[i]) await recordAttempt(clozeWordIds[i], chosen.toLowerCase()===ans.toLowerCase(), 'cloze', clozeData.blanks[i].answer);
+
+    const isCorrect = chosen.toLowerCase() === ans.toLowerCase();
+
+    if (isCorrect) {
+      // 綠色顯示正確答案
+      sel.classList.add('correct');
+      correct++;
+    } else {
+      // 換成正確答案，紅色顯示
+      const span = document.createElement('span');
+      span.style.cssText = 'font-weight:700;color:var(--accent);background:#fee2e2;padding:1px 8px;border-radius:5px;border-bottom:2px solid var(--accent)';
+      span.textContent = ans;
+      sel.replaceWith(span);
+
+      // 收集答錯單字
+      const ansWord = ans.toLowerCase();
+      const wordObj = clozeWords.find(w => w.word.toLowerCase() === ansWord);
+      if (wordObj && !wrongWords.find(w => w.id === wordObj.id)) {
+        wrongWords.push(wordObj);
+      }
+    }
+
+    if (clozeWordIds[i]) await recordAttempt(clozeWordIds[i], isCorrect, 'cloze', ans);
   }
-  document.getElementById('practice-cloze').style.display='none';
-  const pct=Math.round(correct/total*100);
-  document.getElementById('result-emoji').textContent = pct>=80?'🌟':pct>=50?'💪':'📖';
-  document.getElementById('result-title').textContent = '克漏字完成！';
-  document.getElementById('result-sub').textContent = `${total} 空格答對 ${correct} 個（${pct}%）`;
-  document.getElementById('practice-result').style.display='block';
+
+  // 隱藏提交按鈕
+  document.getElementById('cloze-btn-row').style.display = 'none';
+
+  // 顯示結果區
+  const pct = Math.round(correct / total * 100);
+  document.getElementById('cloze-result-summary').innerHTML =
+    `<span style="color:${pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--accent)'}">${pct>=80?'🎉':'💪'} ${total} 個空格答對 ${correct} 個（${pct}%）</span>`;
+
+  // 答錯單字
+  const wrongSection = document.getElementById('cloze-wrong-section');
+  const wrongList    = document.getElementById('cloze-wrong-list');
+  if (wrongWords.length) {
+    wrongSection.style.display = 'block';
+    wrongList.innerHTML = wrongWords.map(w =>
+      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">
+        <span style="font-weight:700">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#991b1b;opacity:.8;margin-left:5px">${w.translation}</span>` : ''}
+      </span>`
+    ).join('');
+  } else {
+    wrongSection.style.display = 'none';
+  }
+
+  document.getElementById('cloze-result-section').style.display = 'block';
+  gdriveAutoBackup();
 }
 
 // ═══════════════════════════════════════
@@ -2810,6 +3199,448 @@ let vocabAllWords = [];    // 全清單，用於抽干擾選項
 
 // ── 翻譯記憶快取（本次練習 session 內）──
 const _vocabTrCache = {};
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// STUDY SESSION
+// ═══════════════════════════════════════════════════════════════
+let studyListId = null;
+let studyMode = 'all';
+let studyCount = 10;
+let studyQueue = [];
+let studyReviewQueue = [];
+let studyIdx = 0;
+let studyKnown = 0;
+let studyUnknown = 0;
+let studyFlipped = false;
+let studyIsReview = false;
+let studySessionId = null;
+let studyStartTime = null;
+
+// ── 開啟學習面板 ──
+async function openStudyPanel(listId) {
+  studyListId = listId;
+  goto('study');
+  setTimeout(() => {
+    document.querySelectorAll('#study-list-cards .plist-card').forEach(card => {
+      if (parseInt(card.dataset.lid) === listId) card.click();
+    });
+  }, 400);
+}
+
+
+
+async function initStudyPage() {
+  document.getElementById('study-setup').style.display = 'block';
+  document.getElementById('study-session').style.display = 'none';
+  document.getElementById('study-result').style.display = 'none';
+  await populateStudyListCards();
+  await renderStudyHistory();
+}
+
+async function populateStudyListCards() {
+  const lists = await getAllLists();
+  const container = document.getElementById('study-list-cards');
+  if (!container) return;
+  if (!lists.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:.85rem">尚無單字庫</div>';
+    return;
+  }
+  container.innerHTML = '';
+  for (const list of lists) {
+    const words = await getWordsForList(list.id);
+    const sessions = await getStudySessionsForList(list.id);
+    const lastSession = sessions[sessions.length - 1];
+    const div = document.createElement('div');
+    div.className = 'plist-card' + (studyListId === list.id ? ' selected' : '');
+    div.dataset.lid = list.id;
+    div.onclick = () => selectStudyList(list.id, div);
+    div.innerHTML = `
+      <div class="pl-name">${list.name}</div>
+      <div class="pl-count">${words.length} 個單字</div>
+      <div class="pl-count" style="margin-top:3px;color:var(--accent2)">
+        學習 ${sessions.length} 次${lastSession ? '・' + fmtDate(lastSession.started_at) : ''}
+      </div>
+      <span class="pl-check">✓</span>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function selectStudyList(id, el) {
+  studyListId = id;
+  document.querySelectorAll('#study-list-cards .plist-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function renderStudyHistory() {
+  const el = document.getElementById('study-history-list');
+  if (!el) return;
+  const all = await getAllStudySessions();
+  if (!all.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.82rem">尚無學習記錄</div>';
+    return;
+  }
+  const recent = [...all].reverse().slice(0, 5);
+  el.innerHTML = recent.map(s => {
+    const dur = s.ended_at
+      ? Math.round((new Date(s.ended_at) - new Date(s.started_at)) / 60000) + ' 分鐘'
+      : '未完成';
+    const modeLabel = {all:'從頭',new:'未學過',unknown:'不認識',continue:'繼續'}[s.mode] || s.mode;
+    return `<div style="padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;font-size:.82rem">
+      <div style="font-weight:700;margin-bottom:3px">${s.list_name}</div>
+      <div style="color:var(--muted)">${fmtDate(s.started_at)} ・ ${modeLabel} ・ ${s.total_count} 個 ・ ${dur}${s.known_count != null ? ' ・ 認識 ' + s.known_count + '/' + s.total_count : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function practiceStudiedWords() {
+  if (!studyListId) { toast('找不到單字庫'); return; }
+  selectedPracticeListId = studyListId;
+  selectedScope = 'last-study';
+  goto('practice');
+  // 等 populatePracticeList 渲染完後選中對應清單和範圍
+  setTimeout(() => {
+    // 選清單卡片
+    document.querySelectorAll('#practice-list-cards .plist-card').forEach(card => {
+      if (parseInt(card.dataset.listId || card.dataset.listid) === studyListId) {
+        card.click();
+      }
+    });
+    // 選 last-study scope
+    document.querySelectorAll('#scope-cards .count-card').forEach(el => {
+      const isTarget = el.dataset.scope === 'last-study';
+      el.classList.toggle('selected', isTarget);
+    });
+    selectedScope = 'last-study';
+  }, 600);
+}
+
+function backToStudySetup() {
+  document.getElementById('study-result').style.display = 'none';
+  document.getElementById('study-session').style.display = 'none';
+  document.getElementById('study-setup').style.display = 'block';
+  goto('study');
+}
+
+// ── 模式 / 數量選擇 ──
+function selectStudyMode(el) {
+  studyMode = el.dataset.smode;
+  document.querySelectorAll('#study-mode-row .count-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectStudyCount(el) {
+  studyCount = parseInt(el.dataset.n);
+  document.querySelectorAll('#study-count-row .count-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── DB helpers ──
+async function getStudySessionsForList(listId) {
+  return new Promise(res => {
+    try {
+      const idx = store('study_sessions','readonly').index('list_id');
+      const req = idx.getAll(listId);
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => res([]);
+    } catch(e) { res([]); }
+  });
+}
+
+async function getAllStudySessions() {
+  return new Promise(res => {
+    try {
+      const req = store('study_sessions','readonly').getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => res([]);
+    } catch(e) { res([]); }
+  });
+}
+
+async function saveStudySession(session) {
+  return req2p(store('study_sessions','readwrite').add(session));
+}
+
+async function updateStudySession(session) {
+  return req2p(store('study_sessions','readwrite').put(session));
+}
+
+// ── 開始學習 ──
+async function startStudy() {
+  if (!studyListId) { toast('請先選擇單字庫'); return; }
+  const allWords = await getWordsForList(studyListId);
+  if (!allWords.length) { toast('此單字庫沒有單字'); return; }
+
+  let pool = [];
+
+  if (studyMode === 'all') {
+    pool = [...allWords];
+  } else if (studyMode === 'new') {
+    const sessions = await getStudySessionsForList(studyListId);
+    const studiedIds = new Set(sessions.flatMap(s => s.word_ids || []));
+    pool = allWords.filter(w => !studiedIds.has(w.id));
+    if (!pool.length) { toast('所有單字都已學過！'); return; }
+  } else if (studyMode === 'unknown') {
+    const records = await new Promise(res => {
+      const req = store('practice_records','readonly').getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => res([]);
+    });
+    const unknownIds = new Set(records.filter(r => r.error_count > 0).map(r => r.word_id));
+    pool = allWords.filter(w => unknownIds.has(w.id));
+    if (!pool.length) { toast('沒有答錯過的單字'); return; }
+  } else if (studyMode === 'continue') {
+    const sessions = await getStudySessionsForList(studyListId);
+    if (!sessions.length) {
+      toast('尚無學習記錄，從頭開始');
+      pool = [...allWords];
+    } else {
+      const last = sessions[sessions.length - 1];
+      const lastIdx = allWords.findIndex(w => w.id === last.end_word_id);
+      pool = lastIdx >= 0 ? allWords.slice(lastIdx + 1) : allWords;
+      if (!pool.length) { toast('已學完全部，從頭開始'); pool = [...allWords]; }
+    }
+  }
+
+  if (studyCount > 0 && pool.length > studyCount) pool = pool.slice(0, studyCount);
+
+  studyQueue = pool;
+  studyReviewQueue = [];
+  studyIdx = 0;
+  studyKnown = 0;
+  studyUnknown = 0;
+  studyFlipped = false;
+  studyIsReview = false;
+  studyStartTime = new Date().toISOString();
+
+  const lists = await getAllLists();
+  const session = {
+    list_id: studyListId,
+    list_name: lists.find(l => l.id === studyListId)?.name || '',
+    mode: studyMode,
+    start_word_id: pool[0]?.id,
+    end_word_id: null,
+    word_ids: pool.map(w => w.id),
+    started_at: studyStartTime,
+    ended_at: null,
+    total_count: pool.length,
+    known_count: 0,
+    unknown_count: 0,
+  };
+  studySessionId = await saveStudySession(session);
+
+  document.getElementById('study-setup').style.display = 'none';
+  document.getElementById('study-result').style.display = 'none';
+  document.getElementById('study-session').style.display = 'block';
+  document.getElementById('study-review-banner').style.display = 'none';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+
+  renderStudyCard();
+}
+
+// ── 渲染卡片 ──
+async function renderStudyCard() {
+  const word = studyIsReview ? studyReviewQueue[studyIdx] : studyQueue[studyIdx];
+  if (!word) { endStudySession(); return; }
+
+  studyFlipped = false;
+  document.getElementById('study-card-inner').style.transform = 'rotateY(0deg)';
+  document.getElementById('study-flip-row').style.display = 'block';
+  document.getElementById('study-eval-row').style.display = 'none';
+
+  const total = studyIsReview ? studyReviewQueue.length : studyQueue.length;
+  const phase = studyIsReview ? '複習 ' : '';
+  document.getElementById('study-progress').textContent = `${phase}${studyIdx + 1} / ${total}`;
+  document.getElementById('study-bar').style.width = ((studyIdx / total) * 100) + '%';
+  document.getElementById('study-known-count').textContent = '✓ ' + studyKnown;
+  document.getElementById('study-unknown-count').textContent = '✗ ' + studyUnknown;
+
+  // 先顯示單字，資料非同步載入
+  document.getElementById('study-front-pos').textContent = '';
+  document.getElementById('study-front-word').textContent = word.word;
+  document.getElementById('study-front-phonetic').textContent = '…';
+  document.getElementById('study-back-word').textContent = word.word;
+  document.getElementById('study-back-pos').textContent = '';
+  document.getElementById('study-back-defs').textContent = '載入中…';
+  document.getElementById('study-back-example').style.display = 'none';
+  document.getElementById('study-back-mnemonic').style.display = 'none';
+
+  // ── 取詳細資料：快取 → 字典 → AI ──
+  let pos = '', phonetic = '';
+  let defs = (word.translation || '').trim();
+  let example = '', mnemonic = '';
+
+  try {
+    let detail = null;
+
+    // 1. 查快取
+    const cached = await getCachedDetail(word.word);
+    if (cached?.detail_json) {
+      detail = typeof cached.detail_json === 'string'
+        ? JSON.parse(cached.detail_json) : cached.detail_json;
+    }
+
+    // 2. 快取不足 → 查字典
+    const detailInsufficient = !detail ||
+      (!detail.definitions_zh?.length && !detail.phonetic && !detail.ipa);
+    if (detailInsufficient) {
+      try {
+        const dictId = getActiveDictId ? getActiveDictId() : null;
+        if (dictId) {
+          const dict = await ensureDictLoaded(dictId, null);
+          const rawHtml = await mdxLookup(dict, word.word);
+          if (rawHtml) {
+            const parsed = parseDictEntry(rawHtml, word.word);
+            if (parsed) {
+              detail = detail || {};
+              if (!detail.definitions_zh?.length && parsed.definitions_zh?.length)
+                detail.definitions_zh = parsed.definitions_zh;
+              if (!detail.phonetic && parsed.phonetic) detail.phonetic = parsed.phonetic;
+              if (!detail.pos && parsed.pos) detail.pos = parsed.pos;
+              if (!detail.examples?.length && parsed.examples?.length)
+                detail.examples = parsed.examples;
+              if (Object.keys(detail).length) cacheWordDetail(word.word, detail);
+            }
+          }
+        }
+      } catch(e) {}
+    }
+
+    // 3. 仍不足 → 查 AI（缺音標或缺中文定義）
+    const stillInsufficient = !detail?.phonetic && !detail?.ipa
+      || (!detail?.definitions_zh?.length && !defs);
+    if (stillInsufficient) {
+      const aiSettings = JSON.parse(localStorage.getItem('aiSettings') || '{}');
+      if (aiSettings.provider !== 'none') {
+        try {
+          document.getElementById('study-front-phonetic').textContent = 'AI 查詢中…';
+          const aiDetail = await lookupWord(word.word);
+          if (aiDetail) {
+            detail = detail || {};
+            // 只補缺的欄位，不覆蓋已有的
+            if (!detail.definitions_zh?.length && aiDetail.definitions_zh?.length)
+              detail.definitions_zh = aiDetail.definitions_zh;
+            if (!detail.phonetic && aiDetail.phonetic) detail.phonetic = aiDetail.phonetic;
+            if (!detail.ipa && aiDetail.ipa) detail.ipa = aiDetail.ipa;
+            if (!detail.pos && aiDetail.pos) detail.pos = aiDetail.pos;
+            if (!detail.examples?.length && aiDetail.examples?.length)
+              detail.examples = aiDetail.examples;
+            if (!detail.mnemonic && aiDetail.mnemonic) detail.mnemonic = aiDetail.mnemonic;
+          }
+        } catch(e) {}
+      }
+    }
+    // 4. 還是沒有 → 留空（不顯示錯誤）
+
+    // 4. 整理欄位
+    if (detail) {
+      pos      = detail.pos || detail.part_of_speech || '';
+      phonetic = detail.phonetic || detail.ipa || '';
+      if (!defs) defs = (detail.definitions_zh || []).slice(0, 3).join('；');
+      const ex = detail.examples?.[0];
+      if (ex) example = `${ex.en || ex.sentence || ''}${ex.zh ? '\n' + ex.zh : ''}`;
+      mnemonic = detail.mnemonic || detail.memory_tip || '';
+    }
+  } catch(e) { console.error('renderStudyCard:', e); }
+
+  // ── 更新 UI ──
+  document.getElementById('study-front-pos').textContent = pos ? pos.toUpperCase() : '';
+  document.getElementById('study-front-phonetic').textContent = phonetic ? `/${phonetic}/` : '';
+  document.getElementById('study-back-pos').textContent = pos || '';
+  document.getElementById('study-back-defs').textContent = defs || '';
+
+  const exEl = document.getElementById('study-back-example');
+  if (example) {
+    exEl.style.display = 'block';
+    exEl.innerHTML = example.split('\n').map((l, i) =>
+      `<div style="${i===0 ? 'font-weight:600' : 'color:var(--muted);margin-top:3px'}">${l}</div>`
+    ).join('');
+  } else { exEl.style.display = 'none'; }
+
+  const mnEl = document.getElementById('study-back-mnemonic');
+  if (mnemonic) { mnEl.style.display = 'block'; mnEl.textContent = '💡 ' + mnemonic; }
+  else { mnEl.style.display = 'none'; }
+}
+
+function flipStudyCard() {
+  if (studyFlipped) return;
+  studyFlipped = true;
+  document.getElementById('study-card-inner').style.transform = 'rotateY(180deg)';
+  document.getElementById('study-flip-row').style.display = 'none';
+  document.getElementById('study-eval-row').style.display = 'block';
+}
+
+function evalStudy(known) {
+  if (known) {
+    studyKnown++;
+  } else {
+    studyUnknown++;
+    const word = studyIsReview ? studyReviewQueue[studyIdx] : studyQueue[studyIdx];
+    if (!studyIsReview) studyReviewQueue.push(word);
+  }
+  studyIdx++;
+  const total = studyIsReview ? studyReviewQueue.length : studyQueue.length;
+  if (studyIdx >= total) {
+    if (!studyIsReview && studyReviewQueue.length > 0) {
+      studyIsReview = true;
+      studyIdx = 0;
+      document.getElementById('study-review-banner').style.display = 'block';
+      renderStudyCard();
+    } else {
+      endStudySession();
+    }
+  } else {
+    renderStudyCard();
+  }
+}
+
+async function endStudySession() {
+  const endTime = new Date().toISOString();
+  const lastWord = studyQueue[studyQueue.length - 1];
+  try {
+    const sessions = await getAllStudySessions();
+    const session = sessions.find(s => s.id === studySessionId);
+    if (session) {
+      session.ended_at = endTime;
+      session.end_word_id = lastWord?.id;
+      session.known_count = studyKnown;
+      session.unknown_count = studyUnknown;
+      await updateStudySession(session);
+    }
+  } catch(e) {}
+  document.getElementById('study-session').style.display = 'none';
+  showStudyResult();
+}
+
+function showStudyResult() {
+  document.getElementById('study-result').style.display = 'block';
+  const total = studyQueue.length;
+  const pct = total > 0 ? Math.round(studyKnown / total * 100) : 0;
+  const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚';
+  document.getElementById('study-result-body').innerHTML = `
+    <div style="font-size:2.8rem;margin-bottom:10px">${emoji}</div>
+    <h3 style="font-size:1.1rem;margin-bottom:8px">學習完成！</h3>
+    <div style="font-size:2rem;font-weight:800;color:var(--accent2);margin-bottom:4px">${studyKnown} / ${total}</div>
+    <div style="font-size:.88rem;color:var(--muted);margin-bottom:6px">認識率 ${pct}%</div>
+    ${studyReviewQueue.length > 0 ? `<div style="font-size:.8rem;color:var(--accent);margin-bottom:18px">複習了 ${studyReviewQueue.length} 個不認識的單字</div>` : '<div style="margin-bottom:18px"></div>'}
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startStudy()">再學一次</button>
+      <button class="btn btn-primary" onclick="practiceStudiedWords()" style="background:var(--accent2)">🎯 馬上練習</button>
+      <button class="btn btn-ghost" onclick="backToStudySetup()">關閉</button>
+    </div>
+  `;
+  document.getElementById('study-result').scrollIntoView({behavior:'smooth', block:'start'});
+  gdriveAutoBackup();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('zh-TW', {month:'numeric',day:'numeric'}) + ' ' +
+    d.toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+}
 
 
 // ═══════════════════════════════════════
@@ -3029,6 +3860,7 @@ function spellNext() {
 }
 
 function showSpellResult() {
+  document.getElementById('practice-setup').style.display='none';
   document.getElementById('practice-spell').style.display = 'none';
   const el = document.getElementById('practice-result');
   el.style.display = 'block';
@@ -3041,7 +3873,7 @@ function showSpellResult() {
       <div style="font-size:1rem;color:var(--muted);margin-bottom:24px">正確率 ${pct}%</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="startSpell(spellWords)">再練一次</button>
-        <button class="btn btn-ghost" onclick="endPractice()">返回設定</button>
+        <button class="btn btn-ghost" onclick="endPractice()">返回練習模式</button>
       </div>
     </div>`;
   gdriveAutoBackup();
@@ -3148,7 +3980,7 @@ async function renderVocabQuestion() {
   sentBox.innerHTML = renderedSentences.map((s, i) =>
     `<div style="margin-bottom:${i < renderedSentences.length-1 ? '10px' : '0'}">`
     + `<div style="font-size:.95rem">${s.en}</div>`
-    + (s.zh ? `<div style="font-size:.78rem;color:var(--muted);margin-top:2px">${s.zh}</div>` : '')
+    + (s.zh ? `<div class="vocab-zh" style="font-size:.78rem;color:var(--muted);margin-top:2px;display:none">${s.zh}</div>` : '')
     + `</div>`
   ).join('');
 
@@ -3183,6 +4015,11 @@ async function selectVocabOption(el, opt, target) {
   vocabAnswered = true;
 
   document.querySelectorAll('#vocab-options .option').forEach(o => o.classList.add('disabled'));
+
+  // ── 回答後顯示例句中文 ──
+  document.querySelectorAll('#vocab-sentences .vocab-zh').forEach(el => {
+    el.style.display = 'block';
+  });
 
   if (opt.correct) {
     el.classList.add('correct');
@@ -3228,6 +4065,7 @@ function vocabNext() {
 }
 
 function showVocabResult() {
+  document.getElementById('practice-setup').style.display='none';
   document.getElementById('practice-vocab').style.display = 'none';
   const pct = Math.round(vocabScore / vocabWords.length * 100);
   document.getElementById('result-emoji').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '💪' : '📚';
@@ -3240,7 +4078,10 @@ function showVocabResult() {
   if (lastWrongWords.length) {
     wrongSection.style.display = 'block';
     wrongList.innerHTML = lastWrongWords.map(w =>
-      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">${w.word}</span>`
+      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">
+        <span style="font-weight:700">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#991b1b;opacity:.8;margin-left:5px">${w.translation}</span>` : ''}
+      </span>`
     ).join('');
     retryBtn.style.display = 'inline-flex';
     retryBtn.textContent = `🔁 再練錯題（${lastWrongWords.length} 題）`;
@@ -3365,6 +4206,7 @@ function endPractice() {
   document.getElementById('practice-spell').style.display='none';
   document.getElementById('practice-result').style.display='none';
   document.getElementById('practice-setup').style.display='block';
+  window.scrollTo({top:0, behavior:'smooth'});
   populatePracticeList();
 }
 
@@ -3497,9 +4339,51 @@ function gdriveLogin() {
     `&response_type=token` +
     `&scope=${encodeURIComponent(GDRIVE_SCOPE)}` +
     `&include_granted_scopes=true`;
-  // Store that we initiated login
-  localStorage.setItem('gdrive_login_pending', '1');
-  window.location.href = url;
+
+  // 用 popup 視窗，不跳離主頁面
+  const w = 500, h = 600;
+  const left = Math.max(0, (screen.width - w) / 2);
+  const top  = Math.max(0, (screen.height - h) / 2);
+  const popup = window.open(url, 'gdriveAuth',
+    `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
+
+  if (!popup) {
+    // popup 被封鎖，fallback 到 redirect
+    localStorage.setItem('gdrive_login_pending', '1');
+    window.location.href = url;
+    return;
+  }
+
+  // 輪詢 popup 是否已取得 token
+  gdriveMsg('等待 Google 授權中…', 'var(--muted)');
+  const timer = setInterval(() => {
+    try {
+      if (popup.closed) {
+        clearInterval(timer);
+        gdriveMsg('授權視窗已關閉', 'var(--muted)');
+        return;
+      }
+      const hash = popup.location.hash;
+      if (hash && hash.includes('access_token=')) {
+        clearInterval(timer);
+        popup.close();
+        // 解析 token
+        const params = new URLSearchParams(hash.slice(1));
+        const token = params.get('access_token');
+        const expiresIn = parseInt(params.get('expires_in') || '3600');
+        if (token) {
+          _gdriveToken = token;
+          localStorage.setItem('gdrive_token', token);
+          localStorage.setItem('gdrive_token_exp', Date.now() + expiresIn * 1000);
+          updateGDriveUI(true);
+          gdriveMsg('✅ 連結成功！', 'var(--green)');
+          toast('☁️ Google 帳號連結成功！');
+        }
+      }
+    } catch(e) {
+      // cross-origin 暫時無法存取，繼續等
+    }
+  }, 500);
 }
 
 function gdriveLogout() {
@@ -3594,6 +4478,11 @@ async function exportAllData() {
     req.onsuccess = () => res(req.result);
     req.onerror = () => res([]);
   });
+  const sessions = await new Promise(res => {
+    const req = store('study_sessions','readonly').getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res([]);
+  });
   return {
     version: 2,
     exported_at: new Date().toISOString(),
@@ -3601,6 +4490,7 @@ async function exportAllData() {
     words: allWords,
     practice_records: records,
     practice_history: history,
+    study_sessions: sessions,
   };
 }
 
@@ -3754,6 +4644,22 @@ async function importBackupData(data) {
       } catch(e) {}
     }
   }
+
+  // Merge study_sessions (skip duplicates by started_at)
+  const allSessions = await new Promise(res => {
+    const req = store('study_sessions','readonly').getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res([]);
+  });
+  const existingSAt = new Set(allSessions.map(s => s.started_at));
+  for (const s of (data.study_sessions || [])) {
+    if (!existingSAt.has(s.started_at)) {
+      try {
+        const { id, ...rest } = s; // 移除舊 id，讓 autoIncrement 產生新 id
+        await req2p(store('study_sessions','readwrite').add(rest));
+      } catch(e) {}
+    }
+  }
 }
 
 // ── Auto-backup after practice ──
@@ -3771,6 +4677,113 @@ window.addEventListener('load', () => {
   const lastBackup = localStorage.getItem('gdrive_last_backup');
   if (lastBackup && _gdriveToken) gdriveMsg(`上次備份：${lastBackup}`);
 });
+
+
+async function copyWrongFromStats() {
+  const scope = document.getElementById('stats-copy-btn').dataset.scope || 'today';
+  closeModal('modal-stats-detail');
+  await copyWrongToList(scope);
+}
+
+
+// ═══════════════════════════════════════════════════════
+let _copyWrongScope = 'today'; // 'today' | 'all'
+let _copyWrongWordIds = [];
+
+async function copyWrongToList(scope) {
+  _copyWrongScope = scope;
+
+  // 收集答錯的 word_id
+  const allHistory = await new Promise(res => {
+    const req = store('practice_history','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  });
+
+  let filtered = allHistory.filter(h => h.is_correct === 0);
+
+  if (scope === 'today') {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    filtered = filtered.filter(h => h.timestamp?.slice(0, 10) === todayStr);
+  }
+
+  // 去重 word_id
+  const uniqueIds = [...new Set(filtered.map(h => h.word_id).filter(Boolean))];
+
+  if (!uniqueIds.length) {
+    toast(scope === 'today' ? '今日沒有答錯的單字' : '沒有答錯過的單字');
+    return;
+  }
+
+  _copyWrongWordIds = uniqueIds;
+
+  // 設定 modal 預設名稱
+  const today = new Date().toLocaleDateString('zh-TW', {month:'numeric', day:'numeric'});
+  const label = scope === 'today' ? `今日答錯 ${today}` : `累計答錯單字`;
+  document.getElementById('copy-wrong-listname').value = label;
+  document.getElementById('copy-wrong-title').textContent =
+    scope === 'today' ? '複製今日答錯單字' : '複製全部答錯單字';
+  document.getElementById('copy-wrong-info').textContent =
+    `共 ${uniqueIds.length} 個答錯單字將複製到新單字庫`;
+  document.getElementById('copy-wrong-msg').textContent = '';
+
+  openModal('modal-copy-wrong');
+}
+
+async function confirmCopyWrong() {
+  const name = document.getElementById('copy-wrong-listname').value.trim();
+  if (!name) {
+    document.getElementById('copy-wrong-msg').textContent = '請輸入單字庫名稱';
+    document.getElementById('copy-wrong-msg').style.color = 'var(--accent)';
+    return;
+  }
+
+  const msgEl = document.getElementById('copy-wrong-msg');
+  msgEl.textContent = '建立中…';
+  msgEl.style.color = 'var(--muted)';
+
+  try {
+    // 建立新單字庫
+    const newListId = await createListDB(name);
+
+    // 取得這些 word_id 對應的單字資料
+    const allWords = [];
+    for (const wid of _copyWrongWordIds) {
+      try {
+        const w = await getItem('words', wid);
+        if (w) allWords.push(w);
+      } catch(e) {}
+    }
+
+    if (!allWords.length) {
+      msgEl.textContent = '找不到對應單字資料';
+      msgEl.style.color = 'var(--accent)';
+      return;
+    }
+
+    // 複製到新單字庫
+    await batchInsertWords(newListId, allWords.map(w => ({
+      word: w.word,
+      translation: w.translation || '',
+      importance: w.importance || 3,
+      frequency: w.frequency || 3,
+      examples: w.examples || '',
+    })));
+
+    msgEl.textContent = `✓ 已建立「${name}」，共 ${allWords.length} 個單字`;
+    msgEl.style.color = 'var(--green)';
+    toast(`📋 已複製 ${allWords.length} 個單字到「${name}」`);
+
+    refreshHome();
+    renderLists();
+
+    // 2 秒後關閉
+    setTimeout(() => closeModal('modal-copy-wrong'), 2000);
+  } catch(e) {
+    msgEl.textContent = '建立失敗：' + e.message;
+    msgEl.style.color = 'var(--accent)';
+  }
+}
 
 // ═══════════════════════════════════════
 // INIT
@@ -4416,7 +5429,7 @@ function renderDictResultCard(word, rawHtml, parsed) {
 
   return `<div class="card" style="padding:16px">
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <span style="font-size:1.3rem;font-weight:700">${word}</span>
+      <span style="font-size:1.3rem;font-weight:700;font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">${word}</span>
       ${phonetic ? `<span style="font-size:.85rem;color:var(--muted)">${phonetic}</span>` : ''}
       ${pos ? `<span style="font-size:.75rem;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border)">${s2t(pos)}</span>` : ''}
       <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:.72rem" onclick="showWordDetail('${word}')">📋 完整詳解</button>
