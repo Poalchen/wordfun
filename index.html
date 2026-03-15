@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v1.1 – 智慧單字學習</title>
+<title>WordFun v1.3 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1123,7 +1123,10 @@ nav {
       <div id="settings-deepseek" style="display:none;margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
         <div style="font-size:.82rem;font-weight:600;margin-bottom:6px;color:#10b981">🟢 DeepSeek 設定</div>
         <div style="font-size:.75rem;color:#065f46;background:#d1fae5;border:1px solid #6ee7b7;border-radius:6px;padding:6px 10px;margin-bottom:10px">
-          ✓ DeepSeek 支援跨域請求，可在任何環境使用。免費額度充裕，推薦使用。
+          ✓ DeepSeek 支援跨域請求，可在 GitHub Pages 或本機使用。免費額度充裕，推薦使用。
+        </div>
+        <div style="font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:6px 10px;margin-bottom:10px">
+          ⚠️ DeepSeek 在 claude.ai 環境因安全限制<strong>無法使用</strong>，請上傳到 GitHub Pages 後再設定使用。
         </div>
         <div style="margin-bottom:10px">
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">API Key
@@ -1416,7 +1419,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v1.1';
+const APP_VERSION = 'v1.3';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1782,15 +1785,27 @@ Rules:
 - part_of_speech_zh: Chinese label e.g. 動詞、名詞、形容詞、副詞
 - phrases: provide 4-6 common phrases or collocations using this word, each with "phrase" (English) and "zh" (Traditional Chinese meaning)
 - Provide exactly 3 examples with Traditional Chinese translations`;
-  const json = await callClaude(prompt);
-  JSON.parse(json);
+  const raw = await callAI(prompt);
+  // 清除 markdown 包裝（DeepSeek 等模型可能加上 ```json ... ```）
+  const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const start = clean.indexOf('{');
+  const end2  = clean.lastIndexOf('}');
+  if (start === -1 || end2 === -1) throw new Error('AI 回應格式錯誤');
+  const json = clean.slice(start, end2 + 1);
+  JSON.parse(json); // 驗證
   return json;
 }
 
 async function batchTranslateAI(words) {
-  const prompt = `Translate these English words to Traditional Chinese (繁體中文). Return ONLY a JSON array: [{"word":"...","translation":"..."}]. No markdown.\n\n${words.join('\n')}`;
-  const json = await callClaude(prompt);
-  return JSON.parse(json);
+  const prompt = `Translate these English words to Traditional Chinese (繁體中文). Return ONLY a JSON array: [{"word":"...","translation":"..."}]. No markdown, no explanation.\n\n${words.join('\n')}`;
+  const raw = await callAI(prompt);
+  // 清除可能的 markdown 包裝
+  const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim();
+  // 找到第一個 [ 到最後一個 ]
+  const start = clean.indexOf('[');
+  const end = clean.lastIndexOf(']');
+  if (start === -1 || end === -1) throw new Error('回應格式錯誤');
+  return JSON.parse(clean.slice(start, end + 1));
 }
 
 async function generateClozeStory(words) {
