@@ -540,7 +540,11 @@ nav {
         </div>
         <!-- 背面 -->
         <div id="study-back" style="position:absolute;width:100%;min-height:300px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);display:flex;flex-direction:column">
-          <div id="study-back-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:1.3rem;font-weight:700;color:var(--ink);margin-bottom:4px"></div>
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <div id="study-back-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:1.3rem;font-weight:700;color:var(--ink)"></div>
+            <button onclick="speakStudyWord()" title="發音" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0 2px;line-height:1;opacity:.7;transition:.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">🔊</button>
+            <div id="study-back-phonetic" style="font-size:.82rem;color:var(--muted);font-style:italic"></div>
+          </div>
           <div id="study-back-pos"  style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
           <div id="study-back-defs" style="font-size:.95rem;font-weight:600;color:var(--ink);line-height:1.6;margin-bottom:12px"></div>
           <div id="study-back-example" style="font-size:.8rem;color:var(--muted);line-height:1.7;padding:10px 12px;background:#f9f8f6;border-radius:10px;border-left:3px solid var(--accent2);margin-bottom:10px;display:none"></div>
@@ -631,6 +635,7 @@ nav {
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input id="word-search" type="text" placeholder="🔍 搜尋單字..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:160px" oninput="loadWords()">
           <button class="btn btn-ghost btn-sm" onclick="openAddWordModal()">＋ 新增單字</button>
+          <button class="btn btn-ghost btn-sm" onclick="openMergeListModal()" style="color:var(--accent2)">⇄ 合併到</button>
           <div style="position:relative;display:inline-block">
             <button class="btn btn-ghost btn-sm" onclick="toggleClearMenu(this)" style="color:var(--muted)">🗑 清除記錄 ▾</button>
             <div id="clear-menu" style="display:none;position:absolute;right:0;top:110%;background:var(--card);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);z-index:50;min-width:160px;overflow:hidden">
@@ -944,7 +949,17 @@ nav {
   </div>
   <!-- 今日統計 -->
   <div id="today-stats" style="margin-bottom:16px">
-    <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">📅 今日練習</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">
+        📅 <span id="today-stats-label">今日練習</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="shiftStatsDate(-1)" style="padding:3px 8px;font-size:.8rem">◀</button>
+        <input type="date" id="stats-date-picker" style="padding:3px 8px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;background:var(--surface);color:var(--fg)" onchange="loadHistoryByDate(this.value)">
+        <button class="btn btn-ghost btn-sm" onclick="shiftStatsDate(1)" style="padding:3px 8px;font-size:.8rem">▶</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetStatsDate()" style="font-size:.72rem;padding:3px 8px">今日</button>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="today-summary"></div>
   </div>
   <!-- 累計統計 -->
@@ -1286,6 +1301,31 @@ nav {
   </div>
 </div>
 
+<!-- Merge List Modal -->
+<div class="modal-bg" id="modal-merge-list">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">⇄ 合併到其他單字庫</h3>
+      <button class="modal-close" onclick="closeModal('modal-merge-list')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="merge-from-info" style="font-size:.85rem;margin-bottom:14px;padding:8px 12px;background:#eff6ff;border-radius:8px;color:#1d4ed8"></div>
+      <div class="form-row">
+        <label class="form-label">合併到哪個單字庫？</label>
+        <select id="merge-target-sel" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.85rem"></select>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px">
+        ✓ 重複單字自動跳過&nbsp;&nbsp;✓ 原單字庫保留不變
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmMergeList()">開始合併</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-merge-list')">取消</button>
+      </div>
+      <div id="merge-msg" style="margin-top:10px;font-size:.82rem;min-height:1.2em"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODALS -->
 <div class="modal-bg" id="modal-add-list">
   <div class="modal" style="max-width:400px">
@@ -1452,7 +1492,13 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v3.3';
+
+// ── 本地時間 ISO 字串（避免 UTC 時區問題）──
+function localISOString() {
+  return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
+}
+
+const APP_VERSION = 'v4.3';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1605,13 +1651,13 @@ function countLocalCache() {
 async function recordAttempt(wordId, correct, method, wordStr) {
   // history — 同時存單字文字，避免單字刪除後顯示 id
   await req2p(store('practice_history','readwrite').add({
-    word_id:wordId, word: wordStr||'', is_correct:correct?1:0, method, timestamp: new Date().toISOString()
+    word_id:wordId, word: wordStr||'', is_correct:correct?1:0, method, timestamp: localISOString()
   }));
   // upsert record
   const existing = await getItem('practice_records', wordId) || {word_id:wordId, practice_count:0, error_count:0};
   existing.practice_count++;
   if (!correct) existing.error_count++;
-  existing.last_practice_time = new Date().toISOString();
+  existing.last_practice_time = localISOString();
   existing.last_practice_method = method;
   await putItem('practice_records', existing);
 }
@@ -2067,6 +2113,24 @@ async function createList() {
 
 
 
+function speakStudyWord() {
+  const word = document.getElementById('study-back-word').textContent.trim();
+  if (!word || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const speak = () => {
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US'; utter.rate = 0.85; utter.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => v.lang === 'en-US' && v.localService)
+           || voices.find(v => v.lang.startsWith('en'));
+    if (v) utter.voice = v;
+    window.speechSynthesis.speak(utter);
+  };
+  window.speechSynthesis.getVoices().length > 0
+    ? speak()
+    : (window.speechSynthesis.addEventListener('voiceschanged', speak, {once:true}), setTimeout(speak, 100));
+}
+
 function speakWord() {
   const word = document.getElementById('detail-word').textContent.trim();
   if (!word) return;
@@ -2099,6 +2163,7 @@ function speakWord() {
   }
 }
 
+
 function showConfirm(title, msg, onOk) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-msg').textContent   = msg;
@@ -2121,6 +2186,67 @@ function showConfirm(title, msg, onOk) {
 
 // ── Rename List ──
 let _renameListId = null;
+
+
+// ── Merge List ──
+async function openMergeListModal() {
+  if (!activeListId) { toast('請先選擇單字庫'); return; }
+
+  const allLists = await getAllLists();
+  const currentList = allLists.find(l => l.id === activeListId);
+  const otherLists = allLists.filter(l => l.id !== activeListId);
+
+  if (!otherLists.length) { toast('沒有其他單字庫可合併'); return; }
+
+  const words = await getWordsForList(activeListId);
+  document.getElementById('merge-from-info').textContent =
+    `將「${currentList?.name}」的 ${words.length} 個單字合併到選定的單字庫`;
+
+  const sel = document.getElementById('merge-target-sel');
+  sel.innerHTML = otherLists.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  document.getElementById('merge-msg').textContent = '';
+
+  openModal('modal-merge-list');
+}
+
+async function confirmMergeList() {
+  const targetId = parseInt(document.getElementById('merge-target-sel').value);
+  if (!targetId || !activeListId) return;
+
+  const msgEl = document.getElementById('merge-msg');
+  msgEl.textContent = '合併中…';
+  msgEl.style.color = 'var(--muted)';
+
+  try {
+    const sourceWords = await getWordsForList(activeListId);
+    const targetWords = await getWordsForList(targetId);
+    const existingSet = new Set(targetWords.map(w => w.word.toLowerCase()));
+
+    const toInsert = sourceWords.filter(w => !existingSet.has(w.word.toLowerCase()));
+    const skipped  = sourceWords.length - toInsert.length;
+
+    if (toInsert.length > 0) {
+      await batchInsertWords(targetId, toInsert.map(w => ({
+        word:       w.word,
+        translation: w.translation || '',
+        importance: w.importance || 3,
+        frequency:  w.frequency  || 3,
+        examples:   w.examples   || '',
+      })));
+    }
+
+    const targetList = (await getAllLists()).find(l => l.id === targetId);
+    msgEl.textContent = `✓ 已合併 ${toInsert.length} 個單字到「${targetList?.name}」` +
+      (skipped > 0 ? `，跳過 ${skipped} 個重複` : '');
+    msgEl.style.color = 'var(--green)';
+    toast(`⇄ 合併完成：${toInsert.length} 個單字`);
+    refreshHome();
+    setTimeout(() => closeModal('modal-merge-list'), 2000);
+  } catch(e) {
+    msgEl.textContent = '合併失敗：' + e.message;
+    msgEl.style.color = 'var(--accent)';
+  }
+}
 
 function renameList(id, currentName) {
   _renameListId = id;
@@ -2286,15 +2412,33 @@ async function fillTranslation(wordId, word, btn) {
 // ═══════════════════════════════════════
 function loadTxtFile(e) {
   const f = e.target.files[0]; if(!f) return;
+  // 記住檔名（去掉副檔名）
+  window._importTxtName = f.name.replace(/\.txt$/i, '');
+  // 如果目前選的是「使用 TXT 檔名」，更新顯示
+  const sel = document.getElementById('import-list-sel');
+  const opt = sel.querySelector('option[value="__txt__"]');
+  if (opt) opt.textContent = `📄 新建「${window._importTxtName}」`;
   const r = new FileReader();
   r.onload = ev => document.getElementById('import-text').value = ev.target.result;
-  r.readAsText(f);
+  r.readAsText(f, 'UTF-8');
 }
 
 async function runImport() {
-  const listId = +document.getElementById('import-list-sel').value;
+  const selVal = document.getElementById('import-list-sel').value;
   const raw = document.getElementById('import-text').value.trim();
-  if (!listId || !raw) { toast('請選擇清單並輸入內容'); return; }
+  if (!raw) { toast('請輸入或選擇匯入內容'); return; }
+
+  // 若選擇「使用 TXT 檔名建立新清單」
+  let listId;
+  if (selVal === '__txt__') {
+    const newName = window._importTxtName || '匯入清單';
+    listId = await createListDB(newName);
+    if (!listId) { toast('建立清單失敗'); return; }
+    toast(`✓ 已建立新清單「${newName}」`);
+  } else {
+    listId = +selVal;
+    if (!listId) { toast('請選擇目標清單'); return; }
+  }
 
   const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
   const parsed = lines.map(line => {
@@ -2465,6 +2609,85 @@ function clearAllCache() {
 // ═══════════════════════════════════════
 // HISTORY PAGE
 // ═══════════════════════════════════════
+
+// ── 今日統計（支援任意日期）──
+function renderTodayStats(allHistory, allWords, allRecords, wordMap, recMap, dateStr) {
+  const todayH     = allHistory.filter(h => (h.timestamp||'').startsWith(dateStr));
+  const todayTotal   = todayH.length;
+  const todayCorrect = todayH.filter(h => h.is_correct).length;
+  const todayWrong   = todayTotal - todayCorrect;
+  const todayAcc     = todayTotal > 0 ? Math.round(todayCorrect / todayTotal * 100) : 0;
+  const todayWordIds = new Set(todayH.map(h => h.word_id));
+  const todayWords   = todayWordIds.size;
+
+  // 更新標籤：今日或指定日期
+  const todayNow = new Date().toLocaleDateString('sv').slice(0, 10);
+  const labelEl  = document.getElementById('today-stats-label');
+  if (labelEl) {
+    labelEl.textContent = dateStr === todayNow
+      ? '今日練習'
+      : dateStr.replace(/-/g, '/') + ' 練習';
+  }
+
+  const cardStyle = 'cursor:pointer;transition:opacity .15s';
+  const todayEl   = document.getElementById('today-summary');
+  if (!todayEl) return;
+
+  if (todayTotal === 0) {
+    todayEl.innerHTML = `<div style="grid-column:1/-1;color:var(--muted);font-size:.82rem;padding:8px 0">${dateStr === todayNow ? '今日' : dateStr + ' '}尚無練習記錄</div>`;
+  } else {
+    todayEl.innerHTML = `
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-words','${dateStr} 練習單字','${dateStr}')">
+        <div class="hs-n" style="color:var(--accent)">${todayWords}</div>
+        <div class="hs-l">練習單字數</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','${dateStr} 作答明細','${dateStr}')">
+        <div class="hs-n">${todayTotal}</div>
+        <div class="hs-l">作答次數</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-correct','${dateStr} 答對明細','${dateStr}')">
+        <div class="hs-n" style="color:var(--green)">${todayCorrect}</div>
+        <div class="hs-l">答對</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-wrong','${dateStr} 答錯明細','${dateStr}')">
+        <div class="hs-n" style="color:var(--accent)">${todayWrong}</div>
+        <div class="hs-l">答錯</div>
+      </div>
+      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','${dateStr} 作答明細','${dateStr}')">
+        <div class="hs-n" style="color:${todayAcc>=80?'var(--green)':todayAcc>=50?'var(--gold)':'var(--accent)'}">${todayAcc}%</div>
+        <div class="hs-l">正確率</div>
+      </div>
+    `;
+  }
+}
+
+async function loadHistoryByDate(dateStr) {
+  if (!dateStr) return;
+  const allHistory = await new Promise(res => {
+    const req = store('practice_history','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror  = () => res([]);
+  });
+  renderTodayStats(allHistory, [], [], {}, {}, dateStr);
+}
+
+function shiftStatsDate(delta) {
+  const picker = document.getElementById('stats-date-picker');
+  if (!picker) return;
+  const d = new Date(picker.value || new Date().toLocaleDateString('sv'));
+  d.setDate(d.getDate() + delta);
+  const newDate = d.toLocaleDateString('sv').slice(0, 10);
+  picker.value = newDate;
+  loadHistoryByDate(newDate);
+}
+
+function resetStatsDate() {
+  const picker = document.getElementById('stats-date-picker');
+  const today = new Date().toLocaleDateString('sv').slice(0, 10);
+  if (picker) picker.value = today;
+  loadHistoryByDate(today);
+}
+
 async function loadHistory() {
   document.getElementById('history-loading').style.display = 'block';
   document.getElementById('history-empty').style.display   = 'none';
@@ -2479,51 +2702,16 @@ async function loadHistory() {
   const allHistory    = await getAll('practice_history');
   const recMap        = {};
   allRecords.forEach(r => recMap[r.word_id] = r);
+  const wordMap = {};
+  allWords.forEach(w => wordMap[w.id] = w);
 
   // ── 今日統計 ──
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayH   = allHistory.filter(h => (h.timestamp||'').startsWith(todayStr));
-  const todayTotal   = todayH.length;
-  const todayCorrect = todayH.filter(h => h.is_correct).length;
-  const todayWrong   = todayTotal - todayCorrect;
-  const todayAcc     = todayTotal > 0 ? Math.round(todayCorrect / todayTotal * 100) : 0;
-  // 今日練習的不重複單字數
-  const todayWordIds = new Set(todayH.map(h => h.word_id));
-  const todayWords   = todayWordIds.size;
-  // 今日練習時段（最早～最晚）
-  const todayTimes   = todayH.map(h => h.timestamp).sort();
-  const todaySpan    = todayTimes.length >= 2
-    ? todayTimes[0].slice(11,16) + ' – ' + todayTimes[todayTimes.length-1].slice(11,16)
-    : (todayTimes[0] ? todayTimes[0].slice(11,16) : '—');
-
-  const cardStyle = 'cursor:pointer;transition:opacity .15s' ;
-  const todayEl = document.getElementById('today-summary');
-  if (todayTotal === 0) {
-    todayEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:.82rem;padding:8px 0">今日尚無練習記錄</div>';
-  } else {
-    todayEl.innerHTML = `
-      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-words','今日練習單字',\'${todayStr}\')">
-        <div class="hs-n" style="color:var(--accent)">${todayWords}</div>
-        <div class="hs-l">練習單字數</div>
-      </div>
-      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','今日作答明細',\'${todayStr}\')">
-        <div class="hs-n">${todayTotal}</div>
-        <div class="hs-l">作答次數</div>
-      </div>
-      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-correct','今日答對明細',\'${todayStr}\')">
-        <div class="hs-n" style="color:var(--green)">${todayCorrect}</div>
-        <div class="hs-l">答對</div>
-      </div>
-      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-wrong','今日答錯明細',\'${todayStr}\')">
-        <div class="hs-n" style="color:var(--red,#e74c3c)">${todayWrong}</div>
-        <div class="hs-l">答錯</div>
-      </div>
-      <div class="hist-summary-card" style="${cardStyle}" onclick="showStatsDetail('today-all','今日作答明細',\'${todayStr}\')">
-        <div class="hs-n" style="color:${todayAcc>=80?'var(--green)':todayAcc>=50?'var(--accent)':'var(--red,#e74c3c)'}">${todayAcc}%</div>
-        <div class="hs-l">今日正確率</div>
-      </div>
-    `;
-  }
+  const todayStr = new Date().toLocaleDateString('sv').slice(0, 10); // sv locale = YYYY-MM-DD local time
+  // 初始化日期選擇器（每次進記錄頁都重設為今天）
+  const picker = document.getElementById('stats-date-picker');
+  if (picker) picker.value = todayStr;
+  const selectedDate = todayStr;
+  renderTodayStats(allHistory, allWords, allRecords, wordMap, recMap, selectedDate);
 
   // ── 累計統計 ──
   const total      = allWords.length;
@@ -3260,20 +3448,19 @@ async function selectMCOption(el, opt, word) {
     document.querySelectorAll('.option').forEach(o=>{
       if(o.textContent===word.translation) o.classList.add('correct');
     });
-    // Record wrong word
     if (!lastWrongWords.find(w=>w.id===word.id)) lastWrongWords.push(word);
-    // Show detail icon on wrong answer
     const btn = document.getElementById('mc-detail-btn');
     btn.style.display = 'inline-block';
-    // Subtle pulse animation
     btn.animate([
       {transform:'scale(1)',opacity:.5},
       {transform:'scale(1.3)',opacity:1},
       {transform:'scale(1)',opacity:.75}
     ], {duration:500, easing:'ease-out'});
   }
-  await recordAttempt(word.id, opt.correct, 'mc', word.word);
-  document.getElementById('mc-next').style.display = mcIdx < mcWords.length-1 ? 'inline-flex' : 'none';
+  try { await recordAttempt(word.id, opt.correct, 'mc', word.word); } catch(e) {}
+  // 顯示下一題或結束
+  const nextBtn = document.getElementById('mc-next');
+  if (nextBtn) nextBtn.style.display = mcIdx < mcWords.length-1 ? 'inline-flex' : 'none';
   if (mcIdx >= mcWords.length-1) setTimeout(showMCResult, 1200);
 }
 
@@ -3658,7 +3845,7 @@ async function startStudy() {
   studyUnknown = 0;
   studyFlipped = false;
   studyIsReview = false;
-  studyStartTime = new Date().toISOString();
+  studyStartTime = localISOString();
 
   const lists = await getAllLists();
   const session = {
@@ -3794,6 +3981,7 @@ async function renderStudyCard() {
   document.getElementById('study-front-pos').textContent = pos ? pos.toUpperCase() : '';
   document.getElementById('study-front-phonetic').textContent = phonetic ? `/${phonetic}/` : '';
   document.getElementById('study-back-pos').textContent = pos || '';
+  document.getElementById('study-back-phonetic').textContent = phonetic ? `/${phonetic}/` : '';
   document.getElementById('study-back-defs').textContent = defs || '';
 
   const exEl = document.getElementById('study-back-example');
@@ -3810,11 +3998,13 @@ async function renderStudyCard() {
 }
 
 function flipStudyCard() {
-  if (studyFlipped) return;
-  studyFlipped = true;
-  document.getElementById('study-card-inner').style.transform = 'rotateY(180deg)';
-  document.getElementById('study-flip-row').style.display = 'none';
-  document.getElementById('study-eval-row').style.display = 'block';
+  studyFlipped = !studyFlipped;
+  document.getElementById('study-card-inner').style.transform =
+    studyFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+  document.getElementById('study-flip-row').style.display =
+    studyFlipped ? 'none' : 'block';
+  document.getElementById('study-eval-row').style.display =
+    studyFlipped ? 'block' : 'none';
 }
 
 function evalStudy(known) {
@@ -3842,7 +4032,7 @@ function evalStudy(known) {
 }
 
 async function endStudySession() {
-  const endTime = new Date().toISOString();
+  const endTime = localISOString();
   const lastWord = studyQueue[studyQueue.length - 1];
   try {
     const sessions = await getAllStudySessions();
@@ -4523,7 +4713,9 @@ function openAddWordModal() {
 async function openImportModal() {
   const lists = await getAllLists();
   const sel = document.getElementById('import-list-sel');
-  sel.innerHTML = lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+  sel.innerHTML =
+    `<option value="__txt__">📄 使用 TXT 檔名建立新清單</option>` +
+    lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
   if (activeListId) sel.value = activeListId;
   openModal('modal-import');
 }
@@ -5027,7 +5219,7 @@ async function copyWrongToList(scope) {
   let filtered = allHistory.filter(h => h.is_correct === 0);
 
   if (scope === 'today') {
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = new Date().toLocaleDateString('sv').slice(0, 10); // sv locale = YYYY-MM-DD local time
     filtered = filtered.filter(h => h.timestamp?.slice(0, 10) === todayStr);
   }
 
