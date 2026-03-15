@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v2.0 – 智慧單字學習</title>
+<title>WordFun v2.1 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1092,10 +1092,9 @@ nav {
         <div style="margin-bottom:10px">
           <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">模型</label>
           <select id="gemini-model" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem">
-            <option value="gemini-2.0-flash">gemini-2.0-flash（免費・每日 1500 次）</option>
             <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite（免費・最快）</option>
-            <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview（免費・較慢）</option>
-            <option value="gemini-2.5-pro-preview-05-06">gemini-2.5-pro-preview（高品質）</option>
+            <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview（免費・均衡）</option>
+            <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro-preview（高品質）</option>
           </select>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="testAI('gemini')" style="font-size:.78rem">🧪 測試連線</button>
@@ -1430,7 +1429,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v2.0';
+const APP_VERSION = 'v2.1';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1615,7 +1614,7 @@ function saveAISettings() {
   const settings = {
     provider,
     geminiKey:      document.getElementById('gemini-key')?.value.trim()     || '',
-    geminiModel:    document.getElementById('gemini-model')?.value           || 'gemini-2.0-flash',
+    geminiModel:    document.getElementById('gemini-model')?.value           || 'gemini-2.0-flash-lite',
     claudeKey:      document.getElementById('claude-key')?.value.trim()     || '',
     claudeModel:    document.getElementById('claude-model')?.value           || 'claude-haiku-4-5-20251001',
     deepseekKey:    document.getElementById('deepseek-key')?.value.trim()   || '',
