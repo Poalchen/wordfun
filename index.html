@@ -1432,7 +1432,7 @@ nav {
 // ═══════════════════════════════════════
 // DB (IndexedDB – mirrors SQLite schema)
 // ═══════════════════════════════════════
-const APP_VERSION = 'v2.5';
+const APP_VERSION = 'v2.7';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2057,7 +2057,7 @@ function speakWord() {
       const utter = new SpeechSynthesisUtterance(word);
       utter.lang = 'en-US';
       utter.rate = 0.9;
-      // 等語音清單載入
+      utter.volume = 1;
       const trySpeak = () => {
         const voices = window.speechSynthesis.getVoices();
         const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService)
@@ -2075,14 +2075,40 @@ function speakWord() {
     } catch(e) {}
   }
 
-  // 方法2：Google Dictionary TTS（任何環境可用）
+  // 方法2：Google Dictionary TTS + Web Audio 放大
   try {
-    const audio = new Audio(`https://ssl.gstatic.com/dictionary/static/sounds/oxford/${encodeURIComponent(word.toLowerCase())}.mp3`);
-    audio.onerror = () => {
-      // 方法3：開啟 Google 字典發音頁
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
-    };
-    audio.play();
+    const url = `https://ssl.gstatic.com/dictionary/static/sounds/oxford/${encodeURIComponent(word.toLowerCase())}.mp3`;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      fetch(url)
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+          const ctx = new AudioCtx();
+          ctx.decodeAudioData(buf, decoded => {
+            const source = ctx.createBufferSource();
+            const gain   = ctx.createGain();
+            gain.gain.value = 6.0; // 放大 6 倍
+            source.buffer = decoded;
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            source.start(0);
+          });
+        })
+        .catch(() => {
+          // fetch 失敗（CORS），改用 Audio 元素
+          const audio = new Audio(url);
+          audio.volume = 1.0;
+          audio.play().catch(() => {
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
+          });
+        });
+    } else {
+      const audio = new Audio(url);
+      audio.volume = 1.0;
+      audio.play().catch(() => {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
+      });
+    }
   } catch(e) {
     window.open(`https://www.google.com/search?q=${encodeURIComponent(word)}+pronunciation`, '_blank');
   }
