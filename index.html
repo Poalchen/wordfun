@@ -185,9 +185,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 
 /* ── CLOZE ── */
 .story-text{
-  font-size:1rem;line-height:1.9;background:#f9f8f6;
+  font-size:1.15rem;line-height:2.0;background:#f9f8f6;
   border-radius:12px;padding:20px;margin-bottom:20px;
   border:1px solid var(--border);
+  font-family:'Calibri','Calibri Light',Candara,Arial,sans-serif;
 }
 .blank-select{
   display:inline-block;width:auto;padding:2px 8px;min-width:100px;
@@ -816,11 +817,15 @@ nav {
   </div>
 
   <div id="practice-cloze" class="practice-wrap" style="display:none">
-    <div id="cloze-loading" class="loading-row"><span class="spinner"></span> AI 正在生成克漏字故事…</div>
+    <div id="cloze-loading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px">
+      <span class="spinner" style="width:36px;height:36px;border-width:4px"></span>
+      <div style="font-size:1rem;color:var(--muted)">AI 正在生成克漏字故事…</div>
+      <div style="font-size:.78rem;color:var(--muted)">通常需要 5~15 秒，請稍候</div>
+    </div>
     <div id="cloze-content" style="display:none">
       <div class="card card-body">
         <h3 style="margin-bottom:14px;font-size:1rem">閱讀故事並填入正確單字</h3>
-        <div class="story-text" id="cloze-story"></div>
+        <div class="story-text" id="cloze-story" style="line-height:2.8;word-break:break-word"></div>
         <div id="cloze-btn-row" style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn btn-green" onclick="submitCloze()">✓ 提交答案</button>
           <button class="btn btn-ghost btn-sm" onclick="endPractice()">結束練習</button>
@@ -831,6 +836,13 @@ nav {
           <div id="cloze-wrong-section" style="display:none">
             <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">答錯的單字</div>
             <div id="cloze-wrong-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+          </div>
+          <!-- 文章複習 + 中文翻譯 -->
+          <div id="cloze-full-story-section" style="display:none;margin-bottom:16px">
+            <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">📖 完整文章（點任一單字查意義）</div>
+            <div id="cloze-full-story" style="font-family:'Calibri','Calibri Light',Candara,Arial,sans-serif;font-size:1.1rem;line-height:2.2;padding:16px;background:#f9f8f6;border-radius:10px;border:1px solid var(--border);margin-bottom:10px"></div>
+            <div style="font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">🀄 中文翻譯</div>
+            <div id="cloze-zh-story" style="font-size:1rem;line-height:1.9;padding:14px;background:#f0f6ff;border-radius:10px;border:1px solid #bfdbfe;color:var(--fg)"></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="endPractice()">返回練習模式</button>
@@ -1515,7 +1527,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v6.4';
+const APP_VERSION = 'v8.1';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1919,6 +1931,7 @@ function getApiKey() { return 'built-in'; }
 let activeListId = null;
 let mcWords = [], mcIdx = 0, mcScore = 0, mcAnswered = false, mcCurrentWord = null;;
 let clozeData = null, clozeWordIds = [], clozeWords = [];
+let vocabWords = [], vocabIdx = 0, vocabScore = 0, vocabAnswered = false, vocabAllWords = [];
 
 // ── 學習模式狀態 ──
 let studyListId     = null;
@@ -3159,6 +3172,24 @@ function stopBatchCache() {
 // ═══════════════════════════════════════
 let currentDetailWord = null;
 
+async function showWordDetailDictOnly(word) {
+  const result = await lookupWordDictOnly(word);
+  if (result) {
+    // 有字典結果，直接顯示
+    showWordDetail(word, null);
+  } else {
+    // 查無結果，顯示 modal 但說明無資料
+    currentDetailWord = word;
+    document.getElementById('detail-word').textContent = word;
+    document.getElementById('detail-phonetic').textContent = '';
+    document.getElementById('detail-pos').textContent = '';
+    document.getElementById('detail-back-phonetic') && (document.getElementById('study-back-phonetic').textContent = '');
+    document.getElementById('detail-body').innerHTML =
+      `<p style="color:var(--muted);font-size:.85rem">字典中找不到「${word}」的資料。<br>請先上傳字典檔案，或在設定頁啟用 AI。</p>`;
+    openModal('modal-detail');
+  }
+}
+
 async function showWordDetail(word, callerModalId) {
   currentDetailWord = word;
   document.getElementById('detail-word').textContent = word;
@@ -3383,6 +3414,188 @@ async function startPractice() {
   }
 }
 
+async function renderCloze(words, allWords) {
+  clozeWords   = words;
+  clozeWordIds = words.map(w => w.id);
+  document.getElementById('cloze-loading').style.display  = 'block';
+  document.getElementById('cloze-content').style.display  = 'none';
+  document.getElementById('cloze-result-section').style.display = 'none';
+
+  const wordList = words.map(w => w.word).join(', ');
+  const prompt = `Write a short English passage (80-120 words) using these words naturally: ${wordList}.
+Replace each of these words with a blank "___" in the passage.
+Return ONLY valid JSON: {"story":"passage with blanks","blanks":[{"word":"...","hint":"Chinese meaning"}]}
+No markdown.`;
+
+  try {
+    // 30 秒 timeout
+    const raw = await Promise.race([
+      callAI(prompt),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('AI 回應逾時，請重試')), 30000))
+    ]);
+    const clean = raw.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim();
+    const s = clean.indexOf('{'), e2 = clean.lastIndexOf('}');
+    clozeData = JSON.parse(clean.slice(s, e2+1));
+  } catch(err) {
+    console.error('renderCloze error:', err);
+    // Fallback: use word translation as hints
+    clozeData = {
+      story: words.map(w => `Please use <b>${w.word}</b> in a sentence. ___`).join(' '),
+      blanks: words.map(w => ({ word: w.word, hint: w.translation || '' }))
+    };
+    toast('AI 生成失敗，使用備用模式');
+  }
+
+  // Render story with input blanks
+  let story = clozeData.story || '';
+  let blankIdx = 0;
+  const blankArr = clozeData.blanks || [];
+  // 建立干擾選項池（從 allWords 取，排除所有答案）
+  const answerWords = new Set(blankArr.map(b => (b.word||'').toLowerCase()));
+  const distractorPool = (allWords || clozeWords)
+    .filter(w => !answerWords.has(w.word.toLowerCase()) && w.word.trim());
+
+  // 全域已用干擾集合（確保每題干擾不重複）
+  const globalUsedDistractors = new Set(answerWords);
+
+  blankIdx = 0;
+  story = story.replace(/___/g, () => {
+    const b = blankArr[blankIdx] || {};
+    const answer = (b.word || '').toLowerCase();
+
+    // 每題重新打亂取 4 個未用過的干擾
+    const shuffledPool = [...distractorPool].sort(() => Math.random() - .5);
+    const distractors = [];
+    for (const w of shuffledPool) {
+      const wl = w.word.toLowerCase();
+      if (!globalUsedDistractors.has(wl)) {
+        globalUsedDistractors.add(wl);
+        distractors.push(w.word);
+        if (distractors.length >= 4) break;
+      }
+    }
+    // 若干擾不足 4 個，從 pool 補（可重複）
+    if (distractors.length < 4) {
+      for (const w of shuffledPool) {
+        if (!distractors.includes(w.word) && w.word.toLowerCase() !== answer) {
+          distractors.push(w.word);
+          if (distractors.length >= 4) break;
+        }
+      }
+    }
+
+    // 5 個選項打亂
+    const options = [b.word, ...distractors].filter(Boolean).sort(() => Math.random() - .5);
+    const optionsHtml = `<option value="">── 選擇 ──</option>` +
+      options.map(o => `<option value="${o.toLowerCase()}">${o}</option>`).join('');
+
+    blankIdx++;
+    return `<select class="cloze-input" data-answer="${answer}"
+      style="display:inline-block;margin:0 4px;padding:3px 6px;border:2px solid var(--accent);border-radius:6px;font-size:.9rem;background:var(--surface);color:var(--fg);cursor:pointer;vertical-align:middle;max-width:160px">
+      ${optionsHtml}
+    </select>`;
+  });
+
+  document.getElementById('cloze-story').innerHTML = story;
+  document.getElementById('cloze-loading').style.display = 'none';
+  document.getElementById('cloze-content').style.display = 'block';
+}
+
+function submitCloze() {
+  const inputs = document.querySelectorAll('.cloze-input');
+  let correct = 0, wrong = 0;
+  lastWrongWords = [];
+
+  inputs.forEach(inp => {
+    const ans    = (inp.value || '').trim().toLowerCase();
+    const expect = (inp.dataset.answer || '').toLowerCase();
+    if (ans === expect) {
+      inp.style.borderColor = 'var(--green)';
+      inp.style.background  = '#f0fdf4';
+      inp.style.color = 'var(--green)';
+      correct++;
+    } else {
+      // 換成正確答案文字顯示
+      const correctWord = (clozeData?.blanks||[]).find(b => (b.word||'').toLowerCase() === expect);
+      const correctText = correctWord?.word || expect;
+      const span = document.createElement('span');
+      span.style.cssText = 'display:inline-block;margin:0 4px;padding:3px 10px;border:2px solid var(--accent);border-radius:6px;font-size:.9rem;color:#dc2626;background:#fee2e2;vertical-align:middle;font-weight:600';
+      span.textContent = correctText;
+      inp.parentNode.replaceChild(span, inp);
+      wrong++;
+      const wordObj = clozeWords.find(w => w.word.toLowerCase() === expect);
+      if (wordObj && !lastWrongWords.find(w => w.id === wordObj.id)) lastWrongWords.push(wordObj);
+    }
+    if (inp.parentNode) inp.disabled = true;
+  });
+
+  // Record attempts
+  clozeWords.forEach(w => {
+    const inp = [...inputs].find(i => i.dataset.answer === w.word.toLowerCase());
+    const isCorrect = inp && inp.value.trim().toLowerCase() === w.word.toLowerCase();
+    try { recordAttempt(w.id, isCorrect, 'cloze', w.word); } catch(e) {}
+  });
+
+  const total = inputs.length;
+  const pct   = total > 0 ? Math.round(correct / total * 100) : 0;
+  const summary = document.getElementById('cloze-result-summary');
+  summary.textContent = `答對 ${correct} / ${total}，正確率 ${pct}%`;
+  summary.style.color = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--accent)';
+
+  const wrongSection = document.getElementById('cloze-wrong-section');
+  const wrongList    = document.getElementById('cloze-wrong-list');
+  if (lastWrongWords.length && wrongList) {
+    wrongSection.style.display = 'block';
+    wrongList.innerHTML = lastWrongWords.map(w =>
+      `<span onclick="showWordDetail('${w.word.replace(/'/g,"\\'")}',null)"
+        style="padding:5px 12px;background:#fee2e2;border-radius:20px;color:#991b1b;font-size:.85rem;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="font-weight:600">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#b91c1c">${s2t(w.translation)}</span>` : ''}
+      </span>`
+    ).join('');;
+  } else if (wrongSection) {
+    wrongSection.style.display = 'none';
+  }
+
+  document.getElementById('cloze-btn-row').style.display = 'none';
+  document.getElementById('cloze-result-section').style.display = 'block';
+
+  const fullStorySection = document.getElementById('cloze-full-story-section');
+  const fullStoryEl      = document.getElementById('cloze-full-story');
+  const zhStoryEl        = document.getElementById('cloze-zh-story');
+
+  if (fullStoryEl && clozeData?.story) {
+    fullStorySection.style.display = 'block';
+
+    // 重建純文字版（空格換回正確單字）
+    const blanksCopy = [...(clozeData.blanks||[])];
+    let bi = 0;
+    const cleanStory = clozeData.story.replace(/___/g, () => blanksCopy[bi++]?.word || '___');
+
+    // 把每個英文單字都變成可點擊的 span
+    const practiceSet = new Set(clozeWords.map(w => w.word.toLowerCase()));
+    const wordHtml = cleanStory.replace(/([a-zA-Z]+(?:[-'][a-zA-Z]+)*)/g, (word) => {
+      const isPractice = practiceSet.has(word.toLowerCase());
+      if (isPractice) {
+        return `<span onclick="showWordDetail('${word.replace(/'/g,"\\'")}',null)" style="color:#1d4ed8;font-weight:700;cursor:pointer;border-bottom:2px solid #93c5fd">${word}</span>`;
+      } else {
+        return `<span onclick="showWordDetailDictOnly('${word.replace(/'/g,"\\'")}',null)" style="color:var(--fg);cursor:pointer;border-bottom:1px dashed #d1d5db">${word}</span>`;
+      }
+    });
+    fullStoryEl.innerHTML = wordHtml;
+
+    // AI 翻譯整篇
+    if (zhStoryEl) {
+      zhStoryEl.innerHTML = '<span style="color:var(--muted);font-size:.85rem">翻譯中…</span>';
+      callAI(`請將以下英文短文翻譯成自然流暢的繁體中文，只輸出譯文，不需任何說明：\n\n${cleanStory}`)
+        .then(zh => { zhStoryEl.innerHTML = s2t(zh); })
+        .catch(() => { zhStoryEl.innerHTML = '<span style="color:var(--muted)">翻譯失敗</span>'; });
+    }
+  }
+
+  refreshHome();
+}
+
 async function startMC(allWords, practicePool) {
   lastWrongWords = [];
   const pool = practicePool || allWords;
@@ -3526,8 +3739,11 @@ async function startCloze(allWords, practicePool) {
   const shuffled = [...pool].sort(() => Math.random() - .5);
   const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
   const words = shuffled.slice(0, n);
-  document.getElementById('practice-setup').style.display = 'none';
+
+  // 先顯示 cloze div（含 loading），再隱藏 setup
   document.getElementById('practice-cloze').style.display = 'block';
+  document.getElementById('practice-setup').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   await renderCloze(words, allWords);
 }
 
@@ -4108,6 +4324,7 @@ async function startSpell(words) {
   spellIdx = 0; spellScore = 0;
   document.getElementById('practice-setup').style.display = 'none';
   document.getElementById('practice-spell').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   renderSpellQuestion();
 }
 
@@ -4336,9 +4553,10 @@ async function startVocab(allWords, practicePool) {
   const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
   vocabWords = shuffled.slice(0, n);
   vocabIdx = 0; vocabScore = 0; vocabAnswered = false;
+  document.getElementById('practice-setup').style.display = 'none';
   document.getElementById('practice-vocab').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // 預載第一題（同時在背景預載第二題）
   await renderVocabQuestion();
   if (vocabWords.length > 1) _prefetchVocab(1);
 }
@@ -4430,7 +4648,7 @@ async function renderVocabQuestion() {
   sentBox.innerHTML = renderedSentences.map((s, i) =>
     `<div style="margin-bottom:${i < renderedSentences.length-1 ? '10px' : '0'}">`
     + `<div style="font-size:.95rem">${s.en}</div>`
-    + (s.zh ? `<div class="vocab-zh" style="font-size:.78rem;color:var(--muted);margin-top:2px;display:none">${s.zh}</div>` : '')
+    + (s.zh ? `<div class="vocab-zh" style="font-size:.78rem;color:var(--muted);margin-top:2px;display:none">${s2t(s.zh)}</div>` : '')
     + `</div>`
   ).join('');
 
@@ -4551,7 +4769,7 @@ async function getVocabSentences(word) {
       const detail = typeof cached.detail_json === 'string'
         ? JSON.parse(cached.detail_json) : cached.detail_json;
       if (detail?.examples?.length) {
-        return detail.examples.slice(0, 1).map(e => ({ en: e.en, zh: e.zh }));
+        return detail.examples.slice(0, 1).map(e => ({ en: e.en, zh: s2t(e.zh || '') }));
       }
     } catch(e) {}
   }
@@ -4567,7 +4785,7 @@ async function getVocabSentences(word) {
         if (parsed?.examples?.length) {
           // 存入快取，下次直接命中
           await cacheWordDetail(word.word, JSON.stringify(parsed));
-          return parsed.examples.slice(0, 1).map(e => ({ en: e.en, zh: e.zh }));
+          return parsed.examples.slice(0, 1).map(e => ({ en: e.en, zh: s2t(e.zh || '') }));
         }
         // 字典有此字但無例句 → 繼續往下用 AI 補
       }
@@ -5866,6 +6084,35 @@ function parseDictEntry(html, word) {
 }
 
 // ── Main lookup function: dict first, AI fills gaps ────────────────────
+// 只查快取 + 字典，不呼叫 AI（用於克漏字故事單字點擊）
+async function lookupWordDictOnly(word) {
+  // 1. 快取
+  const cached = await getCachedDetail(word);
+  if (cached?.detail_json) {
+    try {
+      const detail = typeof cached.detail_json === 'string'
+        ? JSON.parse(cached.detail_json) : cached.detail_json;
+      if (detail?.definitions_zh?.length) return JSON.stringify(detail);
+    } catch(e) {}
+  }
+  // 2. 字典
+  const dictId = getActiveDictId();
+  if (dictId) {
+    try {
+      const dict = await ensureDictLoaded(dictId, null);
+      const rawHtml = await mdxLookup(dict, word);
+      if (rawHtml) {
+        const dictResult = parseDictEntry(rawHtml, word);
+        if (dictResult?.definitions_zh?.length) {
+          await cacheWordDetail(word, JSON.stringify(dictResult));
+          return JSON.stringify(dictResult);
+        }
+      }
+    } catch(e) {}
+  }
+  return null; // 查無結果
+}
+
 async function lookupWord(word) {
   // ── 1. 先查快取（最快，不耗 AI）──
   const cached = await getCachedDetail(word);
