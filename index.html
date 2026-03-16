@@ -486,7 +486,9 @@ nav {
 
     <div style="margin-bottom:18px">
       <div class="step-label">STEP 1 — 選擇單字庫</div>
-      <div id="study-list-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+      <div id="study-list-cards" style="display:none"></div>
+      <select id="study-list-sel" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--fg)" onchange="onStudyListChange(this.value)"></select>
+      <div id="study-scope-hint" style="font-size:.75rem;color:var(--muted);margin-top:8px;display:none;padding:6px 10px;background:var(--surface);border-radius:6px;border:1px solid var(--border)"></div>
     </div>
 
     <div style="margin-bottom:18px">
@@ -509,7 +511,7 @@ nav {
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="startStudy()" style="width:100%">開始學習 →</button>
+    <button class="btn btn-primary" id="study-start-btn" onclick="startStudy()" style="width:100%">開始學習 →</button>
 
     <div style="margin-top:24px">
       <div class="step-label">最近學習記錄</div>
@@ -611,6 +613,10 @@ nav {
       <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 匯入 .txt</button>
       <button class="btn btn-ghost btn-sm" onclick="startBatchCache()">⚡ 批量快取</button>
       <button class="btn btn-primary btn-sm" onclick="openAddListModal()">＋ 新增清單</button>
+      <button id="btn-rename-list" class="btn btn-ghost btn-sm" onclick="renameActiveList()"
+        style="color:#1d4ed8;background:#e0eaff;opacity:.4;pointer-events:none" title="先選擇單字庫再改名">✎ 改名</button>
+      <button id="btn-delete-list" class="btn btn-ghost btn-sm" onclick="deleteActiveList()"
+        style="color:#dc2626;background:#fee2e2;opacity:.4;pointer-events:none" title="先選擇單字庫再刪除">🗑 刪除</button>
     </div>
   </div>
 
@@ -645,6 +651,17 @@ nav {
             </div>
           </div>
         </div>
+      </div>
+      <!-- 單字庫統計列 -->
+      <div id="list-stats-bar" style="display:none;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:.8rem">
+        <span>📚 <b id="ls-total">0</b> 個單字</span>
+        <span style="color:var(--muted)">|</span>
+        <span>⭐ 未練過 <b id="ls-new" style="color:var(--accent)">0</b></span>
+        <span>✅ 已練過 <b id="ls-practiced" style="color:var(--green)">0</b></span>
+        <span>❌ 有錯誤 <b id="ls-wrong" style="color:#ef4444">0</b></span>
+        <span style="color:var(--muted)">|</span>
+        <span>🎯 正確率 <b id="ls-acc">—</b></span>
+        <span>🕐 最後練習 <b id="ls-last" style="color:var(--muted)">—</b></span>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto">
         <table class="word-table" style="min-width:400px">
@@ -701,9 +718,10 @@ nav {
       <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
         STEP 1 — 選擇單字庫
       </div>
-      <div id="practice-list-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
-      <!-- hidden select for compat -->
-      <select id="practice-list-sel" style="display:none"></select>
+      <div id="practice-list-cards" style="display:none"></div>
+      <!-- 下拉式單字庫選擇 -->
+      <select id="practice-list-sel" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--fg)" onchange="onPracticeListChange(this.value)"></select>
+      <div id="scope-hint" style="font-size:.75rem;color:var(--muted);margin-top:8px;display:none;padding:6px 10px;background:var(--surface);border-radius:6px;border:1px solid var(--border)"></div>
     </div>
 
     <!-- Step 2: 選擇模式 -->
@@ -766,7 +784,6 @@ nav {
         <div class="count-card"          data-scope="imperfect" onclick="selectScope(this)">📈 未全對</div>
         <div class="count-card"          data-scope="last-study" onclick="selectScope(this)">📖 最近學習</div>
       </div>
-      <div id="scope-hint" style="font-size:.75rem;color:var(--muted);margin-top:8px;display:none"></div>
     </div>
 
     <button class="btn btn-primary" onclick="startPractice()" style="width:100%;padding:14px;font-size:.95rem" id="start-btn" disabled>
@@ -921,7 +938,7 @@ nav {
       <button class="btn btn-ghost btn-sm" onclick="clearAllCache()" style="color:var(--accent)">🗑 清除全部</button>
     </div>
   </div>
-  <div id="cache-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+  <div id="cache-list" style="background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>
   <div id="cache-empty" style="display:none;text-align:center;padding:60px;color:var(--muted);font-size:.85rem">尚無快取單字，點擊單字後 AI 分析結果將自動儲存。</div>
 </div>
 
@@ -1498,7 +1515,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v4.3';
+const APP_VERSION = 'v6.4';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1900,8 +1917,22 @@ function getApiKey() { return 'built-in'; }
 // UI STATE
 // ═══════════════════════════════════════
 let activeListId = null;
-let mcWords = [], mcIdx = 0, mcScore = 0, mcAnswered = false;
+let mcWords = [], mcIdx = 0, mcScore = 0, mcAnswered = false, mcCurrentWord = null;;
 let clozeData = null, clozeWordIds = [], clozeWords = [];
+
+// ── 學習模式狀態 ──
+let studyListId     = null;
+let studyMode       = 'all';      // all | new | unknown | continue
+let studyCount      = 5;          // 預設 5 個
+let studyQueue      = [];
+let studyReviewQueue = [];
+let studyIdx        = 0;
+let studyKnown      = 0;
+let studyUnknown    = 0;
+let studyFlipped    = false;
+let studyIsReview   = false;
+let studyStartTime  = null;
+let studySessionId  = null;
 
 // ═══════════════════════════════════════
 // NAV
@@ -1981,9 +2012,7 @@ async function renderLists() {
     const studySessions = await getStudySessionsForList(l.id);
     const lastStudy = studySessions[studySessions.length-1];
     div.innerHTML = `
-      <button class="del" onclick="event.stopPropagation();deleteList(${l.id})">刪除</button>
-      <button class="del" style="right:46px;background:#e0eaff;color:#1d4ed8" onclick="event.stopPropagation();renameList(${l.id},'${l.name.replace(/'/g,"\\'").replace(/`/g,'\\`')}')">改名</button>
-      <h3>${l.name}</h3>
+      <h3 style="padding-right:0;margin-bottom:4px">${l.name}</h3>
       <div class="wc">${wordCounts[l.id]} 個單字</div>
       <div class="wc" style="margin-top:4px;color:var(--accent2)">
         📖 學習 ${studySessions.length} 次${lastStudy ? '・' + fmtDate(lastStudy.started_at) : ''}
@@ -2004,8 +2033,63 @@ async function selectList(id, name) {
   activeListId = id;
   document.getElementById('word-section').style.display = 'block';
   document.getElementById('active-list-name').textContent = name;
+
+  // 啟用頂部改名/刪除按鈕
+  const btnRename = document.getElementById('btn-rename-list');
+  const btnDelete = document.getElementById('btn-delete-list');
+  if (btnRename) { btnRename.style.opacity = '1'; btnRename.style.pointerEvents = ''; }
+  if (btnDelete) { btnDelete.style.opacity = '1'; btnDelete.style.pointerEvents = ''; }
+
   renderLists();
   loadWords();
+  updateListStatsBar(id);
+}
+
+function renameActiveList() {
+  if (!activeListId) { toast('請先選擇單字庫'); return; }
+  const name = document.getElementById('active-list-name').textContent;
+  renameList(activeListId, name);
+}
+
+function deleteActiveList() {
+  if (!activeListId) { toast('請先選擇單字庫'); return; }
+  deleteList(activeListId);
+}
+
+async function updateListStatsBar(listId) {
+  const bar = document.getElementById('list-stats-bar');
+  if (!bar) return;
+  bar.style.display = 'flex';
+
+  const words   = await getWordsForList(listId);
+  const allRecs = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror   = () => res([]);
+  });
+  const recMap = {};
+  allRecs.forEach(r => recMap[r.word_id] = r);
+
+  const total     = words.length;
+  const practiced = words.filter(w => (recMap[w.id]?.practice_count || 0) > 0).length;
+  const newCount  = total - practiced;
+  const wrong     = words.filter(w => (recMap[w.id]?.error_count || 0) > 0).length;
+
+  // 正確率
+  const totalAtt = words.reduce((s,w) => s + (recMap[w.id]?.practice_count||0), 0);
+  const totalErr = words.reduce((s,w) => s + (recMap[w.id]?.error_count||0), 0);
+  const acc      = totalAtt > 0 ? Math.round((totalAtt - totalErr) / totalAtt * 100) + '%' : '—';
+
+  // 最後練習時間
+  const lastTimes = words.map(w => recMap[w.id]?.last_practice_time).filter(Boolean).sort();
+  const lastStr   = lastTimes.length ? fmtDate(lastTimes[lastTimes.length-1]) : '尚未練習';
+
+  document.getElementById('ls-total').textContent     = total;
+  document.getElementById('ls-new').textContent       = newCount;
+  document.getElementById('ls-practiced').textContent = practiced;
+  document.getElementById('ls-wrong').textContent     = wrong;
+  document.getElementById('ls-acc').textContent       = acc;
+  document.getElementById('ls-last').textContent      = lastStr;
 }
 
 // ── 單字排序狀態 ──
@@ -2469,7 +2553,7 @@ async function runImport() {
             if (rawHtml) {
               const parsed2 = parseDictEntry(rawHtml, w.word);
               if (parsed2?.definitions_zh?.length) {
-                w.translation = parsed2.definitions_zh[0].replace(/^[（(][^）)]*[）)]\s*/, '').slice(0, 40);
+                w.translation = s2t(parsed2.definitions_zh[0].replace(/^[（(][^）)]*[）)]\s*/, '').slice(0, 40));
               }
             }
           } catch(e) {}
@@ -2484,7 +2568,7 @@ async function runImport() {
       try {
         const translated = await batchTranslateAI(stillNoTrans.map(w => w.word));
         const map = {};
-        translated.forEach(t => map[t.word.toLowerCase()] = t.translation);
+        translated.forEach(t => map[t.word.toLowerCase()] = s2t(t.translation || ''));
         stillNoTrans.forEach(w => { w.translation = map[w.word.toLowerCase()] || ''; });
       } catch(e) { toast('AI 翻譯失敗，繼續匯入'); }
     }
@@ -2569,18 +2653,30 @@ function renderCacheList(items) {
   container.innerHTML = '';
   if (!items.length) { empty.style.display='block'; return; }
   empty.style.display = 'none';
-  items.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'cache-card';
-    div.innerHTML = `
-      <button class="cc-del" onclick="event.stopPropagation();deleteCacheItem('${item.lsKey}','${item.word}')">✕</button>
-      <div class="cc-word">${item.word}</div>
-      <div class="cc-pos">${item.pos}</div>
-      <div class="cc-def">${item.def || '（點擊查看詳細）'}</div>
-      <div class="cc-date">快取於 ${item.date}</div>
+
+  // 表頭
+  const header = document.createElement('div');
+  header.style.cssText = 'display:grid;grid-template-columns:1fr 1.8fr 2.5fr auto;gap:0;padding:8px 14px;font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--surface)';
+  header.innerHTML = '<span>單字</span><span>詞性 / 翻譯</span><span>定義</span><span>快取日期</span>';
+  container.appendChild(header);
+
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:grid;grid-template-columns:1fr 1.8fr 2.5fr auto;gap:0;padding:10px 14px;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s${i % 2 === 0 ? '' : ';background:var(--surface)'}`;
+    row.onmouseover = () => row.style.background = 'var(--light, #f0f6ff)';
+    row.onmouseout  = () => row.style.background = i % 2 === 0 ? '' : 'var(--surface)';
+    row.innerHTML = `
+      <span style="font-weight:600;color:var(--blue,#2563eb);font-size:.88rem">${item.word}</span>
+      <span style="font-size:.78rem;color:var(--muted)">${item.pos ? `<span style="background:#f3f4f6;padding:1px 6px;border-radius:4px;margin-right:4px">${item.pos}</span>` : ''}${s2t(item.def?.split('；')[0] || '')}</span>
+      <span style="font-size:.78rem;color:var(--fg);line-height:1.5">${s2t(item.def || '（點擊查看詳細）').slice(0,60)}${(item.def||'').length>60?'…':''}</span>
+      <span style="display:flex;align-items:center;gap:8px;white-space:nowrap">
+        <span style="font-size:.72rem;color:var(--muted)">${item.date}</span>
+        <button onclick="event.stopPropagation();deleteCacheItem('${item.lsKey}','${item.word}')"
+          style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:.9rem;padding:2px 4px;border-radius:4px" title="刪除快取">✕</button>
+      </span>
     `;
-    div.onclick = () => showWordDetail(item.word);
-    container.appendChild(div);
+    row.onclick = () => showWordDetail(item.word);
+    container.appendChild(row);
   });
 }
 
@@ -3233,141 +3329,70 @@ function selectCount(el) {
   selectedPracticeCount = +el.dataset.n;  // 0 = 全部
 }
 
-async function populatePracticeList() {
-  const lists = await getAllLists();
-  // update hidden select
-  const sel = document.getElementById('practice-list-sel');
-  sel.innerHTML = lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
-
-  const container = document.getElementById('practice-list-cards');
-  if (!lists.length) {
-    container.innerHTML = '<p style="color:var(--muted);font-size:.83rem;grid-column:1/-1">尚無單字庫，請先到「單字庫」建立清單。</p>';
-    return;
-  }
-
-  container.innerHTML = '';
-  for (const l of lists.sort((a,b)=>b.id-a.id)) {
-    const words = await getWordsForList(l.id);
-    const div = document.createElement('div');
-    div.className = 'plist-card' + (selectedPracticeListId===l.id ? ' selected' : '');
-    div.dataset.listId = l.id;
-    div.innerHTML = `
-      <span class="pl-check">✓</span>
-      <div class="pl-name">${l.name}</div>
-      <div class="pl-count">${words.length} 個單字</div>
-    `;
-    div.onclick = () => {
-      document.querySelectorAll('.plist-card').forEach(c=>c.classList.remove('selected'));
-      div.classList.add('selected');
-      selectedPracticeListId = l.id;
-      sel.value = l.id;
-      const wc = words.length;
-      const newCount  = words.filter(w=>!w.practice_count||w.practice_count===0).length;
-      const errCount  = words.filter(w=>w.error_count>0).length;
-      const impCount  = words.filter(w=>!w.practice_count||w.error_count>0).length;
-      const hint = document.getElementById('scope-hint');
-      hint.style.display = 'block';
-      hint.innerHTML = `共 ${wc} 字　⭐ 未練 <b>${newCount}</b>　❌ 有錯 <b>${errCount}</b>　📈 未全對 <b>${impCount}</b>`;
-      const btn = document.getElementById('start-btn');
-      btn.disabled = wc < 1;
-      btn.textContent = wc < 1
-        ? `⚠ 此清單沒有單字`
-        : `開始練習「${l.name}」🚀`;
-    };
-    container.appendChild(div);
-  }
-
-  // Auto-select list
-  if (!selectedPracticeListId && lists.length) {
-    container.firstChild?.click();
-  } else if (selectedPracticeListId) {
-    // 選中對應的卡片
-    const target = container.querySelector(`[data-list-id="${selectedPracticeListId}"]`);
-    if (target) target.click();
-  }
-  // 若有指定 scope，更新 scope 卡片狀態
-  if (selectedScope && selectedScope !== 'all') {
-    document.querySelectorAll('#scope-cards .count-card').forEach(el => {
-      el.classList.toggle('selected', el.dataset.scope === selectedScope);
-    });
-  }
-}
+let selectedMode = 'mc'; // default mode
 
 function selectMode(el) {
-  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  document.getElementById('practice-mode-sel').value = el.dataset.mode;
+  selectedMode = el.dataset.mode;
 }
 
 async function startPractice() {
   const listId = selectedPracticeListId || +document.getElementById('practice-list-sel').value;
-  const mode   = document.getElementById('practice-mode-sel').value;
   if (!listId) { toast('請先選擇單字庫'); return; }
 
   const allWords = await getWordsForList(listId);
-  if (!allWords.length) { toast('此清單沒有單字'); return; }
+  if (!allWords.length) { toast('此單字庫沒有單字'); return; }
 
-  // Apply scope filter
-  let words = allWords;
+  // 取練習記錄
+  const allRecs = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror   = () => res([]);
+  });
+  const recMap = {};
+  allRecs.forEach(r => recMap[r.word_id] = r);
+
+  // 依 scope 篩選練習池
+  let pool = [...allWords];
   if (selectedScope === 'new') {
-    words = allWords.filter(w => !w.practice_count || w.practice_count === 0);
-    if (!words.length) { toast('此清單沒有未練過的單字 🎉'); return; }
+    pool = allWords.filter(w => !(recMap[w.id]?.practice_count > 0));
   } else if (selectedScope === 'wrong') {
-    words = allWords.filter(w => w.error_count > 0);
-    if (!words.length) { toast('此清單沒有答錯過的單字 🎉'); return; }
+    pool = allWords.filter(w => recMap[w.id]?.error_count > 0);
   } else if (selectedScope === 'imperfect') {
-    words = allWords.filter(w => {
-      if (!w.practice_count) return true;  // 未練過也算
-      return w.error_count > 0;            // 有錯誤 = 未全對
-    });
-    if (!words.length) { toast('此清單所有單字都已全對！🎉'); return; }
+    pool = allWords.filter(w => !(recMap[w.id]?.practice_count > 0) || recMap[w.id]?.error_count > 0);
   } else if (selectedScope === 'last-study') {
-    // 取最近一次學習 session 的單字
-    const sessions = await getStudySessionsForList(listId);
-    if (!sessions.length) { toast('此清單尚無學習記錄，請先使用學習功能'); return; }
-    const last = sessions[sessions.length - 1];
-    const lastIds = new Set(last.word_ids || []);
-    words = allWords.filter(w => lastIds.has(w.id));
-    if (!words.length) { toast('找不到最近學習的單字'); return; }
-  }
-
-  if (words.length < 4) {
-    // 單字不足 4 個時，從全部單字補足（MC 需要 4 個選項）
-    const mode = document.getElementById('practice-mode-sel').value;
-    if (mode === 'mc' || mode === 'vocab') {
-      // 從 allWords 補充不在 words 裡的單字
-      const wordIds = new Set(words.map(w => w.id));
-      const extras = allWords.filter(w => !wordIds.has(w.id));
-      const needed = 4 - words.length;
-      words = [...words, ...extras.sort(() => Math.random() - .5).slice(0, needed)];
-      if (words.length < 4) {
-        toast(`單字庫不足 4 個單字，無法進行此練習模式`);
-        return;
-      }
-      toast(`符合條件的單字只有 ${words.length - needed} 個，已補充 ${needed} 個單字`);
+    if (studyQueue.length > 0) {
+      const studiedIds = new Set(studyQueue.map(w => w.id));
+      pool = allWords.filter(w => studiedIds.has(w.id));
     }
-    // 其他模式（spell/cloze）不需要 4 個，直接繼續
+    if (!pool.length) pool = [...allWords];
   }
 
-  document.getElementById('practice-setup').style.display='none';
-  document.getElementById('practice-result').style.display='none';
+  if (!pool.length) { toast('此範圍沒有符合的單字'); return; }
 
-  if (mode === 'mc')    await startMC(allWords, words);
-  else if (mode === 'cloze') await startCloze(words);
-  else if (mode === 'vocab') await startVocab(allWords, words);
-  else if (mode === 'spell') await startSpell(words);
+  // 依模式啟動
+  if (selectedMode === 'mc') {
+    await startMC(allWords, pool);
+  } else if (selectedMode === 'cloze') {
+    await startCloze(allWords, pool);
+  } else if (selectedMode === 'vocab') {
+    await startVocab(allWords, pool);
+  } else if (selectedMode === 'spell') {
+    await startSpell(pool);
+  }
 }
 
-async function startMC(allWords, practicePool=null) {
+async function startMC(allWords, practicePool) {
   lastWrongWords = [];
   const pool = practicePool || allWords;
-  const shuffled = [...pool].sort(()=>Math.random()-.5);
+  const shuffled = [...pool].sort(() => Math.random() - .5);
   const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
   mcWords = shuffled.slice(0, n);
-  mcIdx=0; mcScore=0; mcAnswered=false;
-  // Keep full list for distractors
+  mcIdx = 0; mcScore = 0; mcAnswered = false;
   window._mcAllWords = allWords;
-  document.getElementById('practice-mc').style.display='block';
+  document.getElementById('practice-setup').style.display = 'none';
+  document.getElementById('practice-mc').style.display = 'block';
   renderMCQuestion(allWords);
 }
 
@@ -3377,26 +3402,20 @@ async function renderMCQuestion(allWords) {
   document.getElementById('mc-progress').textContent = `題目 ${mcIdx+1} / ${mcWords.length}`;
   document.getElementById('mc-score').textContent = `${mcScore} 分`;
   document.getElementById('mc-bar').style.width = (mcIdx/mcWords.length*100)+'%';
-  document.getElementById('mc-next').style.display='none';
-  document.getElementById('mc-detail-btn').style.display='none';
+  document.getElementById('mc-next').style.display = 'none';
+  document.getElementById('mc-detail-btn').style.display = 'none';
   mcAnswered = false;
 
-  // 從所有單字庫取干擾選項，範圍更大
+  // 從所有單字庫取干擾選項
   let allPoolWords = window._mcAllWords || allWords;
   try {
-    // 取全部單字庫的單字
     const allLists = await getAllLists();
     const extra = [];
-    for (const l of allLists) {
-      const ws = await getWordsForList(l.id);
-      extra.push(...ws);
-    }
+    for (const l of allLists) { const ws = await getWordsForList(l.id); extra.push(...ws); }
     if (extra.length > allPoolWords.length) allPoolWords = extra;
   } catch(e) {}
 
   const targetTrans = (target.translation || '').trim();
-
-  // 過濾：排除目標單字本身、翻譯為空、翻譯與目標相同
   const usedTrans = new Set([targetTrans]);
   const candidates = allPoolWords
     .filter(w => w.id !== target.id && w.translation && w.translation.trim() && !usedTrans.has(w.translation.trim()))
@@ -3405,16 +3424,12 @@ async function renderMCQuestion(allWords) {
   const distractors = [];
   for (const w of candidates) {
     const t = w.translation.trim();
-    if (!usedTrans.has(t)) {
-      usedTrans.add(t);
-      distractors.push(w);
-      if (distractors.length >= 3) break;
-    }
+    if (!usedTrans.has(t)) { usedTrans.add(t); distractors.push(w); if (distractors.length >= 3) break; }
   }
 
   const options = [
-    {text: targetTrans || '（無翻譯）', correct: true},
-    ...distractors.map(d => ({text: d.translation.trim(), correct: false}))
+    { text: targetTrans || '（無翻譯）', correct: true },
+    ...distractors.map(d => ({ text: d.translation.trim(), correct: false }))
   ].sort(() => Math.random() - .5);
 
   const grid = document.getElementById('mc-options');
@@ -3428,239 +3443,150 @@ async function renderMCQuestion(allWords) {
   });
 }
 
-let mcCurrentWord = null;
-
-function mcShowDetail() {
-  if (mcCurrentWord) showWordDetail(mcCurrentWord.word);
-}
-
 async function selectMCOption(el, opt, word) {
   if (mcAnswered) return;
   mcAnswered = true;
   mcCurrentWord = word;
-  document.querySelectorAll('.option').forEach(o=>o.classList.add('disabled'));
+  document.querySelectorAll('.option').forEach(o => o.classList.add('disabled'));
   if (opt.correct) {
     el.classList.add('correct');
     mcScore++;
     document.getElementById('mc-detail-btn').style.display = 'none';
   } else {
     el.classList.add('wrong');
-    document.querySelectorAll('.option').forEach(o=>{
-      if(o.textContent===word.translation) o.classList.add('correct');
+    document.querySelectorAll('.option').forEach(o => {
+      if (o.textContent === word.translation) o.classList.add('correct');
     });
-    if (!lastWrongWords.find(w=>w.id===word.id)) lastWrongWords.push(word);
+    if (!lastWrongWords.find(w => w.id === word.id)) lastWrongWords.push(word);
     const btn = document.getElementById('mc-detail-btn');
     btn.style.display = 'inline-block';
     btn.animate([
-      {transform:'scale(1)',opacity:.5},
-      {transform:'scale(1.3)',opacity:1},
-      {transform:'scale(1)',opacity:.75}
-    ], {duration:500, easing:'ease-out'});
+      { transform:'scale(1)', opacity:.5 },
+      { transform:'scale(1.3)', opacity:1 },
+      { transform:'scale(1)', opacity:.75 }
+    ], { duration:500, easing:'ease-out' });
   }
   try { await recordAttempt(word.id, opt.correct, 'mc', word.word); } catch(e) {}
-  // 顯示下一題或結束
   const nextBtn = document.getElementById('mc-next');
   if (nextBtn) nextBtn.style.display = mcIdx < mcWords.length-1 ? 'inline-flex' : 'none';
   if (mcIdx >= mcWords.length-1) setTimeout(showMCResult, 1200);
 }
 
-async function nextMC() {
+function mcShowDetail() {
+  if (mcCurrentWord) showWordDetail(mcCurrentWord.word, null);
+}
+
+function nextMC() {
   mcIdx++;
-  const allWords = window._mcAllWords || await getWordsForList(selectedPracticeListId || +document.getElementById('practice-list-sel').value);
-  renderMCQuestion(allWords);
+  mcAnswered = false;
+  renderMCQuestion(window._mcAllWords || []);
 }
 
 function showMCResult() {
-  document.getElementById('practice-setup').style.display='none';
-  document.getElementById('practice-mc').style.display='none';
-  const pct = Math.round(mcScore/mcWords.length*100);
-  document.getElementById('result-emoji').textContent = pct>=80?'🎉':pct>=50?'💪':'📚';
-  document.getElementById('result-title').textContent = pct>=80?'太棒了！':'繼續加油！';
-  document.getElementById('result-sub').textContent = `${mcWords.length} 題中答對 ${mcScore} 題（${pct}%）`;
+  document.getElementById('practice-mc').style.display = 'none';
+  document.getElementById('practice-setup').style.display = 'none';
+  const res = document.getElementById('practice-result');
+  res.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Show wrong words
+  const pct = mcWords.length > 0 ? Math.round(mcScore / mcWords.length * 100) : 0;
+  const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '😊' : '💪';
+
+  const emojiEl = document.getElementById('result-emoji');
+  const titleEl = document.getElementById('result-title');
+  const subEl   = document.getElementById('result-sub');
+  if (emojiEl) emojiEl.textContent = emoji;
+  if (titleEl) titleEl.textContent = '練習完成！';
+  if (subEl)   subEl.textContent   = `答對 ${mcScore} / ${mcWords.length} 題，正確率 ${pct}%`;
+
   const wrongSection = document.getElementById('result-wrong-section');
-  const wrongList    = document.getElementById('result-wrong-list');
+  const wrongEl      = document.getElementById('result-wrong-list');
   const retryBtn     = document.getElementById('retry-wrong-btn');
-  if (lastWrongWords.length) {
+
+  if (lastWrongWords.length && wrongEl && wrongSection) {
     wrongSection.style.display = 'block';
-    wrongList.innerHTML = lastWrongWords.map(w =>
-      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">
-        <span style="font-weight:700">${w.word}</span>
-        ${w.translation ? `<span style="font-size:.75rem;color:#991b1b;opacity:.8;margin-left:5px">${w.translation}</span>` : ''}
+    wrongEl.innerHTML = lastWrongWords.map(w =>
+      `<span onclick="showWordDetail('${w.word.replace(/'/g,"\\'")}', null)"
+        style="padding:5px 12px;background:#fee2e2;border-radius:20px;color:#991b1b;font-size:.85rem;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:2px"
+        title="點擊查看詳細">
+        <span style="font-weight:600">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#b91c1c">${w.translation}</span>` : ''}
       </span>`
     ).join('');
-    retryBtn.style.display = 'inline-flex';
-    retryBtn.textContent = `🔁 再練錯題（${lastWrongWords.length} 題）`;
-  } else {
+    if (retryBtn) retryBtn.style.display = 'inline-flex';
+  } else if (wrongSection) {
     wrongSection.style.display = 'none';
-    retryBtn.style.display = 'none';
+    if (retryBtn) retryBtn.style.display = 'none';
+  }
+  refreshHome();
+}
+
+async function startCloze(allWords, practicePool) {
+  const pool = practicePool || allWords;
+  const shuffled = [...pool].sort(() => Math.random() - .5);
+  const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
+  const words = shuffled.slice(0, n);
+  document.getElementById('practice-setup').style.display = 'none';
+  document.getElementById('practice-cloze').style.display = 'block';
+  await renderCloze(words, allWords);
+}
+
+async function populatePracticeList() {
+  const lists = await getAllLists();
+  const sel = document.getElementById('practice-list-sel');
+
+  if (!lists.length) {
+    sel.innerHTML = '<option value="">尚無單字庫，請先到「單字庫」建立清單</option>';
+    return;
   }
 
-  document.getElementById('practice-result').style.display='block';
-}
+  const sorted = lists.sort((a,b) => b.id - a.id);
+  sel.innerHTML = sorted.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
 
-async function retryWrongWords() {
-  if (!lastWrongWords.length) return;
-  const allWords = await getWordsForList(selectedPracticeListId || +document.getElementById('practice-list-sel').value);
-  document.getElementById('practice-result').style.display='none';
-  document.getElementById('practice-setup').style.display='none';
-  // Use wrong words as pool, full list as distractor source
-  await startMC(allWords, lastWrongWords);
-}
-
-// ═══════════════════════════════════════
-// PRACTICE – CLOZE
-// ═══════════════════════════════════════
-async function startCloze(words) {
-  document.getElementById('practice-cloze').style.display='block';
-  document.getElementById('cloze-loading').style.display='block';
-  document.getElementById('cloze-content').style.display='none';
-
-  const targets = words.sort(()=>Math.random()-.5).slice(0, Math.min(5, words.length));
-  clozeWordIds = targets.map(w=>w.id);
-  clozeWords   = targets;
-
-  // ── 快取 key：依單字組合排序後雜湊 ──
-  const clozeKey = 'wf_cloze_' + targets.map(w=>w.word).sort().join('|');
-  try {
-    const cached = localStorage.getItem(clozeKey);
-    if (cached) {
-      clozeData = JSON.parse(cached);
-      renderCloze(clozeData, targets);
-      return;
-    }
-  } catch(e) {}
-
-  // ── 無快取才呼叫 AI ──
-  try {
-    const data = await generateClozeStory(targets.map(w=>w.word));
-    clozeData = data;
-    // 存快取（每組單字的故事只生成一次）
-    try { localStorage.setItem(clozeKey, JSON.stringify(data)); } catch(e) {}
-    renderCloze(data, targets);
-  } catch(e) {
-    toast('克漏字生成失敗：'+e.message);
-    endPractice();
+  // 恢復上次選擇
+  if (selectedPracticeListId && sorted.find(l => l.id === selectedPracticeListId)) {
+    sel.value = selectedPracticeListId;
+  } else {
+    sel.value = sorted[0].id;
   }
+  await onPracticeListChange(+sel.value);
 }
 
-function renderCloze(data, targets) {
-  document.getElementById('cloze-loading').style.display='none';
-  document.getElementById('cloze-content').style.display='block';
+async function onPracticeListChange(listId) {
+  listId = +listId;
+  if (!listId) return;
+  selectedPracticeListId = listId;
+  const words = await getWordsForList(listId);
+  const lists = await getAllLists();
+  const l = lists.find(x => x.id === listId);
 
-  let story = data.story;
-  data.blanks.forEach((b,i) => {
-    const opts = b.options.map(o=>`<option value="${o}">${o}</option>`).join('');
-    const sel = `<select class="blank-select" id="blank-${i}"><option value="">— 選擇 —</option>${opts}</select>`;
-    story = story.replace('___', sel);
+  // 取練習記錄
+  const allRecs = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror   = () => res([]);
   });
-  document.getElementById('cloze-story').innerHTML = story;
-}
+  const recMap = {};
+  allRecs.forEach(r => recMap[r.word_id] = r);
 
-async function submitCloze() {
-  let correct=0, total=clozeData.blanks.length;
-  const wrongWords = [];
+  const wc       = words.length;
+  const newCount = words.filter(w => !(recMap[w.id]?.practice_count > 0)).length;
+  const errCount = words.filter(w =>  (recMap[w.id]?.error_count    > 0)).length;
+  const impCount = words.filter(w => !(recMap[w.id]?.practice_count > 0) || (recMap[w.id]?.error_count > 0)).length;
 
-  for (let i=0; i<total; i++) {
-    const sel = document.getElementById('blank-'+i);
-    if (!sel) continue;
-    const ans = clozeData.blanks[i].answer;
-    const chosen = sel.value;
-    sel.disabled = true;
-
-    const isCorrect = chosen.toLowerCase() === ans.toLowerCase();
-
-    if (isCorrect) {
-      // 綠色顯示正確答案
-      sel.classList.add('correct');
-      correct++;
-    } else {
-      // 換成正確答案，紅色顯示
-      const span = document.createElement('span');
-      span.style.cssText = 'font-weight:700;color:var(--accent);background:#fee2e2;padding:1px 8px;border-radius:5px;border-bottom:2px solid var(--accent)';
-      span.textContent = ans;
-      sel.replaceWith(span);
-
-      // 收集答錯單字
-      const ansWord = ans.toLowerCase();
-      const wordObj = clozeWords.find(w => w.word.toLowerCase() === ansWord);
-      if (wordObj && !wrongWords.find(w => w.id === wordObj.id)) {
-        wrongWords.push(wordObj);
-      }
-    }
-
-    if (clozeWordIds[i]) await recordAttempt(clozeWordIds[i], isCorrect, 'cloze', ans);
+  const hint = document.getElementById('scope-hint');
+  if (hint) {
+    hint.style.display = 'block';
+    hint.innerHTML = `共 ${wc} 字　⭐ 未練 <b>${newCount}</b>　❌ 有錯 <b>${errCount}</b>　📈 未全對 <b>${impCount}</b>`;
   }
-
-  // 隱藏提交按鈕
-  document.getElementById('cloze-btn-row').style.display = 'none';
-
-  // 顯示結果區
-  const pct = Math.round(correct / total * 100);
-  document.getElementById('cloze-result-summary').innerHTML =
-    `<span style="color:${pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--accent)'}">${pct>=80?'🎉':'💪'} ${total} 個空格答對 ${correct} 個（${pct}%）</span>`;
-
-  // 答錯單字
-  const wrongSection = document.getElementById('cloze-wrong-section');
-  const wrongList    = document.getElementById('cloze-wrong-list');
-  if (wrongWords.length) {
-    wrongSection.style.display = 'block';
-    wrongList.innerHTML = wrongWords.map(w =>
-      `<span class="wrong-chip" onclick="showWordDetail('${w.word}')" title="點擊查看詳細">
-        <span style="font-weight:700">${w.word}</span>
-        ${w.translation ? `<span style="font-size:.75rem;color:#991b1b;opacity:.8;margin-left:5px">${w.translation}</span>` : ''}
-      </span>`
-    ).join('');
-  } else {
-    wrongSection.style.display = 'none';
+  const btn = document.getElementById('start-btn');
+  if (btn) {
+    btn.disabled = wc < 1;
+    btn.textContent = wc < 1 ? `⚠ 此清單沒有單字` : `開始練習「${l?.name}」🚀`;
   }
-
-  document.getElementById('cloze-result-section').style.display = 'block';
-  gdriveAutoBackup();
+  const hiddenSel = document.getElementById('practice-list-sel');
+  if (hiddenSel) hiddenSel.value = listId;
 }
-
-// ═══════════════════════════════════════
-// VOCAB MODE (文意字彙)
-// ═══════════════════════════════════════
-let vocabWords = [];       // 本次題目清單
-let vocabIdx   = 0;
-let vocabScore = 0;
-let vocabAnswered = false;
-let vocabAllWords = [];    // 全清單，用於抽干擾選項
-
-// ── 翻譯記憶快取（本次練習 session 內）──
-const _vocabTrCache = {};
-
-
-
-// ═══════════════════════════════════════════════════════════════
-// STUDY SESSION
-// ═══════════════════════════════════════════════════════════════
-let studyListId = null;
-let studyMode = 'all';
-let studyCount = 10;
-let studyQueue = [];
-let studyReviewQueue = [];
-let studyIdx = 0;
-let studyKnown = 0;
-let studyUnknown = 0;
-let studyFlipped = false;
-let studyIsReview = false;
-let studySessionId = null;
-let studyStartTime = null;
-
-// ── 開啟學習面板 ──
-async function openStudyPanel(listId) {
-  studyListId = listId;
-  goto('study');
-  setTimeout(() => {
-    document.querySelectorAll('#study-list-cards .plist-card').forEach(card => {
-      if (parseInt(card.dataset.lid) === listId) card.click();
-    });
-  }, 400);
-}
-
 
 
 async function initStudyPage() {
@@ -3673,37 +3599,97 @@ async function initStudyPage() {
 
 async function populateStudyListCards() {
   const lists = await getAllLists();
-  const container = document.getElementById('study-list-cards');
-  if (!container) return;
+  let sel = document.getElementById('study-list-sel');
+  if (!sel) return;
+
   if (!lists.length) {
-    container.innerHTML = '<div style="color:var(--muted);font-size:.85rem">尚無單字庫</div>';
+    sel.innerHTML = '<option value="">尚無單字庫</option>';
     return;
   }
-  container.innerHTML = '';
-  for (const list of lists) {
-    const words = await getWordsForList(list.id);
-    const sessions = await getStudySessionsForList(list.id);
-    const lastSession = sessions[sessions.length - 1];
-    const div = document.createElement('div');
-    div.className = 'plist-card' + (studyListId === list.id ? ' selected' : '');
-    div.dataset.lid = list.id;
-    div.onclick = () => selectStudyList(list.id, div);
-    div.innerHTML = `
-      <div class="pl-name">${list.name}</div>
-      <div class="pl-count">${words.length} 個單字</div>
-      <div class="pl-count" style="margin-top:3px;color:var(--accent2)">
-        學習 ${sessions.length} 次${lastSession ? '・' + fmtDate(lastSession.started_at) : ''}
-      </div>
-      <span class="pl-check">✓</span>
-    `;
-    container.appendChild(div);
+
+  sel.innerHTML = lists.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+  // 恢復上次選擇
+  if (studyListId && lists.find(l => l.id === studyListId)) {
+    sel.value = studyListId;
+  } else {
+    sel.value = lists[0].id;
+    studyListId = lists[0].id;
+  }
+  await onStudyListChange(+sel.value);
+}
+
+async function onStudyListChange(listId) {
+  listId = +listId;
+  if (!listId) return;
+  studyListId = listId;
+  const lists = await getAllLists();
+  const l = lists.find(x => x.id === listId);
+  const words = await getWordsForList(listId);
+  const sessions = await getStudySessionsForList(listId);
+  const lastSession = sessions[sessions.length - 1];
+
+  // 統計資訊
+  const allRecs = await new Promise(res => {
+    const req = store('practice_records','readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror   = () => res([]);
+  });
+  const recMap = {};
+  allRecs.forEach(r => recMap[r.word_id] = r);
+  const total     = words.length;
+  const practiced = words.filter(w => (recMap[w.id]?.practice_count||0) > 0).length;
+  const newCount  = total - practiced;
+  const wrong     = words.filter(w => (recMap[w.id]?.error_count||0) > 0).length;
+  const totalAtt  = words.reduce((s,w) => s + (recMap[w.id]?.practice_count||0), 0);
+  const totalErr  = words.reduce((s,w) => s + (recMap[w.id]?.error_count||0), 0);
+  const acc       = totalAtt > 0 ? Math.round((totalAtt-totalErr)/totalAtt*100)+'%' : '—';
+
+  // 學習次數統計
+  const studiedCount = words.filter(w => {
+    // 曾在 study_sessions 學過
+    return sessions.some(s => s.list_id === listId);
+  }).length;
+
+  const hint = document.getElementById('study-scope-hint');
+  if (hint) {
+    hint.style.display = 'block';
+    hint.innerHTML = `共 ${total} 字　⭐ 未練 <b>${newCount}</b>　❌ 有錯 <b>${wrong}</b>　🎯 正確率 <b>${acc}</b>　📖 學習 <b>${sessions.length}</b> 次${lastSession ? '・' + fmtDate(lastSession.started_at) : ''}`;
+  }
+
+  // 更新繼續上次按鈕狀態
+  const continueCard = document.querySelector('[data-smode="continue"]');
+  if (continueCard) {
+    const hasSession = sessions.length > 0;
+    continueCard.style.opacity = hasSession ? '1' : '.4';
+    continueCard.style.pointerEvents = hasSession ? '' : 'none';
+    if (hasSession && lastSession) {
+      continueCard.innerHTML = `繼續上次<br><small style="font-size:.7rem;color:var(--muted)">${fmtDate(lastSession.started_at)}</small>`;
+    }
+  }
+
+  // 更新開始學習按鈕
+  const startBtn = document.getElementById('study-start-btn');
+  if (startBtn) {
+    startBtn.disabled = words.length < 1;
+    startBtn.textContent = words.length < 1 ? '⚠ 此清單沒有單字' : `開始學習「${l?.name}」📖`;
   }
 }
 
-function selectStudyList(id, el) {
+function openStudyPanel(listId) {
+  studyListId = listId;
+  goto('study');
+  setTimeout(async () => {
+    const sel = document.getElementById('study-list-sel');
+    if (sel) { sel.value = listId; await onStudyListChange(listId); }
+  }, 200);
+}
+
+function selectStudyList(id) {
   studyListId = id;
-  document.querySelectorAll('#study-list-cards .plist-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  const sel = document.getElementById('study-list-sel');
+  if (sel) sel.value = id;
+  onStudyListChange(id);
 }
 
 async function renderStudyHistory() {
@@ -3731,22 +3717,51 @@ async function practiceStudiedWords() {
   if (!studyListId) { toast('找不到單字庫'); return; }
   selectedPracticeListId = studyListId;
   selectedScope = 'last-study';
+
+  // 同步題數（學習幾個就練習幾個）
+  const studiedCount = studyQueue.length || studyCount;
+  selectedPracticeCount = studiedCount;
+
   goto('practice');
-  // 等 populatePracticeList 渲染完後選中對應清單和範圍
-  setTimeout(() => {
-    // 選清單卡片
-    document.querySelectorAll('#practice-list-cards .plist-card').forEach(card => {
-      if (parseInt(card.dataset.listId || card.dataset.listid) === studyListId) {
-        card.click();
-      }
-    });
+
+  setTimeout(async () => {
+    // 更新下拉選單
+    const sel = document.getElementById('practice-list-sel');
+    if (sel) {
+      sel.value = studyListId;
+      await onPracticeListChange(studyListId);
+    }
+
     // 選 last-study scope
     document.querySelectorAll('#scope-cards .count-card').forEach(el => {
-      const isTarget = el.dataset.scope === 'last-study';
-      el.classList.toggle('selected', isTarget);
+      el.classList.toggle('selected', el.dataset.scope === 'last-study');
     });
     selectedScope = 'last-study';
-  }, 600);
+
+    // 選對應題數按鈕（選最接近的）
+    const countCards = document.querySelectorAll('#count-cards .count-card');
+    let bestCard = null;
+    let bestDiff = Infinity;
+    countCards.forEach(el => {
+      const n = +el.dataset.n;
+      const diff = n === 0 ? Infinity : Math.abs(n - studiedCount);
+      if (diff < bestDiff) { bestDiff = diff; bestCard = el; }
+    });
+    // 如果學習數量等於某個選項就選那個，否則選「全部」
+    let matched = false;
+    countCards.forEach(el => {
+      const n = +el.dataset.n;
+      if (n === studiedCount) { el.classList.add('selected'); matched = true; }
+      else el.classList.remove('selected');
+    });
+    if (!matched) {
+      // 選全部
+      countCards.forEach(el => {
+        el.classList.toggle('selected', +el.dataset.n === 0);
+      });
+      selectedPracticeCount = 0;
+    }
+  }, 400);
 }
 
 function backToStudySetup() {
@@ -4632,6 +4647,15 @@ async function getDictRandomWords(excludeWord, count) {
     .sort(() => Math.random() - .5)
     .slice(0, count)
     .map(w => ({ word: w.word, translation: w.translation || '' }));
+}
+
+async function retryWrongWords() {
+  if (!lastWrongWords.length) { toast('沒有答錯的單字'); return; }
+  document.getElementById('practice-result').style.display = 'none';
+  const pool = [...lastWrongWords];
+  const allListId = selectedPracticeListId;
+  const allWords  = allListId ? await getWordsForList(allListId) : pool;
+  await startMC(allWords, pool);
 }
 
 function endPractice() {
