@@ -108,9 +108,16 @@ nav{
 .list-card .del:hover{background:#fecaca}
 
 /* ── WORD TABLE ── */
-.word-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.word-table{width:100%;border-collapse:collapse;font-size:.84rem;table-layout:fixed}
 .word-table th{text-align:left;padding:10px 14px;background:#f9f8f6;font-family:'Syne',sans-serif;font-size:.75rem;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border)}
-.word-table td{padding:11px 14px;border-bottom:1px solid var(--border)}
+.word-table td{padding:11px 14px;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis}
+.word-table th:nth-child(1),.word-table td:nth-child(1){width:18%}
+.word-table th:nth-child(2),.word-table td:nth-child(2){width:32%}
+.word-table th:nth-child(3),.word-table td:nth-child(3){width:9%}
+.word-table th:nth-child(4),.word-table td:nth-child(4){width:9%}
+.word-table th:nth-child(5),.word-table td:nth-child(5){width:9%}
+.word-table th:nth-child(6),.word-table td:nth-child(6){width:14%}
+.word-table th:nth-child(7),.word-table td:nth-child(7){width:9%}
 .word-table tr:last-child td{border-bottom:none}
 .word-table tr:hover td{background:#fafaf8}
 .word-chip{
@@ -504,7 +511,7 @@ nav {
 
     <div style="margin-bottom:22px">
       <div class="step-label">STEP 3 — 學習數量</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-count-row">
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="study-count-row2">
         <div class="count-card"          data-n="5"  onclick="selectStudyCount(this)">5 個</div>
         <div class="count-card selected" data-n="10" onclick="selectStudyCount(this)">10 個</div>
         <div class="count-card"          data-n="20" onclick="selectStudyCount(this)">20 個</div>
@@ -532,7 +539,15 @@ nav {
     <div class="score-bar"><div class="score-fill" id="study-bar" style="width:0%"></div></div>
 
     <!-- 卡片 -->
-    <div id="study-card" style="margin-top:16px;perspective:1000px;cursor:pointer" onclick="flipStudyCard()">
+      <!-- 發音按鈕（卡片外上方）-->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <button onclick="speakStudyWord()" title="發音"
+          style="background:none;border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:.85rem;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:5px"
+          onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='none'">
+          🔊 <span style="font-size:.78rem">發音</span>
+        </button>
+      </div>
+    <div id="study-card" style="margin-top:0;perspective:1000px;cursor:pointer" onclick="flipStudyCard()">
       <div id="study-card-inner" style="position:relative;width:100%;min-height:300px;transform-style:preserve-3d;transition:transform .5s">
         <!-- 正面 -->
         <div id="study-front" style="position:absolute;width:100%;min-height:300px;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--ink);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
@@ -545,7 +560,6 @@ nav {
         <div id="study-back" style="position:absolute;width:100%;min-height:300px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);background:#fff;border-radius:20px;padding:24px;border:2px solid var(--border);display:flex;flex-direction:column">
           <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:4px">
             <div id="study-back-word" style="font-family:'Lexend',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:1.3rem;font-weight:700;color:var(--ink)"></div>
-            <button onclick="speakStudyWord()" title="發音" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0 2px;line-height:1;opacity:.7;transition:.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">🔊</button>
             <div id="study-back-phonetic" style="font-size:.82rem;color:var(--muted);font-style:italic"></div>
           </div>
           <div id="study-back-pos"  style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
@@ -608,18 +622,21 @@ nav {
 
 <!-- WORDS -->
 <div id="page-words" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <h2 style="font-size:1.4rem">單字庫</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="openImportModal()">📥 匯入 .txt</button>
-      <button class="btn btn-ghost btn-sm" onclick="startBatchCache()">⚡ 批量快取</button>
-      <button class="btn btn-primary btn-sm" onclick="openAddListModal()">＋ 新增清單</button>
-      <button id="btn-rename-list" class="btn btn-ghost btn-sm" onclick="renameActiveList()"
-        style="color:#1d4ed8;background:#e0eaff;opacity:.4;pointer-events:none" title="先選擇單字庫再改名">✎ 改名</button>
-      <button id="btn-delete-list" class="btn btn-ghost btn-sm" onclick="deleteActiveList()"
-        style="color:#dc2626;background:#fee2e2;opacity:.4;pointer-events:none" title="先選擇單字庫再刪除">🗑 刪除</button>
+  <div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:nowrap;gap:6px;overflow-x:auto">
+      <h2 style="font-size:1.2rem;white-space:nowrap;flex-shrink:0">單字庫</h2>
+      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="openImportModal()" style="font-size:.75rem;padding:5px 8px;white-space:nowrap">📥 匯入</button>
+        <button class="btn btn-ghost btn-sm" onclick="startBatchCache()" style="font-size:.75rem;padding:5px 8px;white-space:nowrap">⚡ 快取</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddListModal()" style="font-size:.75rem;padding:5px 8px;white-space:nowrap">＋ 新增</button>
+        <div style="width:1px;height:18px;background:var(--border)"></div>
+        <button id="btn-rename-list" class="btn btn-ghost btn-sm" onclick="renameActiveList()"
+          style="color:#1d4ed8;background:#e0eaff;opacity:.4;pointer-events:none;font-size:.75rem;padding:5px 8px;white-space:nowrap" title="先選擇單字庫再改名">✎ 改名</button>
+        <button id="btn-delete-list" class="btn btn-ghost btn-sm" onclick="deleteActiveList()"
+          style="color:#dc2626;background:#fee2e2;opacity:.4;pointer-events:none;font-size:.75rem;padding:5px 8px;white-space:nowrap" title="先選擇單字庫再刪除">🗑 刪除</button>
+      </div>
     </div>
-  </div>
+  </div>>
 
   <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
     <input id="list-search" type="text" placeholder="🔍 搜尋清單..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:180px" oninput="renderLists()">
@@ -666,7 +683,7 @@ nav {
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto">
         <table class="word-table" style="min-width:400px">
-          <thead><tr><th id="th-word" class="sortable" onclick="sortWords('word')">單字 <span class="sort-icon">⇅</span></th><th>翻譯</th><th id="th-importance" class="sortable" onclick="sortWords('importance')">重要度 <span class="sort-icon">⇅</span></th><th id="th-practice" class="sortable" onclick="sortWords('practice')">練習 <span class="sort-icon">⇅</span></th><th>錯誤</th><th>正確率</th><th id="th-last" class="sortable" onclick="sortWords('last')">最近練習 <span class="sort-icon">⇅</span></th><th></th></tr></thead>
+          <thead><tr><th id="th-word" class="sortable" onclick="sortWords('word')">單字 <span class="sort-icon">⇅</span></th><th>翻譯</th><th id="th-practice" class="sortable" onclick="sortWords('practice')">練習 <span class="sort-icon">⇅</span></th><th>錯誤</th><th>正確率</th><th id="th-last" class="sortable" onclick="sortWords('last')">最近練習 <span class="sort-icon">⇅</span></th><th></th></tr></thead>
           <tbody id="word-tbody"></tbody>
         </table>
         <div id="word-loading" class="loading-row" style="display:none"><span class="spinner"></span> 載入中…</div>
@@ -1202,6 +1219,19 @@ nav {
         <span id="deepseek-test-result" style="font-size:.78rem;margin-left:8px"></span>
       </div>
 
+      <!-- 發音速度設定 -->
+      <div style="margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+        <div style="font-size:.82rem;font-weight:600;margin-bottom:10px">🔊 單字發音速度</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">慢</span>
+          <input type="range" id="speech-rate" min="0.5" max="1.5" step="0.1" value="0.75"
+            style="flex:1" oninput="document.getElementById('speech-rate-val').textContent=this.value">
+          <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">快</span>
+          <span id="speech-rate-val" style="font-size:.82rem;font-weight:600;color:var(--accent2);min-width:2.5em;text-align:right">0.75</span>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:6px">預設 0.75（建議範圍 0.6 ~ 1.0）</div>
+      </div>
+
       <!-- 儲存按鈕 -->
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-primary" onclick="saveAISettings()">💾 儲存設定</button>
@@ -1527,7 +1557,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v8.1';
+const APP_VERSION = 'v8.5';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1717,6 +1747,7 @@ function saveAISettings() {
     claudeModel:    document.getElementById('claude-model')?.value           || 'claude-haiku-4-5-20251001',
     deepseekKey:    document.getElementById('deepseek-key')?.value.trim()   || '',
     deepseekModel:  document.getElementById('deepseek-model')?.value         || 'deepseek-chat',
+    speechRate:     parseFloat(document.getElementById('speech-rate')?.value || '0.75'),
   };
   localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
   updateAIBadge(settings);
@@ -1763,6 +1794,9 @@ function initSettingsPage() {
   if (s.claudeModel)   document.getElementById('claude-model').value    = s.claudeModel;
   if (s.deepseekKey)   document.getElementById('deepseek-key').value    = s.deepseekKey;
   if (s.deepseekModel) document.getElementById('deepseek-model').value  = s.deepseekModel;
+  const rate = s.speechRate || 0.75;
+  const rateEl = document.getElementById('speech-rate');
+  if (rateEl) { rateEl.value = rate; document.getElementById('speech-rate-val').textContent = rate; }
   onProviderChange();
 }
 
@@ -1936,7 +1970,7 @@ let vocabWords = [], vocabIdx = 0, vocabScore = 0, vocabAnswered = false, vocabA
 // ── 學習模式狀態 ──
 let studyListId     = null;
 let studyMode       = 'all';      // all | new | unknown | continue
-let studyCount      = 5;          // 預設 5 個
+let studyCount      = 10;          // 預設 10 個
 let studyQueue      = [];
 let studyReviewQueue = [];
 let studyIdx        = 0;
@@ -2162,7 +2196,6 @@ async function loadWords() {
 
   for (const w of words) {
     const rec = recs[w.id];
-    const stars = '★'.repeat(w.importance) + '☆'.repeat(5-w.importance);
     const lastPrac = rec.last_practice_time
       ? (() => {
           const d = new Date(rec.last_practice_time);
@@ -2182,7 +2215,6 @@ async function loadWords() {
         ? w.translation
         : `<button class="btn btn-ghost btn-sm" style="font-size:.72rem;padding:3px 8px;color:var(--accent2)" onclick="fillTranslation(${w.id},'${w.word}',this)">✦ AI 補翻譯</button>`
       }</td>
-      <td><span class="stars">${stars}</span></td>
       <td>${rec.practice_count ? `<span class="badge-mc">${rec.practice_count}次</span>` : '—'}</td>
       <td>${rec.error_count ? `<span class="badge-err">${rec.error_count}錯</span>` : '—'}</td>
       <td>${scoreBadge(rec)}</td>
@@ -2210,13 +2242,19 @@ async function createList() {
 
 
 
+function getSpeechRate() {
+  const s = loadAISettings();
+  return s.speechRate || 0.75;
+}
+
 function speakStudyWord() {
-  const word = document.getElementById('study-back-word').textContent.trim();
+  const word = document.getElementById('study-back-word').textContent.trim()
+            || document.getElementById('study-front-word').textContent.trim();
   if (!word || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const speak = () => {
     const utter = new SpeechSynthesisUtterance(word);
-    utter.lang = 'en-US'; utter.rate = 0.85; utter.volume = 1;
+    utter.lang = 'en-US'; utter.rate = getSpeechRate(); utter.volume = 1;
     const voices = window.speechSynthesis.getVoices();
     const v = voices.find(v => v.lang === 'en-US' && v.localService)
            || voices.find(v => v.lang.startsWith('en'));
@@ -2242,7 +2280,7 @@ function speakWord() {
   const speak = () => {
     const utter = new SpeechSynthesisUtterance(word);
     utter.lang = 'en-US';
-    utter.rate = 0.85;
+    utter.rate = getSpeechRate();
     utter.volume = 1;
     const voices = window.speechSynthesis.getVoices();
     const enVoice = voices.find(v => v.lang === 'en-US' && v.localService)
@@ -2562,7 +2600,17 @@ async function runImport() {
         const dict = await ensureDictLoaded(dictId, null);
         for (const w of noTrans) {
           try {
-            const rawHtml = await mdxLookup(dict, w.word);
+            const strategies = [
+              w.word,
+              w.word.toLowerCase(),
+              w.word.toLowerCase().replace(/\s+/g, '-'),
+              w.word.toLowerCase().replace(/-/g, ' '),
+            ];
+            let rawHtml = null;
+            for (const q of strategies) {
+              rawHtml = await mdxLookup(dict, q);
+              if (rawHtml) break;
+            }
             if (rawHtml) {
               const parsed2 = parseDictEntry(rawHtml, w.word);
               if (parsed2?.definitions_zh?.length) {
@@ -3996,8 +4044,10 @@ function selectStudyMode(el) {
 
 function selectStudyCount(el) {
   studyCount = parseInt(el.dataset.n);
-  document.querySelectorAll('#study-count-row .count-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  // 同步兩個 count row
+  document.querySelectorAll('#study-count-row .count-card, #study-count-row2 .count-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.n === el.dataset.n);
+  });
 }
 
 // ── DB helpers ──
@@ -4342,9 +4392,34 @@ async function renderSpellQuestion() {
   document.getElementById('spell-feedback').textContent = '';
   document.getElementById('spell-feedback').style.color = '';
   document.getElementById('spell-next').style.display = 'none';
-  document.getElementById('spell-answer-row').innerHTML = '';
+  // ── 初始化答案槽（首尾字母預先顯示）──
+  const row = document.getElementById('spell-answer-row');
+  row.innerHTML = '';
+  const wordChars = w.word.toLowerCase().split('');
+  // 重置 spellTyped 為對應長度，首尾預填
+  spellTyped = wordChars.map((ch, i) => {
+    const isRevealed = (i === 0 || i === wordChars.length - 1);
+    const slot = document.createElement('span');
+    slot.style.cssText = `
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:${ch === ' ' ? 24 : 32}px;height:36px;
+      border-radius:6px;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
+      padding:0 6px;
+      ${isRevealed
+        ? 'background:#d1fae5;color:#065f46;border:2px solid #6ee7b7;'
+        : 'background:var(--surface);color:transparent;border:2px dashed var(--border);cursor:default;'}
+    `;
+    slot.textContent = isRevealed ? (ch === ' ' ? '·' : ch.toUpperCase()) : '_';
+    row.appendChild(slot);
+    return { letter: ch, slot, revealed: isRevealed, filled: isRevealed };
+  });
 
-  // ── 中文定義 ──
+  // 如果首尾相同（1~2個字母的單字），全部直接顯示
+  if (wordChars.length <= 2) {
+    spellTyped.forEach(t => { t.revealed = true; t.filled = true; });
+  }
+
+
   let defText = (w.translation || '').trim();
   if (!defText) {
     // 查快取或字典
@@ -4375,12 +4450,63 @@ async function renderSpellQuestion() {
       ? `<span style="color:rgba(255,255,255,.5);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em">中文意義</span><br><span style="color:#fff">${defText}</span>`
       : `<span style="color:rgba(255,255,255,.6);font-size:.85rem">請拼出：<strong style="color:#fff">${w.word}</strong></span>`;
 
-  // ── 組合字母池：原字母 + 空白（片語需要）+ 干擾字母 ──
+  // ── 預填首尾字母到答案列 ──
+  const answerRow = document.getElementById('spell-answer-row');
+  answerRow.innerHTML = '';
+  spellTyped = [];
+
+  const word = spellCurrent;
+  const wordLen = word.length;
+
+  // 建立預填格（首字母 + 中間空格 + 尾字母）
+  for (let i = 0; i < wordLen; i++) {
+    const ch = word[i];
+    const isFirst = i === 0;
+    const isLast  = i === wordLen - 1;
+    const prefill = isFirst || isLast;
+
+    const slot = document.createElement('span');
+    slot.style.cssText = `
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:${ch === ' ' ? 24 : 32}px;height:36px;
+      background:${prefill ? '#10b981' : 'var(--border)'};
+      color:${prefill ? '#fff' : 'transparent'};
+      border-radius:6px;
+      font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
+      padding:0 6px;margin:2px;
+      ${prefill ? '' : 'cursor:default'}
+    `;
+    slot.textContent = prefill ? (ch === ' ' ? '·' : ch.toUpperCase()) : '';
+    slot.dataset.pos = i;
+    slot.dataset.prefill = prefill ? '1' : '0';
+
+    if (prefill) {
+      // 預填格直接加入 spellTyped
+      spellTyped.push({ letter: ch, btn: null, slot, prefill: true });
+    } else {
+      // 空格等待填入
+      spellTyped.push({ letter: null, btn: null, slot, prefill: false });
+    }
+    answerRow.appendChild(slot);
+  }
+
+  // 從字母池移除首字母和尾字母（各移除一個）
+  const removeFromPool = (pool, ch) => {
+    const idx = pool.indexOf(ch);
+    if (idx !== -1) pool.splice(idx, 1);
+  };
+  const firstCh = word[0];
+  const lastCh  = word[wordLen - 1];
+
+  // ── 組合字母池：中間字母 + 干擾字母 ──
   const letters = spellCurrent.split('');
   const hasSpace = letters.includes(' ');
 
-  // 原字母（打亂）
-  const pool = [...letters].sort(() => Math.random() - .5);
+  // 原字母（打亂），移除已預填的首尾字母各一個
+  const pool = [...letters];
+  removeFromPool(pool, firstCh);
+  if (lastCh !== firstCh || wordLen > 2) removeFromPool(pool, lastCh);
+  pool.sort(() => Math.random() - .5);
 
   // 計算干擾字母數量（3~5 個，但不超過總數讓版面太亂）
   const decoyCount = Math.min(5, Math.max(3, Math.floor(spellCurrent.replace(/ /g,'').length * 0.4)));
@@ -4430,52 +4556,84 @@ async function renderSpellQuestion() {
 
 function spellType(letter, btn) {
   if (spellAnswered) return;
-  // 停用此按鈕
   btn.disabled = true;
   btn.style.opacity = '0.35';
 
-  spellTyped.push({ letter, btn });
+  // 找第一個空的非預填格
+  const emptySlot = spellTyped.find(t => !t.prefill && t.letter === null);
+  if (!emptySlot) return;
 
-  // 更新答案槽
-  const row = document.getElementById('spell-answer-row');
-  const slot = document.createElement('span');
-  slot.style.cssText = `
-    display:inline-flex;align-items:center;justify-content:center;
-    min-width:${letter === ' ' ? 24 : 32}px;height:36px;
-    background:var(--accent);color:#fff;border-radius:6px;
-    font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
-    padding:0 6px;cursor:pointer;
-  `;
-  slot.textContent = letter === ' ' ? '·' : letter.toUpperCase();
-  slot.title = '點擊撤回';
-  slot.onclick = () => spellRetract(spellTyped.indexOf(spellTyped.find(t => t.slot === slot)));
-  slot.dataset.idx = spellTyped.length - 1;
-  spellTyped[spellTyped.length - 1].slot = slot;
-  row.appendChild(slot);
+  emptySlot.letter = letter;
+  emptySlot.btn    = btn;
+  emptySlot.slot.textContent = letter === ' ' ? '·' : letter.toUpperCase();
+  emptySlot.slot.style.background = 'var(--accent)';
+  emptySlot.slot.style.color = '#fff';
+  emptySlot.slot.style.cursor = 'pointer';
+  emptySlot.slot.title = '點擊撤回';
+  emptySlot.slot.onclick = () => {
+    if (!emptySlot.prefill && emptySlot.letter !== null) {
+      emptySlot.slot.textContent = '';
+      emptySlot.slot.style.background = 'var(--border)';
+      emptySlot.slot.style.color = 'transparent';
+      emptySlot.slot.style.cursor = 'default';
+      emptySlot.slot.title = '';
+      emptySlot.slot.onclick = null;
+      if (emptySlot.btn) {
+        emptySlot.btn.disabled = false;
+        emptySlot.btn.style.opacity = '1';
+      }
+      emptySlot.letter = null;
+      emptySlot.btn = null;
+    }
+  };
 
-  // 自動檢查：長度符合時驗證
-  const typed = spellTyped.map(t => t.letter).join('');
-  if (typed.length === spellCurrent.length) {
+  // 自動檢查：所有格填滿時驗證
+  const allFilled = spellTyped.every(t => t.letter !== null);
+  if (allFilled) {
+    const typed = spellTyped.map(t => t.letter).join('');
     spellCheck(typed);
   }
 }
 
 function spellRetract(idx) {
   if (spellAnswered) return;
-  // 找最後一個（不允許中間撤回，保持順序）
-  // 改為只能撤回最後一個
-  if (spellTyped.length === 0) return;
-  const last = spellTyped[spellTyped.length - 1];
-  last.slot.remove();
-  last.btn.disabled = false;
-  last.btn.style.opacity = '1';
-  spellTyped.pop();
+  // 找最後一個非首尾已填的槽
+  let targetIdx = -1;
+  for (let i = spellTyped.length - 1; i >= 0; i--) {
+    const t = spellTyped[i];
+    if (t.filled && !t.revealed) { targetIdx = i; break; }
+  }
+  if (targetIdx === -1) return;
+
+  const t = spellTyped[targetIdx];
+  // 還原槽為空
+  t.slot.textContent = '_';
+  t.slot.style.background = 'var(--surface)';
+  t.slot.style.color = 'transparent';
+  t.slot.style.border = '2px dashed var(--border)';
+  t.slot.style.cursor = 'default';
+  t.slot.onclick = null;
+  t.slot.title = '';
+  // 還原按鈕
+  if (t.btn) { t.btn.disabled = false; t.btn.style.opacity = '1'; }
+  t.filled = false;
+  t.btn = null;
 }
 
 function spellClear() {
   if (spellAnswered) return;
-  // 撤回全部
-  while (spellTyped.length > 0) spellRetract(spellTyped.length - 1);
+  // 撤回全部非首尾的已填槽
+  let hasNonRevealed = true;
+  while (hasNonRevealed) {
+    hasNonRevealed = false;
+    for (let i = spellTyped.length - 1; i >= 0; i--) {
+      if (spellTyped[i].filled && !spellTyped[i].revealed) {
+        spellRetract(i);
+        hasNonRevealed = true;
+        break;
+      }
+    }
+  }
 }
 
 function spellCheck(typed) {
@@ -5879,35 +6037,55 @@ async function parseMdx(arrayBuffer, onProgress) {
  * Returns raw HTML string or null.
  */
 async function mdxLookup(dict, word) {
-  const target = word.toLowerCase().trim();
   const { keyList, recBlkMeta, recBlocksRaw } = dict;
 
-  // Binary search
-  let lo = 0, hi = keyList.length - 1, idx = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if (keyList[mid].key === target) { idx = mid; break; }
-    else if (keyList[mid].key < target) lo = mid + 1;
-    else hi = mid - 1;
+  // 嘗試多種形式的 key
+  const candidates = [];
+  const base = word.toLowerCase().trim();
+  candidates.push(base);
+  // 片語：把多餘空白壓縮
+  candidates.push(base.replace(/\s+/g, ' '));
+  // 連字號變空格
+  candidates.push(base.replace(/-/g, ' '));
+  // 空格變連字號
+  candidates.push(base.replace(/\s+/g, '-'));
+  // 去掉所有標點
+  candidates.push(base.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim());
+  // 首字大寫
+  candidates.push(base.charAt(0).toUpperCase() + base.slice(1));
+
+  // 去重
+  const seen = new Set();
+  const uniqueCandidates = candidates.filter(k => k && !seen.has(k) && seen.add(k));
+
+  for (const target of uniqueCandidates) {
+    // Binary search
+    let lo = 0, hi = keyList.length - 1, idx = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const k = keyList[mid].key;
+      if (k === target) { idx = mid; break; }
+      else if (k < target) lo = mid + 1;
+      else hi = mid - 1;
+    }
+    if (idx === -1) continue;
+
+    const recOff  = keyList[idx].offset;
+    const nextOff = idx + 1 < keyList.length ? keyList[idx+1].offset : Infinity;
+
+    let blkIdx = 0;
+    for (let i = 0; i < recBlkMeta.length; i++) {
+      if (recBlkMeta[i].decompOffset + recBlkMeta[i].decompSize > recOff) { blkIdx = i; break; }
+    }
+
+    const meta = recBlkMeta[blkIdx];
+    const blk  = await mdxDecompBlock(recBlocksRaw[blkIdx], false);
+    const start = recOff - meta.decompOffset;
+    const end   = Math.min(nextOff === Infinity ? blk.length : nextOff - meta.decompOffset, blk.length);
+    const result = new TextDecoder('utf-8').decode(blk.slice(start, end)).replace(/\0$/, '').trim();
+    if (result) return result;
   }
-  if (idx === -1) return null;
-
-  const recOff  = keyList[idx].offset;
-  const nextOff = idx + 1 < keyList.length ? keyList[idx+1].offset : Infinity;
-
-  // Find which record block
-  let blkIdx = 0;
-  for (let i = 0; i < recBlkMeta.length; i++) {
-    if (recBlkMeta[i].decompOffset + recBlkMeta[i].decompSize > recOff) { blkIdx = i; break; }
-  }
-
-  const meta = recBlkMeta[blkIdx];
-  const blk  = await mdxDecompBlock(recBlocksRaw[blkIdx], false);
-
-  const start = recOff - meta.decompOffset;
-  const end   = Math.min(nextOff === Infinity ? blk.length : nextOff - meta.decompOffset, blk.length);
-
-  return new TextDecoder('utf-8').decode(blk.slice(start, end)).replace(/\0$/, '').trim();
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -6095,12 +6273,22 @@ async function lookupWordDictOnly(word) {
       if (detail?.definitions_zh?.length) return JSON.stringify(detail);
     } catch(e) {}
   }
-  // 2. 字典
+  // 2. 字典（多策略）
   const dictId = getActiveDictId();
   if (dictId) {
     try {
       const dict = await ensureDictLoaded(dictId, null);
-      const rawHtml = await mdxLookup(dict, word);
+      const strategies = [
+        word,
+        word.toLowerCase(),
+        word.toLowerCase().replace(/\s+/g, '-'),
+        word.toLowerCase().replace(/-/g, ' '),
+      ];
+      let rawHtml = null;
+      for (const q of strategies) {
+        rawHtml = await mdxLookup(dict, q);
+        if (rawHtml) break;
+      }
       if (rawHtml) {
         const dictResult = parseDictEntry(rawHtml, word);
         if (dictResult?.definitions_zh?.length) {
@@ -6129,17 +6317,72 @@ async function lookupWord(word) {
   if (dictId) {
     try {
       const dict = await ensureDictLoaded(dictId, null);
-      const rawHtml = await mdxLookup(dict, word);
+
+      // 多策略查詢（特別處理片語）
+      const lookupStrategies = [
+        word,                                    // 原始
+        word.toLowerCase(),                      // 小寫
+        word.toLowerCase().replace(/\s+/g, '-'), // 空格換連字號
+        word.toLowerCase().replace(/-/g, ' '),   // 連字號換空格
+      ];
+      // 片語：嘗試主要關鍵字（第一個實詞）
+      const words = word.split(/\s+/);
+      if (words.length > 1) {
+        const content = words.filter(w => !['a','an','the','of','to','in','on','at','by','for','with','as'].includes(w.toLowerCase()));
+        if (content.length > 0) lookupStrategies.push(content[0].toLowerCase());
+      }
+
+      let rawHtml = null;
+      for (const q of lookupStrategies) {
+        rawHtml = await mdxLookup(dict, q);
+        if (rawHtml) break;
+      }
+
       if (rawHtml) {
         const dictResult = parseDictEntry(rawHtml, word);
         if (dictResult?.definitions_zh?.length) {
           await cacheWordDetail(word, JSON.stringify(dictResult));
           return JSON.stringify(dictResult);
         }
-        // 字典有此字但解析不到定義 → 繼續往 AI fallback
+        // 查到條目但定義不足，從 phrases 找片語
+        if (dictResult?.phrases?.length && words.length > 1) {
+          const matched = dictResult.phrases.filter(p =>
+            p.phrase && p.phrase.toLowerCase().includes(word.toLowerCase())
+          );
+          if (matched.length) {
+            const pr = { word, phonetic:'', part_of_speech:'phrase', part_of_speech_zh:'片語',
+              definitions_zh: matched.map(p => s2t(p.zh||p.phrase)),
+              synonyms:[], antonyms:[], forms:{}, phrases:matched, examples:[], _from_dict:true };
+            await cacheWordDetail(word, JSON.stringify(pr));
+            return JSON.stringify(pr);
+          }
+        }
+      }
+
+      // 片語：用最後一個實詞再試，從其 phrases 找
+      if (words.length > 1) {
+        const stopWords = new Set(['a','an','the','of','to','in','on','at','by','for','with','as','or','and']);
+        const contentWords = words.filter(w => !stopWords.has(w.toLowerCase()));
+        const tryWords = [...new Set([contentWords[contentWords.length-1], contentWords[0]])].filter(Boolean);
+        for (const tw of tryWords) {
+          const twHtml = await mdxLookup(dict, tw.toLowerCase());
+          if (!twHtml) continue;
+          const twResult = parseDictEntry(twHtml, tw);
+          if (!twResult?.phrases?.length) continue;
+          const wl = word.toLowerCase();
+          const matched = twResult.phrases.filter(p => p.phrase &&
+            (p.phrase.toLowerCase().includes(wl) || wl.includes(p.phrase.toLowerCase()))
+          );
+          if (matched.length) {
+            const pr = { word, phonetic:'', part_of_speech:'phrase', part_of_speech_zh:'片語',
+              definitions_zh: matched.map(p => s2t(p.zh||p.phrase)),
+              synonyms:[], antonyms:[], forms:{}, phrases:matched, examples:[], _from_dict:true };
+            await cacheWordDetail(word, JSON.stringify(pr));
+            return JSON.stringify(pr);
+          }
+        }
       }
     } catch(e) { console.warn('Dict lookup failed:', e.message); }
-    // 字典查無此字 → 嘗試 AI；若無 AI 則回傳提示
   }
 
   // ── 3. 無字典：AI 補充（需已設定）──
