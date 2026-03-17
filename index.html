@@ -1557,7 +1557,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v8.5';
+const APP_VERSION = 'v8.7';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -4398,7 +4398,10 @@ let spellLetterBtns = [];   // 字母池按鈕
 const DECOY_CHARS = 'abcdefghijklmnopqrstuvwxyz';
 
 async function startSpell(words) {
-  spellWords = words.sort(() => Math.random() - .5);
+  lastWrongWords = [];
+  const shuffled = [...words].sort(() => Math.random() - .5);
+  const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
+  spellWords = shuffled.slice(0, n);
   spellIdx = 0; spellScore = 0;
   document.getElementById('practice-setup').style.display = 'none';
   document.getElementById('practice-spell').style.display = 'block';
@@ -4686,6 +4689,8 @@ function spellCheck(typed) {
       s.style.background = 'var(--accent)';
     });
     recordAttempt(spellWords[spellIdx].id, false, 'spell', spellWords[spellIdx].word);
+    const wrongWord = spellWords[spellIdx];
+    if (!lastWrongWords.find(w => w.id === wrongWord.id)) lastWrongWords.push(wrongWord);
   }
 
   document.getElementById('spell-next').style.display = 'block';
@@ -4713,22 +4718,41 @@ function spellNext() {
 }
 
 function showSpellResult() {
-  document.getElementById('practice-setup').style.display='none';
+  document.getElementById('practice-setup').style.display = 'none';
   document.getElementById('practice-spell').style.display = 'none';
-  const el = document.getElementById('practice-result');
-  el.style.display = 'block';
-  const pct = spellWords.length > 0 ? Math.round(spellScore / spellWords.length * 100) : 0;
-  el.querySelector('.card-body').innerHTML = `
-    <div style="text-align:center;padding:12px 0">
-      <div style="font-size:3rem;margin-bottom:12px">${pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚'}</div>
-      <h3 style="font-size:1.3rem;margin-bottom:8px">拼字練習完成！</h3>
-      <div style="font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:4px">${spellScore} / ${spellWords.length}</div>
-      <div style="font-size:1rem;color:var(--muted);margin-bottom:24px">正確率 ${pct}%</div>
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="startSpell(spellWords)">再練一次</button>
-        <button class="btn btn-ghost" onclick="endPractice()">返回練習模式</button>
-      </div>
-    </div>`;
+  const res = document.getElementById('practice-result');
+  res.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const pct   = spellWords.length > 0 ? Math.round(spellScore / spellWords.length * 100) : 0;
+  const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚';
+
+  const emojiEl = document.getElementById('result-emoji');
+  const titleEl = document.getElementById('result-title');
+  const subEl   = document.getElementById('result-sub');
+  if (emojiEl) emojiEl.textContent = emoji;
+  if (titleEl) titleEl.textContent = '拼字練習完成！';
+  if (subEl)   subEl.textContent   = `答對 ${spellScore} / ${spellWords.length} 題，正確率 ${pct}%`;
+
+  const wrongSection = document.getElementById('result-wrong-section');
+  const wrongEl      = document.getElementById('result-wrong-list');
+  const retryBtn     = document.getElementById('retry-wrong-btn');
+
+  if (lastWrongWords.length && wrongEl && wrongSection) {
+    wrongSection.style.display = 'block';
+    wrongEl.innerHTML = lastWrongWords.map(w =>
+      `<span onclick="showWordDetail('${w.word.replace(/'/g,"\\'")}',null)"
+        style="padding:5px 12px;background:#fee2e2;border-radius:20px;color:#991b1b;font-size:.85rem;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="font-weight:600">${w.word}</span>
+        ${w.translation ? `<span style="font-size:.75rem;color:#b91c1c">${s2t(w.translation)}</span>` : ''}
+      </span>`
+    ).join('');
+    if (retryBtn) retryBtn.style.display = 'inline-flex';
+  } else if (wrongSection) {
+    wrongSection.style.display = 'none';
+    if (retryBtn) retryBtn.style.display = 'none';
+  }
+  refreshHome();
   gdriveAutoBackup();
 }
 
