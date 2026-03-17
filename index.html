@@ -2242,6 +2242,25 @@ async function createList() {
 
 
 
+function speakSentence(text) {
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const speak = () => {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-US';
+    utter.rate = getSpeechRate();
+    utter.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const v = voices.find(v => v.lang === 'en-US' && v.localService)
+           || voices.find(v => v.lang.startsWith('en'));
+    if (v) utter.voice = v;
+    window.speechSynthesis.speak(utter);
+  };
+  window.speechSynthesis.getVoices().length > 0
+    ? speak()
+    : (window.speechSynthesis.addEventListener('voiceschanged', speak, {once:true}), setTimeout(speak, 100));
+}
+
 function getSpeechRate() {
   const s = loadAISettings();
   return s.speechRate || 0.75;
@@ -3378,9 +3397,18 @@ function renderDetail(d) {
     const wordVariants = [d.word];
     if (d.forms) Object.values(d.forms).filter(Boolean).forEach(v => wordVariants.push(v));
     const boldRegex = new RegExp(`\\b(${wordVariants.map(w => w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})\\b`, 'gi');
-    d.examples.forEach(ex => {
+    d.examples.forEach((ex, i) => {
       const boldEn = ex.en.replace(boldRegex, '<strong>$1</strong>');
-      html += `<div class="example-item"><div class="en">${boldEn}</div><div class="zh">${s2t(ex.zh)}</div></div>`;
+      const safeEn = ex.en.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `<div class="example-item">
+        <div class="en" style="display:flex;align-items:flex-start;gap:8px">
+          <button onclick="speakSentence('${safeEn}')" title="朗讀例句"
+            style="background:none;border:none;font-size:.9rem;cursor:pointer;color:var(--muted);padding:0;flex-shrink:0;margin-top:2px;opacity:.7"
+            onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">🔊</button>
+          <span>${boldEn}</span>
+        </div>
+        <div class="zh">${s2t(ex.zh)}</div>
+      </div>`;
     });
     html += '</div>';
   }
