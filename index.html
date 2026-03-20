@@ -965,6 +965,7 @@ nav {
       <input id="cache-search" placeholder="搜尋單字…" style="width:160px;padding:7px 12px;font-size:.82rem"
         oninput="filterCache(this.value)" />
       <button class="btn btn-ghost btn-sm" onclick="clearAllCache()" style="color:var(--accent)">🗑 清除全部</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearBadPhraseCaches().then(n=>{toast('已清除 '+n+' 個片語壞快取');loadCache();})" style="color:#d97706" title="清除翻譯不正確的片語快取">🔧 修復片語</button>
     </div>
   </div>
   <div id="cache-list" style="background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>
@@ -1557,7 +1558,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v8.7';
+const APP_VERSION = 'v8.9';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1908,9 +1909,43 @@ async function callClaude(prompt) { return callAI(prompt); }
 
 
 async function fetchWordDetail(word) {
-  const prompt = `You are an English dictionary assistant. Return ONLY valid JSON (no markdown, no extra text) for the English word "${word}" using this exact structure:
+  const isPhrase = word.includes(' ') || word.includes('-') || word.includes("'");
+
+  const phrasePrompt = `Translate the English phrase "${word}" into Traditional Chinese as a complete idiomatic unit (not word-by-word).
+
+Then return a JSON object with this exact structure (replace all values appropriately):
 {
-  "word": "",
+  "word": "${word}",
+  "phonetic": "",
+  "part_of_speech": "phrase",
+  "part_of_speech_zh": "片語",
+  "definitions_zh": ["<THE COMPLETE IDIOMATIC MEANING IN TRADITIONAL CHINESE>"],
+  "synonyms": [{"word": "<English synonym phrase>", "zh": "<繁體中文>"}],
+  "antonyms": [],
+  "forms": {},
+  "phrases": [
+    {"phrase": "<related phrase 1>", "zh": "<繁體中文>"},
+    {"phrase": "<related phrase 2>", "zh": "<繁體中文>"}
+  ],
+  "examples": [
+    {"en": "<sentence using ${word}>", "zh": "<繁體中文翻譯>"},
+    {"en": "<sentence using ${word}>", "zh": "<繁體中文翻譯>"},
+    {"en": "<sentence using ${word}>", "zh": "<繁體中文翻譯>"}
+  ]
+}
+
+Important:
+- definitions_zh must be the IDIOMATIC meaning, e.g.:
+  "aside from" → ["除了……之外"]
+  "bear a close resemblance" → ["與……非常相似；酷似"]
+  "by no means" → ["絕對不；決不"]
+  "come to mind" → ["想到；浮現腦海"]
+  "back and forth" → ["來回地；反覆地"]
+- Return ONLY valid JSON, no markdown, no explanation`;
+
+  const wordPrompt = `You are an English dictionary assistant. Return ONLY valid JSON (no markdown, no extra text) for the English word "${word}":
+{
+  "word": "${word}",
   "phonetic": "",
   "part_of_speech": "",
   "part_of_speech_zh": "",
@@ -1922,28 +1957,44 @@ async function fetchWordDetail(word) {
   "examples": [{"en": "", "zh": ""}]
 }
 Rules:
-- definitions_zh: write definitions in Traditional Chinese only
-- synonyms/antonyms: each item must have "word" (English) and "zh" (Traditional Chinese meaning)
-- part_of_speech_zh: Chinese label e.g. 動詞、名詞、形容詞、副詞
-- phrases: provide 4-6 common phrases or collocations using this word, each with "phrase" (English) and "zh" (Traditional Chinese meaning)
+- definitions_zh: Traditional Chinese only
+- part_of_speech_zh: 動詞、名詞、形容詞、副詞 etc.
+- phrases: 4-6 common collocations
 - Provide exactly 3 examples with Traditional Chinese translations`;
+
+  const prompt = isPhrase ? phrasePrompt : wordPrompt;
   const raw = await callAI(prompt);
-  // 清除 markdown 包裝（DeepSeek 等模型可能加上 ```json ... ```）
   const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
   const start = clean.indexOf('{');
   const end2  = clean.lastIndexOf('}');
   if (start === -1 || end2 === -1) throw new Error('AI 回應格式錯誤');
   const json = clean.slice(start, end2 + 1);
-  JSON.parse(json); // 驗證
+  JSON.parse(json);
   return json;
 }
 
+
 async function batchTranslateAI(words) {
-  const prompt = `Translate these English words to Traditional Chinese (繁體中文). Return ONLY a JSON array: [{"word":"...","translation":"..."}]. No markdown, no explanation.\n\n${words.join('\n')}`;
+  const prompt = `Translate these English words/phrases to Traditional Chinese (繁體中文).
+
+CRITICAL RULES:
+1. For phrases (multiple words): translate as ONE complete unit with idiomatic meaning
+   - "aside from" → "除了……之外"
+   - "by no means" → "絕對不；決不"
+   - "come to mind" → "想到；浮現腦海"
+   - "bear a close resemblance" → "與……極為相似；酷似"
+   - "back and forth" → "來回地；反覆地"
+   - "around the clock" → "全天候；日夜不停"
+   - "cross one's mind" → "想到；心頭閃過"
+2. NEVER translate phrases word-by-word
+3. For single words: give most common meaning(s)
+4. Use "；" to separate multiple meanings
+5. Return ONLY a JSON array: [{"word":"...","translation":"..."}]. No markdown, no explanation.
+
+Words/phrases to translate:
+${words.join('\n')}`;
   const raw = await callAI(prompt);
-  // 清除可能的 markdown 包裝
   const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/,'').trim();
-  // 找到第一個 [ 到最後一個 ]
   const start = clean.indexOf('[');
   const end = clean.lastIndexOf(']');
   if (start === -1 || end === -1) throw new Error('回應格式錯誤');
@@ -3293,6 +3344,33 @@ async function regenWordDetail() {
   await loadWordDetail(currentDetailWord, true);
   btn.disabled = false;
   btn.textContent = '🔄 重新產生';
+}
+
+// 清除所有片語的壞快取（定義不像整體意義的）
+async function clearBadPhraseCaches() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('wf_detail_')) keys.push(k);
+  }
+  let cleared = 0;
+  for (const k of keys) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const rec = JSON.parse(raw);
+      const detail = typeof rec.detail_json === 'string' ? JSON.parse(rec.detail_json) : rec.detail_json;
+      const word = detail?.word || '';
+      const isPhrase = word.includes(' ') || word.includes('-');
+      if (!isPhrase) continue;
+      const def = (detail.definitions_zh || []).join('');
+      const zhChars = def.replace(/[^\u4e00-\u9fff]/g,'').length;
+      const isGood = zhChars >= 4 && 
+        (detail.part_of_speech === 'phrase' || detail.part_of_speech_zh?.includes('片語'));
+      if (!isGood) { localStorage.removeItem(k); cleared++; }
+    } catch(e) {}
+  }
+  return cleared;
 }
 
 async function loadWordDetail(word, forceRefresh) {
@@ -6360,62 +6438,42 @@ async function lookupWord(word) {
     try {
       const detail = typeof cached.detail_json === 'string'
         ? JSON.parse(cached.detail_json) : cached.detail_json;
-      if (detail?.definitions_zh?.length) return JSON.stringify(detail);
+      if (detail?.definitions_zh?.length) {
+        // 片語快取驗證：定義必須看起來像整體慣用意義
+        const isPhrase = word.includes(' ') || word.includes('-');
+        if (isPhrase) {
+          const def = (detail.definitions_zh || []).join('');
+          const zhChars = def.replace(/[^\u4e00-\u9fff]/g,'').length;
+          // 若中文字數太少，或 part_of_speech 不是 phrase，視為壞快取
+          const isGoodCache = zhChars >= 4 && 
+            (detail.part_of_speech === 'phrase' || detail.part_of_speech_zh?.includes('片語') || detail.part_of_speech_zh?.includes('慣'));
+          if (!isGoodCache) {
+            try { await deleteCachedDetail(word); } catch(e) {}
+            // 繼續往下查
+          } else {
+            return JSON.stringify(detail);
+          }
+        } else {
+          return JSON.stringify(detail);
+        }
+      }
     } catch(e) {}
   }
 
   // ── 2. 查字典 ──
   const dictId = getActiveDictId();
+  const isPhrase = word.includes(' ') || word.includes('-');
+
   if (dictId) {
     try {
       const dict = await ensureDictLoaded(dictId, null);
 
-      // 多策略查詢（特別處理片語）
-      const lookupStrategies = [
-        word,                                    // 原始
-        word.toLowerCase(),                      // 小寫
-        word.toLowerCase().replace(/\s+/g, '-'), // 空格換連字號
-        word.toLowerCase().replace(/-/g, ' '),   // 連字號換空格
-      ];
-      // 片語：嘗試主要關鍵字（第一個實詞）
-      const words = word.split(/\s+/);
-      if (words.length > 1) {
-        const content = words.filter(w => !['a','an','the','of','to','in','on','at','by','for','with','as'].includes(w.toLowerCase()));
-        if (content.length > 0) lookupStrategies.push(content[0].toLowerCase());
-      }
-
-      let rawHtml = null;
-      for (const q of lookupStrategies) {
-        rawHtml = await mdxLookup(dict, q);
-        if (rawHtml) break;
-      }
-
-      if (rawHtml) {
-        const dictResult = parseDictEntry(rawHtml, word);
-        if (dictResult?.definitions_zh?.length) {
-          await cacheWordDetail(word, JSON.stringify(dictResult));
-          return JSON.stringify(dictResult);
-        }
-        // 查到條目但定義不足，從 phrases 找片語
-        if (dictResult?.phrases?.length && words.length > 1) {
-          const matched = dictResult.phrases.filter(p =>
-            p.phrase && p.phrase.toLowerCase().includes(word.toLowerCase())
-          );
-          if (matched.length) {
-            const pr = { word, phonetic:'', part_of_speech:'phrase', part_of_speech_zh:'片語',
-              definitions_zh: matched.map(p => s2t(p.zh||p.phrase)),
-              synonyms:[], antonyms:[], forms:{}, phrases:matched, examples:[], _from_dict:true };
-            await cacheWordDetail(word, JSON.stringify(pr));
-            return JSON.stringify(pr);
-          }
-        }
-      }
-
-      // 片語：用最後一個實詞再試，從其 phrases 找
-      if (words.length > 1) {
+      if (isPhrase) {
+        // 片語：只在字典的 phrases section 裡找，不用單字定義
         const stopWords = new Set(['a','an','the','of','to','in','on','at','by','for','with','as','or','and']);
-        const contentWords = words.filter(w => !stopWords.has(w.toLowerCase()));
-        const tryWords = [...new Set([contentWords[contentWords.length-1], contentWords[0]])].filter(Boolean);
+        const wds = word.split(/\s+/);
+        const contentWords = wds.filter(w => !stopWords.has(w.toLowerCase()));
+        const tryWords = [...new Set([contentWords[0], contentWords[contentWords.length-1]])].filter(Boolean);
         for (const tw of tryWords) {
           const twHtml = await mdxLookup(dict, tw.toLowerCase());
           if (!twHtml) continue;
@@ -6431,6 +6489,17 @@ async function lookupWord(word) {
               synonyms:[], antonyms:[], forms:{}, phrases:matched, examples:[], _from_dict:true };
             await cacheWordDetail(word, JSON.stringify(pr));
             return JSON.stringify(pr);
+          }
+        }
+        // 字典找不到此片語 → 直接用 AI
+      } else {
+        // 單字：正常查字典
+        const rawHtml = await mdxLookup(dict, word) || await mdxLookup(dict, word.toLowerCase());
+        if (rawHtml) {
+          const dictResult = parseDictEntry(rawHtml, word);
+          if (dictResult?.definitions_zh?.length) {
+            await cacheWordDetail(word, JSON.stringify(dictResult));
+            return JSON.stringify(dictResult);
           }
         }
       }
