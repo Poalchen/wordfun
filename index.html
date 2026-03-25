@@ -254,11 +254,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent2)}
 .plist-card .pl-check{float:right;color:var(--accent2);font-size:1rem;opacity:0;transition:.15s}
 .plist-card.selected .pl-check{opacity:1}
 .mode-card{
-  background:var(--card);border:2px solid var(--border);border-radius:12px;
-  padding:16px;cursor:pointer;transition:.2s;text-align:center;
+  background:var(--card);border:2px solid var(--border);border-radius:14px;
+  padding:10px 16px;cursor:pointer;transition:.2s;text-align:center;
+  font-size:.88rem;font-weight:600;white-space:nowrap;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
 }
-.mode-card:hover{border-color:var(--accent2)}
-.mode-card.selected{border-color:var(--accent2);background:#eff6ff}
+.mode-card:hover{border-color:var(--accent2);background:var(--surface)}
+.mode-card.selected{border-color:var(--accent2);background:#eff6ff;color:var(--accent2)}
+.mode-card .mode-icon{font-size:1.3rem;line-height:1}
 .count-card{
   padding:8px 20px;border:2px solid var(--border);border-radius:9px;
   font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;background:var(--card);
@@ -402,8 +405,7 @@ nav {
 
 /* Mode cards 2欄 */
 #mode-cards { grid-template-columns: 1fr 1fr; }
-.mode-card { padding: 12px 10px; }
-.mode-card div:first-child { font-size: 1.3rem; margin-bottom: 4px; }
+.count-card { padding: 6px 12px; }
 
 /* Spell letters wrap */
 #spell-letters { gap: 6px; }
@@ -638,16 +640,43 @@ nav {
     </div>
   </div>>
 
-  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
-    <input id="list-search" type="text" placeholder="🔍 搜尋清單..." style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem;width:180px" oninput="renderLists()">
-    <select id="list-sort" onchange="renderLists()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--fg);font-size:.8rem">
+  <!-- 搜尋 + 排序 -->
+  <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+    <input id="list-search" type="text" placeholder="🔍 搜尋清單..." oninput="populateListPicker()"
+      style="flex:1;min-width:120px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--surface);color:var(--fg)">
+    <select id="list-sort" onchange="populateListPicker()"
+      style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:.82rem;background:var(--surface);color:var(--fg)">
       <option value="newest">最新建立</option>
       <option value="oldest">最舊建立</option>
-      <option value="name">名稱 A→Z</option>
-      <option value="count">單字數</option>
+      <option value="name" selected>名稱 A→Z</option>
+      <option value="count">單字數 ↓</option>
+      <option value="last">最近練習</option>
     </select>
   </div>
-  <div class="list-grid" id="list-grid"></div>
+
+  <!-- 單字庫（分類折疊群組）-->
+  <div id="list-groups-container" style="margin-bottom:12px"></div>
+  <!-- 隱藏 select 供 JS 相容 -->
+  <select id="list-picker" style="display:none" onchange="onListPickerChange(this.value)"></select>
+
+  <!-- 選中的單字庫資訊卡片 -->
+  <div id="list-info-card" style="display:none;margin-bottom:16px;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+      <div>
+        <div id="lic-name" style="font-size:1.1rem;font-weight:700;margin-bottom:4px"></div>
+        <div id="lic-stats" style="font-size:.78rem;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap"></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openStudyPanel(activeListId)" style="font-size:.78rem">📖 學習</button>
+        <button class="btn btn-primary btn-sm" onclick="goPracticeFromList()" style="font-size:.78rem">🎯 練習</button>
+        <button class="btn btn-ghost btn-sm" onclick="openSetCategoryModal(activeListId, getListCategories()[activeListId]||'')" style="font-size:.78rem;color:#6d28d9;background:#ede9fe">🏷 設定分類</button>
+      </div>
+    </div>
+    <div id="lic-study-info" style="font-size:.75rem;color:var(--muted);margin-top:8px"></div>
+  </div>
+
+  <!-- 隱藏的舊 list-grid（保留 renderLists 相容性）-->
+  <div class="list-grid" id="list-grid" style="display:none"></div>
 
   <div id="word-section" style="display:none;margin-top:28px">
     <div class="card">
@@ -747,33 +776,19 @@ nav {
       <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
         STEP 2 — 選擇練習模式
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="mode-cards">
-        <div class="mode-card selected" data-mode="mc" onclick="selectMode(this)">
-          <div style="font-size:1.6rem;margin-bottom:6px">🎯</div>
-          <div style="font-weight:700;font-size:.9rem">單選題</div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">從 4 個選項中選出正確翻譯</div>
-        </div>
-        <div class="mode-card" data-mode="cloze" onclick="selectMode(this)">
-          <div style="font-size:1.6rem;margin-bottom:6px">📖</div>
-          <div style="font-weight:700;font-size:.9rem">AI 克漏字</div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">AI 生成短文，填入正確單字</div>
-        </div>
-        <div class="mode-card" data-mode="vocab" onclick="selectMode(this)">
-          <div style="font-size:1.6rem;margin-bottom:6px">📝</div>
-          <div style="font-weight:700;font-size:.9rem">文意字彙</div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">從例句語境中選出正確單字</div>
-        </div>
-        <div class="mode-card" data-mode="spell" onclick="selectMode(this)">
-          <div style="font-size:1.6rem;margin-bottom:6px">🔤</div>
-          <div style="font-weight:700;font-size:.9rem">拼字練習</div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">看中文意義，點字母拼出單字</div>
-        </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="mode-cards">
+        <div class="mode-card selected" data-mode="mc" onclick="selectMode(this)">單選題<span class="mode-icon">🎯</span></div>
+        <div class="mode-card" data-mode="rmc" onclick="selectMode(this)">看中文選單字<span class="mode-icon">🔁</span></div>
+        <div class="mode-card" data-mode="cloze" onclick="selectMode(this)">AI 克漏字<span class="mode-icon">📖</span></div>
+        <div class="mode-card" data-mode="vocab" onclick="selectMode(this)">文意字彙<span class="mode-icon">📝</span></div>
+        <div class="mode-card" data-mode="spell" onclick="selectMode(this)">拼字練習<span class="mode-icon">🔤</span></div>
       </div>
       <select id="practice-mode-sel" style="display:none">
         <option value="mc">單選題</option>
         <option value="cloze">AI 克漏字</option>
         <option value="vocab">文意字彙</option>
         <option value="spell">拼字練習</option>
+        <option value="rmc">看中文選單字</option>
       </select>
     </div>
 
@@ -932,6 +947,24 @@ nav {
 
     <button id="spell-next" class="btn btn-primary" style="display:none;width:100%;margin-top:16px" onclick="spellNext()">下一題 →</button>
   </div>
+
+<div id="practice-rmc" class="practice-wrap" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span id="rmc-progress" style="font-size:.82rem;color:var(--muted)">題目 1 / 5</span>
+    <span id="rmc-score" style="font-size:.82rem;font-weight:700;color:var(--accent2)">0 分</span>
+  </div>
+  <div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:20px">
+    <div id="rmc-bar" style="height:100%;background:var(--accent2);border-radius:2px;transition:width .3s;width:0%"></div>
+  </div>
+  <div class="card card-body" style="margin-bottom:16px">
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">🔁 看中文選單字 — 選出對應的英文單字</div>
+    <!-- 中文提示 -->
+    <div id="rmc-zh" style="font-size:1.4rem;font-weight:700;text-align:center;padding:20px 10px;color:var(--ink)"></div>
+  </div>
+  <!-- 選項 -->
+  <div id="rmc-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+  <button id="rmc-next" onclick="nextRMC()" class="btn btn-primary" style="display:none;width:100%">下一題 →</button>
+</div>
 
 <div id="practice-result" class="practice-wrap" style="display:none">
     <div class="card card-body" style="padding:36px 28px">
@@ -1558,7 +1591,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v8.9';
+const APP_VERSION = 'v9.8';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2073,6 +2106,8 @@ async function refreshHome() {
 // WORD LISTS
 // ═══════════════════════════════════════
 async function renderLists() {
+  // 更新下拉選單（主要顯示方式）
+  await populateListPicker();
   let lists = await getAllLists();
   const grid = document.getElementById('list-grid');
 
@@ -2127,18 +2162,282 @@ async function renderLists() {
 
 
 
+
+
+// ── 分類管理 ──
+const CAT_KEY = 'wf_list_categories'; // {listId: categoryName}
+
+function getListCategories() {
+  try { return JSON.parse(localStorage.getItem(CAT_KEY) || '{}'); } catch { return {}; }
+}
+function setListCategory(listId, cat) {
+  const m = getListCategories();
+  if (cat) m[listId] = cat; else delete m[listId];
+  localStorage.setItem(CAT_KEY, JSON.stringify(m));
+}
+
+// 渲染分類折疊群組
+async function renderListGroups(lists) {
+  const container = document.getElementById('list-groups-container');
+  if (!container) return;
+  const catMap = getListCategories();
+
+  // 按分類分組
+  const groups = {};
+  for (const l of lists) {
+    const cat = catMap[l.id] || '未分類';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(l);
+  }
+
+  // 排序：分類按名稱，未分類放最後
+  const catNames = Object.keys(groups).sort((a,b) => {
+    if (a==='未分類') return 1;
+    if (b==='未分類') return -1;
+    return a.localeCompare(b,'zh-TW');
+  });
+
+  // 讀取折疊狀態
+  const collapsed = JSON.parse(localStorage.getItem('wf_cat_collapsed')||'{}');
+
+  container.innerHTML = '';
+  for (const cat of catNames) {
+    const items = groups[cat];
+    const isCollapsed = collapsed[cat] === true; // 預設展開（只有明確設為 true 才折疊）
+    const groupDiv = document.createElement('div');
+    groupDiv.style.cssText = 'margin-bottom:8px;border:1px solid var(--border);border-radius:10px;overflow:hidden';
+
+    // 標題列
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--surface);cursor:pointer;user-select:none';
+    header.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:.82rem;font-weight:700;color:var(--ink)">${cat}</span>
+        <span style="font-size:.72rem;color:var(--muted);background:var(--bg);padding:1px 7px;border-radius:10px">${items.length}</span>
+      </div>
+      <span class="cat-arrow" style="font-size:.8rem;color:var(--muted);transition:.2s">${isCollapsed?'▶':'▼'}</span>
+    `;
+
+    // 清單容器
+    const listDiv = document.createElement('div');
+    listDiv.style.cssText = isCollapsed ? 'display:none' : '';
+
+    items.forEach((l, i) => {
+      const item = document.createElement('div');
+      const isActive = l.id === activeListId;
+      item.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;border-top:1px solid var(--border);transition:.1s;${isActive?'background:#eff6ff':''}`;
+      item.onmouseover = () => { if (l.id !== activeListId) item.style.background = 'var(--surface)'; };
+      item.onmouseout  = () => { if (l.id !== activeListId) item.style.background = ''; };
+      item.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <span style="font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${isActive?'font-weight:700;color:#1d4ed8':''}">${l.name}</span>
+          ${catMap[l.id] ? `<span style="font-size:.68rem;color:#6d28d9;background:#ede9fe;padding:1px 6px;border-radius:8px;white-space:nowrap;flex-shrink:0">${catMap[l.id]}</span>` : ''}
+        </div>
+        <button onclick="event.stopPropagation();openSetCategoryModal(${l.id},'${(catMap[l.id]||'').replace(/'/g,"\'")}')"
+          style="background:#f3f4f6;border:1px solid var(--border);border-radius:6px;font-size:.72rem;cursor:pointer;color:var(--muted);padding:2px 8px;white-space:nowrap;flex-shrink:0">🏷 分類</button>
+      `;
+      item.onclick = () => onListPickerChange(l.id);
+      listDiv.appendChild(item);
+    });
+
+    // 折疊切換
+    header.onclick = () => {
+      const open = listDiv.style.display !== 'none';
+      listDiv.style.display = open ? 'none' : '';
+      header.querySelector('.cat-arrow').textContent = open ? '▶' : '▼';
+      const st = JSON.parse(localStorage.getItem('wf_cat_collapsed')||'{}');
+      st[cat] = open;
+      localStorage.setItem('wf_cat_collapsed', JSON.stringify(st));
+    };
+
+    groupDiv.appendChild(header);
+    groupDiv.appendChild(listDiv);
+    container.appendChild(groupDiv);
+  }
+}
+
+// 設定分類 modal
+let _setCatListId = null;
+function openSetCategoryModal(listId, currentCat) {
+  _setCatListId = +listId;
+  const cats = getListCategories();
+  const existing = [...new Set(Object.values(cats))].filter(Boolean).sort();
+
+  let modal = document.getElementById('modal-set-category');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-set-category';
+    modal.className = 'modal-bg';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:380px">
+        <div class="modal-header">
+          <h3 style="font-size:1rem">🏷 設定分類</h3>
+          <button class="modal-close" onclick="closeModal('modal-set-category')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="cat-existing-hint" style="font-size:.75rem;color:var(--muted);margin-bottom:10px"></div>
+          <div class="form-row">
+            <label class="form-label">分類名稱（留空 = 未分類）</label>
+            <input id="cat-name-input" placeholder="例如：B4、多益、日常會話"
+              style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--fg)"
+              onkeydown="if(event.key==='Enter')confirmSetCategory()">
+          </div>
+          <div id="cat-quick-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" style="flex:1" onclick="confirmSetCategory()">確認</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-set-category')">取消</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  const hint = document.getElementById('cat-existing-hint');
+  const quickBtns = document.getElementById('cat-quick-btns');
+  hint.textContent = existing.length ? `現有分類：${existing.join('、')}` : '（尚無分類，直接輸入新名稱）';
+  quickBtns.innerHTML = existing.map(cat =>
+    `<button onclick="document.getElementById('cat-name-input').value='${cat.replace(/'/g,"\\'")}'"
+      style="padding:4px 12px;border:1px solid #c4b5fd;border-radius:16px;background:#ede9fe;color:#6d28d9;font-size:.78rem;cursor:pointer">${cat}</button>`
+  ).join('');
+
+  document.getElementById('cat-name-input').value = currentCat || '';
+  openModal('modal-set-category');
+  setTimeout(() => document.getElementById('cat-name-input')?.focus(), 150);
+}
+
+function confirmSetCategory() {
+  if (!_setCatListId) return;
+  const val = document.getElementById('cat-name-input').value.trim();
+  setListCategory(_setCatListId, val);
+  closeModal('modal-set-category');
+  renderLists();
+  toast(`✓ 已設定分類「${val || '未分類'}」`);
+}
+
+// ── 單字庫下拉選擇 ──
+async function populateListPicker() {
+  let lists = await getAllLists();
+  const sort = document.getElementById('list-sort')?.value || 'name';
+  const q    = (document.getElementById('list-search')?.value || '').trim().toLowerCase();
+  if (q) lists = lists.filter(l => l.name.toLowerCase().includes(q));
+
+  // 「最近練習」需要取練習記錄
+  if (sort === 'last' || sort === 'count') {
+    const allRecs = await new Promise(res => { const r=store('practice_records','readonly').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>res([]); });
+    const countMap = {}; const lastMap = {};
+    allRecs.forEach(r => {
+      countMap[r.word_id] = (countMap[r.word_id]||0) + 1;
+      if (r.last_practice_time) {
+        if (!lastMap[r.word_id] || r.last_practice_time > lastMap[r.word_id])
+          lastMap[r.word_id] = r.last_practice_time;
+      }
+    });
+    // 取每個 list 的最後練習時間與總字數
+    const wordCounts = {}; const listLastPrac = {};
+    await Promise.all(lists.map(async l => {
+      const ws = await getWordsForList(l.id);
+      wordCounts[l.id] = ws.length;
+      const times = ws.map(w => lastMap[w.id]).filter(Boolean).sort();
+      listLastPrac[l.id] = times.length ? times[times.length-1] : '';
+    }));
+    if (sort === 'count') lists.sort((a,b) => (wordCounts[b.id]||0) - (wordCounts[a.id]||0));
+    if (sort === 'last')  lists.sort((a,b) => (listLastPrac[b.id]||'').localeCompare(listLastPrac[a.id]||''));
+  } else {
+    lists.sort((a,b) => {
+      if (sort==='newest') return b.id-a.id;
+      if (sort==='oldest') return a.id-b.id;
+      if (sort==='name')   return a.name.localeCompare(b.name,'zh-TW');
+      return 0;
+    });
+  }
+
+  const sel = document.getElementById('list-picker');
+  if (!sel) return;
+  const prev = activeListId ? String(activeListId) : sel.value;
+  sel.innerHTML = '<option value="">──</option>' +
+    lists.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  if (prev) sel.value = prev;
+
+  // 渲染分類折疊群組
+  await renderListGroups(lists);
+
+  if (sel.value) await onListPickerChange(+sel.value, true);
+}
+
+async function onListPickerChange(id, silent) {
+  if (!id) {
+    document.getElementById('list-info-card').style.display = 'none';
+    document.getElementById('word-section').style.display   = 'none';
+    activeListId = null;
+    // 停用改名/刪除按鈕
+    ['btn-rename-list','btn-delete-list'].forEach(bid => {
+      const b = document.getElementById(bid);
+      if (b) { b.style.opacity='.4'; b.style.pointerEvents='none'; }
+    });
+    return;
+  }
+  id = +id;
+  await selectList(id, '');  // selectList 會查名稱並填入 active-list-name
+}
+
+// 從單字庫直接跳到練習
+function goPracticeFromList() {
+  if (!activeListId) return;
+  selectedPracticeListId = activeListId;
+  goto('practice');
+  setTimeout(async () => {
+    const sel = document.getElementById('practice-list-sel');
+    if (sel) { sel.value = activeListId; await onPracticeListChange(activeListId); }
+  }, 300);
+}
+
 async function selectList(id, name) {
   activeListId = id;
+
+  // 更新下拉選單
+  const picker = document.getElementById('list-picker');
+  if (picker && picker.value !== String(id)) picker.value = id;
+
+  // 取資料
+  const lists   = await getAllLists();
+  const list    = lists.find(l => l.id === id);
+  const listName = list?.name || name || '—';
+  document.getElementById('active-list-name').textContent = listName;
+
+  // 更新資訊卡
+  const card = document.getElementById('list-info-card');
+  if (card) {
+    card.style.display = 'block';
+    document.getElementById('lic-name').textContent = listName;
+
+    // 統計
+    const words   = await getWordsForList(id);
+    const allRecs = await new Promise(res => { const r=store('practice_records','readonly').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>res([]); });
+    const recMap  = {}; allRecs.forEach(r => recMap[r.word_id]=r);
+    const total     = words.length;
+    const practiced = words.filter(w => (recMap[w.id]?.practice_count||0)>0).length;
+    const wrong     = words.filter(w => (recMap[w.id]?.error_count||0)>0).length;
+    const totalAtt  = words.reduce((s,w)=>s+(recMap[w.id]?.practice_count||0),0);
+    const totalErr  = words.reduce((s,w)=>s+(recMap[w.id]?.error_count||0),0);
+    const acc       = totalAtt>0 ? Math.round((totalAtt-totalErr)/totalAtt*100)+'%' : '—';
+
+    document.getElementById('lic-stats').innerHTML =
+      `<span>📚 ${total} 字</span><span>⭐ 未練 ${total-practiced}</span><span>❌ 有錯 ${wrong}</span><span>🎯 正確率 ${acc}</span>`;
+
+    // 學習記錄
+    const sessions = await getStudySessionsForList(id);
+    const last     = sessions[sessions.length-1];
+    document.getElementById('lic-study-info').textContent =
+      sessions.length ? `📖 學習 ${sessions.length} 次` + (last ? `・最後 ${fmtDate(last.started_at)}` : '') : '尚未學習';
+  }
+
+  // 啟用改名/刪除按鈕
+  ['btn-rename-list','btn-delete-list'].forEach(bid => {
+    const b = document.getElementById(bid);
+    if (b) { b.style.opacity='1'; b.style.pointerEvents=''; }
+  });
+
   document.getElementById('word-section').style.display = 'block';
-  document.getElementById('active-list-name').textContent = name;
-
-  // 啟用頂部改名/刪除按鈕
-  const btnRename = document.getElementById('btn-rename-list');
-  const btnDelete = document.getElementById('btn-delete-list');
-  if (btnRename) { btnRename.style.opacity = '1'; btnRename.style.pointerEvents = ''; }
-  if (btnDelete) { btnDelete.style.opacity = '1'; btnDelete.style.pointerEvents = ''; }
-
-  renderLists();
   loadWords();
   updateListStatsBar(id);
 }
@@ -3565,6 +3864,8 @@ async function startPractice() {
     await startVocab(allWords, pool);
   } else if (selectedMode === 'spell') {
     await startSpell(pool);
+  } else if (selectedMode === 'rmc') {
+    await startRMC(allWords, pool);
   }
 }
 
@@ -4475,6 +4776,144 @@ let spellLetterBtns = [];   // 字母池按鈕
 
 const DECOY_CHARS = 'abcdefghijklmnopqrstuvwxyz';
 
+// ── 看中文選單字（RMC）──
+let rmcWords = [], rmcIdx = 0, rmcScore = 0, rmcAnswered = false, rmcAllWords = [];
+
+async function startRMC(allWords, practicePool) {
+  lastWrongWords = [];
+  // 取所有單字庫的單字作為干擾來源（跨庫）
+  const allLists = await getAllLists();
+  const allWordsAcrossLists = [];
+  const seenIds = new Set();
+  for (const l of allLists) {
+    const ws = await getWordsForList(l.id);
+    for (const w of ws) {
+      if (!seenIds.has(w.id)) { seenIds.add(w.id); allWordsAcrossLists.push(w); }
+    }
+  }
+  rmcAllWords = allWordsAcrossLists;
+  const shuffled = [...practicePool].sort(() => Math.random() - .5);
+  const n = selectedPracticeCount === 0 ? shuffled.length : Math.min(selectedPracticeCount, shuffled.length);
+  rmcWords = shuffled.slice(0, n);
+  rmcIdx = 0; rmcScore = 0; rmcAnswered = false;
+  document.getElementById('practice-setup').style.display = 'none';
+  document.getElementById('practice-rmc').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderRMCQuestion();
+}
+
+function renderRMCQuestion() {
+  const target = rmcWords[rmcIdx];
+  rmcAnswered = false;
+  document.getElementById('rmc-progress').textContent = `題目 ${rmcIdx + 1} / ${rmcWords.length}`;
+  document.getElementById('rmc-score').textContent = `${rmcScore} 分`;
+  document.getElementById('rmc-bar').style.width = (rmcIdx / rmcWords.length * 100) + '%';
+  document.getElementById('rmc-next').style.display = 'none';
+
+  // 顯示中文翻譯
+  document.getElementById('rmc-zh').textContent = s2t(target.translation || target.word);
+
+  // 取 3 個干擾選項（英文單字，不重複）
+  const used = new Set([target.id]);
+  const distractors = [];
+  const pool = [...rmcAllWords].sort(() => Math.random() - .5);
+  for (const w of pool) {
+    if (!used.has(w.id) && w.word.trim()) {
+      used.add(w.id);
+      distractors.push(w);
+      if (distractors.length >= 3) break;
+    }
+  }
+  const options = [target, ...distractors].sort(() => Math.random() - .5);
+
+  const container = document.getElementById('rmc-options');
+  container.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'padding:14px 10px;font-size:.9rem;text-align:center;border-radius:10px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:.15s;font-weight:500;width:100%';
+    btn.textContent = opt.word;
+    btn.onclick = () => selectRMCOption(btn, opt, target);
+    container.appendChild(btn);
+  });
+}
+
+function selectRMCOption(el, chosen, target) {
+  if (rmcAnswered) return;
+  rmcAnswered = true;
+  const correct = chosen.id === target.id;
+
+  document.querySelectorAll('#rmc-options button').forEach(btn => {
+    btn.style.pointerEvents = 'none';
+    if (btn.textContent === target.word) {
+      btn.style.background = '#f0fdf4'; btn.style.borderColor = 'var(--green)'; btn.style.color = '#16a34a';
+    }
+  });
+  if (!correct) {
+    el.style.background = '#fee2e2'; el.style.borderColor = '#ef4444'; el.style.color = '#dc2626';
+    if (!lastWrongWords.find(w => w.id === target.id)) lastWrongWords.push(target);
+  } else {
+    rmcScore++;
+  }
+
+  try { recordAttempt(target.id, correct, 'rmc', target.word); } catch(e) {}
+
+  document.getElementById('rmc-score').textContent = `${rmcScore} 分`;
+  const nextBtn = document.getElementById('rmc-next');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = rmcIdx + 1 < rmcWords.length ? '下一題 →' : '查看結果 →';
+}
+
+function nextRMC() {
+  rmcIdx++;
+  if (rmcIdx >= rmcWords.length) { showRMCResult(); return; }
+  renderRMCQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showRMCResult() {
+  document.getElementById('practice-rmc').style.display = 'none';
+  document.getElementById('practice-setup').style.display = 'none';
+  const res = document.getElementById('practice-result');
+  res.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const total = rmcWords.length;
+  const pct = total > 0 ? Math.round(rmcScore / total * 100) : 0;
+  const emoji = pct >= 90 ? '🎉' : pct >= 70 ? '😊' : pct >= 50 ? '😅' : '😢';
+
+  let wrongHtml = '';
+  if (lastWrongWords.length) {
+    wrongHtml = `<div style="margin-top:16px">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">答錯的單字</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${lastWrongWords.map(w => `<span onclick="showWordDetail('${w.word.replace(/'/g,"\\'")}',null)"
+          style="padding:5px 12px;background:#fee2e2;border-radius:20px;color:#991b1b;font-size:.85rem;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="font-weight:600">${w.word}</span>
+          ${w.translation ? `<span style="font-size:.75rem;color:#b91c1c">${s2t(w.translation)}</span>` : ''}
+        </span>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  res.innerHTML = `
+    <div style="text-align:center;padding:24px 0 16px">
+      <div style="font-size:2.5rem;margin-bottom:8px">${emoji}</div>
+      <div style="font-size:1.4rem;font-weight:700;margin-bottom:6px">練習完成！</div>
+      <div style="font-size:.88rem;color:var(--muted)">答對 ${rmcScore} / ${total} 題，正確率 ${pct}%</div>
+    </div>
+    ${wrongHtml}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:20px">
+      ${lastWrongWords.length ? `<button class="btn btn-primary btn-sm" onclick="retryRMCWrong()">🔁 再練錯題</button>` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="startRMC(rmcAllWords, rmcWords)">再練一次</button>
+      <button class="btn btn-ghost btn-sm" onclick="endPractice()">返回練習模式</button>
+    </div>`;
+  refreshHome();
+}
+
+function retryRMCWrong() {
+  startRMC(rmcAllWords, [...lastWrongWords]);
+}
+
 async function startSpell(words) {
   lastWrongWords = [];
   const shuffled = [...words].sort(() => Math.random() - .5);
@@ -5169,6 +5608,7 @@ function endPractice() {
   document.getElementById('practice-cloze').style.display='none';
   document.getElementById('practice-vocab').style.display='none';
   document.getElementById('practice-spell').style.display='none';
+  document.getElementById('practice-rmc').style.display='none';
   document.getElementById('practice-result').style.display='none';
   document.getElementById('practice-setup').style.display='block';
   window.scrollTo({top:0, behavior:'smooth'});
