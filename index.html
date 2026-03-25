@@ -1591,7 +1591,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v10.0';
+const APP_VERSION = 'v10.1';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2861,14 +2861,11 @@ async function saveEditWord() {
   const existing = await getItem('words', id);
   if (!existing) return;
 
-  const wordChanged = word.toLowerCase() !== existing.word.toLowerCase();
+  const wordChanged  = word.toLowerCase() !== existing.word.toLowerCase();
+  const transChanged = trans !== existing.translation;
 
-  // 單字本身有變更：清除舊快取、重新 AI 翻譯
   if (wordChanged) {
-    // 清除舊單字的 AI 詳細快取
     await deleteCachedDetail(existing.word);
-
-    // 若未手動填入新翻譯，呼叫 AI 自動翻譯
     if (!trans) {
       const saveBtn = document.querySelector('#modal-edit-word .btn-primary');
       const origText = saveBtn.textContent;
@@ -2877,7 +2874,7 @@ async function saveEditWord() {
       try {
         const res = await batchTranslateAI([word]);
         trans = res[0]?.translation || '';
-      } catch(e) { /* 翻譯失敗不擋儲存 */ }
+      } catch(e) {}
       saveBtn.textContent = origText;
       saveBtn.disabled = false;
     }
@@ -2887,11 +2884,30 @@ async function saveEditWord() {
     ...existing, word, translation: trans, importance: imp, frequency: freq
   }));
 
+  // 翻譯有變更：同步所有單字庫中相同單字
+  let syncCount = 0;
+  if (transChanged && trans && !wordChanged) {
+    const allWords = await new Promise(res => {
+      const req = store('words','readonly').getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror   = () => res([]);
+    });
+    const sameWords = allWords.filter(w =>
+      w.id !== id && w.word.toLowerCase() === word.toLowerCase()
+    );
+    for (const w of sameWords) {
+      await req2p(store('words','readwrite').put({ ...w, translation: trans }));
+      syncCount++;
+    }
+  }
+
   closeModal('modal-edit-word');
   loadWords();
-  toast(wordChanged
-    ? `✓「${word}」已更新，舊快取已清除`
-    : `✓「${word}」已更新`);
+  if (syncCount > 0) {
+    toast(`✓「${word}」已更新，另同步 ${syncCount} 個相同單字`);
+  } else {
+    toast(wordChanged ? `✓「${word}」已更新，舊快取已清除` : `✓「${word}」已更新`);
+  }
 }
 
 async function deleteWord(id) {
