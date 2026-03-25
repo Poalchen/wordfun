@@ -1591,7 +1591,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v9.8';
+const APP_VERSION = 'v10.0';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -2263,46 +2263,61 @@ function openSetCategoryModal(listId, currentCat) {
   const cats = getListCategories();
   const existing = [...new Set(Object.values(cats))].filter(Boolean).sort();
 
-  let modal = document.getElementById('modal-set-category');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-set-category';
-    modal.className = 'modal-bg';
-    modal.innerHTML = `
-      <div class="modal" style="max-width:380px">
-        <div class="modal-header">
-          <h3 style="font-size:1rem">🏷 設定分類</h3>
-          <button class="modal-close" onclick="closeModal('modal-set-category')">✕</button>
-        </div>
-        <div class="modal-body">
-          <div id="cat-existing-hint" style="font-size:.75rem;color:var(--muted);margin-bottom:10px"></div>
-          <div class="form-row">
-            <label class="form-label">分類名稱（留空 = 未分類）</label>
-            <input id="cat-name-input" placeholder="例如：B4、多益、日常會話"
-              style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--fg)"
-              onkeydown="if(event.key==='Enter')confirmSetCategory()">
-          </div>
-          <div id="cat-quick-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-primary" style="flex:1" onclick="confirmSetCategory()">確認</button>
-            <button class="btn btn-ghost" onclick="closeModal('modal-set-category')">取消</button>
-          </div>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  }
+  // 取單字庫名稱
+  getAllLists().then(lists => {
+    const list = lists.find(l => l.id === +listId);
+    const listName = list?.name || '—';
 
-  const hint = document.getElementById('cat-existing-hint');
-  const quickBtns = document.getElementById('cat-quick-btns');
-  hint.textContent = existing.length ? `現有分類：${existing.join('、')}` : '（尚無分類，直接輸入新名稱）';
-  quickBtns.innerHTML = existing.map(cat =>
-    `<button onclick="document.getElementById('cat-name-input').value='${cat.replace(/'/g,"\\'")}'"
-      style="padding:4px 12px;border:1px solid #c4b5fd;border-radius:16px;background:#ede9fe;color:#6d28d9;font-size:.78rem;cursor:pointer">${cat}</button>`
-  ).join('');
+    let modal = document.getElementById('modal-set-category');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-set-category';
+      modal.className = 'modal-bg';
+      modal.innerHTML = `
+        <div class="modal" style="max-width:380px">
+          <div class="modal-header">
+            <h3 style="font-size:1rem">🏷 設定分類</h3>
+            <button class="modal-close" onclick="closeModal('modal-set-category')">✕</button>
+          </div>
+          <div class="modal-body">
+            <div id="cat-list-info" style="margin-bottom:12px;padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--border)"></div>
+            <div id="cat-existing-hint" style="font-size:.75rem;color:var(--muted);margin-bottom:8px"></div>
+            <div class="form-row">
+              <label class="form-label">分類名稱（留空 = 未分類）</label>
+              <input id="cat-name-input" placeholder="例如：B4、多益、日常會話"
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--surface);color:var(--fg)"
+                onkeydown="if(event.key==='Enter')confirmSetCategory()">
+            </div>
+            <div id="cat-quick-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" style="flex:1" onclick="confirmSetCategory()">確認</button>
+              <button class="btn btn-ghost" onclick="closeModal('modal-set-category')">取消</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
 
-  document.getElementById('cat-name-input').value = currentCat || '';
-  openModal('modal-set-category');
-  setTimeout(() => document.getElementById('cat-name-input')?.focus(), 150);
+    // 單字庫資訊
+    const infoEl = document.getElementById('cat-list-info');
+    infoEl.innerHTML = `
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">單字庫</div>
+      <div style="font-weight:700;font-size:.92rem">${listName}</div>
+      ${currentCat ? `<div style="margin-top:4px;font-size:.75rem;color:#6d28d9">目前分類：<span style="background:#ede9fe;padding:1px 8px;border-radius:10px">${currentCat}</span></div>` : '<div style="margin-top:4px;font-size:.75rem;color:var(--muted)">目前分類：未分類</div>'}
+    `;
+
+    const hint = document.getElementById('cat-existing-hint');
+    const quickBtns = document.getElementById('cat-quick-btns');
+    hint.textContent = existing.length ? `現有分類：` : '（尚無分類，直接輸入新名稱）';
+    quickBtns.innerHTML = existing.map(cat =>
+      `<button onclick="document.getElementById('cat-name-input').value='${cat.replace(/'/g,"\\'")}'"
+        style="padding:4px 12px;border:1px solid #c4b5fd;border-radius:16px;background:#ede9fe;color:#6d28d9;font-size:.78rem;cursor:pointer">${cat}</button>`
+    ).join('');
+
+    document.getElementById('cat-name-input').value = currentCat || '';
+    openModal('modal-set-category');
+    setTimeout(() => document.getElementById('cat-name-input')?.focus(), 150);
+  });
 }
 
 function confirmSetCategory() {
@@ -5729,7 +5744,7 @@ function saveGDriveClientId() {
 function showGDriveHelp() { openModal('modal-gdrive-help'); }
 
 function getGDriveClientId() {
-  return localStorage.getItem('gdrive_client_id') || '';
+  return localStorage.getItem('gdrive_client_id') || '564471027775-glm7bsh49hoevld3a70nu6uatg3s1kn9.apps.googleusercontent.com';
 }
 
 function gdriveLogin() {
@@ -6096,7 +6111,7 @@ async function gdriveAutoBackup() {
 // Init on page load
 window.addEventListener('load', () => {
   initGDriveFromHash();
-  const saved = localStorage.getItem('gdrive_client_id');
+  const saved = localStorage.getItem('gdrive_client_id') || '564471027775-glm7bsh49hoevld3a70nu6uatg3s1kn9.apps.googleusercontent.com';
   if (saved) document.getElementById('gdrive-client-id').value = saved;
   const lastBackup = localStorage.getItem('gdrive_last_backup');
   if (lastBackup && _gdriveToken) gdriveMsg(`上次備份：${lastBackup}`);
