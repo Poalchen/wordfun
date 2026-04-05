@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v10.4 – 智慧單字學習</title>
+<title>WordFun v10.5 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1615,7 +1615,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v10.4';
+const APP_VERSION = 'v10.5';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1938,7 +1938,7 @@ async function testAI(provider) {
 }
 
 // ── 預設 API Keys（使用者未設定時自動使用）──
-const DEFAULT_GEMINI_KEY   = 'AIzaSyDEFCjrmecOT05S30plNwMFp5MPqEsf9t0';
+const DEFAULT_GEMINI_KEY   = 'AIzaSyAxTryD_LNsCW8YJ6Ty6amF-PREwbpgueg';
 const DEFAULT_DEEPSEEK_KEY = 'sk-5cc17261ea674b44880681c57b57703b';
 const DEFAULT_GEMINI_MODEL   = 'gemini-2.5-flash';
 const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
