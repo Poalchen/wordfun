@@ -1164,8 +1164,9 @@ nav {
         <div style="margin-top:10px;padding:10px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:8px;font-size:.78rem;line-height:1.7;color:#166534">
           <strong>✅ 任何環境皆可使用 AI：</strong><br>
           • <strong>claude.ai 內開啟</strong>：使用內建 Claude，無需設定 Key<br>
-          • <strong>GitHub Pages / 本地開啟</strong>：自動使用內建預設 Key（Gemini 優先，失敗改 DeepSeek）<br>
-          • 自行設定 Key 後，將優先使用你的設定
+          • <strong>GitHub Pages / 本地開啟</strong>：預設自動使用內建 Gemini Key<br>
+          • 選 Gemini / DeepSeek 但不填 Key → 自動使用內建預設 Key<br>
+          • 填入自己的 Key → 優先使用自己的 Key
         </div>
       </div>
 
@@ -1830,13 +1831,17 @@ function updateAIBadge(settings) {
   if (!badge) return;
   const s = settings || loadAISettings();
   if (s.provider === 'gemini') {
-    badge.textContent = '🔵 Gemini'; badge.style.color = '#4285f4';
+    const hasKey = s.geminiKey ? '' : '（預設）';
+    badge.textContent = '🔵 Gemini' + hasKey; badge.style.color = '#4285f4';
   } else if (s.provider === 'claude') {
     badge.textContent = '🟠 Claude'; badge.style.color = '#d97706';
   } else if (s.provider === 'deepseek') {
-    badge.textContent = '🟢 DeepSeek'; badge.style.color = '#10b981';
-  } else {
+    const hasKey = s.deepseekKey ? '' : '（預設）';
+    badge.textContent = '🟢 DeepSeek' + hasKey; badge.style.color = '#10b981';
+  } else if (window.location.hostname.includes('claude.ai')) {
     badge.textContent = '✦ 內建 Claude'; badge.style.color = '#6b7280';
+  } else {
+    badge.textContent = '🔵 Gemini（預設）'; badge.style.color = '#4285f4';
   }
 }
 
@@ -1907,31 +1912,32 @@ const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
 async function callAI(prompt) {
   const s = loadAISettings();
 
-  // 1. 使用者設定 Gemini
-  if (s.provider === 'gemini' && s.geminiKey) {
-    return callGeminiRaw(s.geminiKey, s.geminiModel || DEFAULT_GEMINI_MODEL, prompt);
+  // 1. 使用者選 Gemini（無論有無填 key，有 key 用自己的，沒有用預設）
+  if (s.provider === 'gemini') {
+    const key = s.geminiKey || DEFAULT_GEMINI_KEY;
+    return callGeminiRaw(key, s.geminiModel || DEFAULT_GEMINI_MODEL, prompt);
   }
 
-  // 2. 使用者設定 Claude + 自己的 key
+  // 2. 使用者選 Claude + 自己的 key
   if (s.provider === 'claude' && s.claudeKey) {
     return callClaudeRaw(s.claudeKey, s.claudeModel || 'claude-haiku-4-5-20251001', prompt);
   }
 
-  // 3. 使用者設定 DeepSeek
-  if (s.provider === 'deepseek' && s.deepseekKey) {
-    return callDeepSeekRaw(s.deepseekKey, s.deepseekModel || DEFAULT_DEEPSEEK_MODEL, prompt);
+  // 3. 使用者選 DeepSeek（無論有無填 key，有 key 用自己的，沒有用預設）
+  if (s.provider === 'deepseek') {
+    const key = s.deepseekKey || DEFAULT_DEEPSEEK_KEY;
+    return callDeepSeekRaw(key, s.deepseekModel || DEFAULT_DEEPSEEK_MODEL, prompt);
   }
 
-  // 4. claude.ai 內建環境（不需 key）
+  // 4. claude.ai 內建環境（provider 是 none 或未設定）
   if (typeof window !== 'undefined' && window.location.hostname.includes('claude.ai')) {
     return callClaudeRaw('', 'claude-sonnet-4-20250514', prompt);
   }
 
-  // 5. 非 claude.ai 環境 → 用預設 Gemini Key
+  // 5. 其他環境且 provider 是 none → 預設 Gemini，失敗改 DeepSeek
   try {
     return await callGeminiRaw(DEFAULT_GEMINI_KEY, DEFAULT_GEMINI_MODEL, prompt);
   } catch(e) {
-    // Gemini 失敗 → 改用預設 DeepSeek Key
     console.warn('預設 Gemini 失敗，改用 DeepSeek：', e.message);
     return callDeepSeekRaw(DEFAULT_DEEPSEEK_KEY, DEFAULT_DEEPSEEK_MODEL, prompt);
   }
