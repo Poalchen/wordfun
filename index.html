@@ -670,6 +670,7 @@ nav {
         <button class="btn btn-ghost btn-sm" onclick="openStudyPanel(activeListId)" style="font-size:.78rem">📖 學習</button>
         <button class="btn btn-primary btn-sm" onclick="goPracticeFromList()" style="font-size:.78rem">🎯 練習</button>
         <button class="btn btn-ghost btn-sm" onclick="openSetCategoryModal(activeListId, getListCategories()[activeListId]||'')" style="font-size:.78rem;color:#6d28d9;background:#ede9fe">🏷 設定分類</button>
+        <button class="btn btn-ghost btn-sm" onclick="startBatchTranslate()" style="font-size:.78rem;color:#0369a1;background:#e0f2fe">🌐 批次補譯</button>
       </div>
     </div>
     <div id="lic-study-info" style="font-size:.75rem;color:var(--muted);margin-top:8px"></div>
@@ -1160,11 +1161,11 @@ nav {
           </label>
         </div>
         <!-- 環境說明 -->
-        <div style="margin-top:10px;padding:10px 12px;background:#fef9c3;border:1px solid #fde047;border-radius:8px;font-size:.78rem;line-height:1.7;color:#713f12">
-          <strong>⚠️ 注意使用環境：</strong><br>
-          • <strong>claude.ai 內開啟（目前環境）</strong>：預設使用內建 Claude，無需設定任何 Key<br>
-          • <strong>下載到本地 / 其他網站開啟</strong>：內建 Claude 失效，請設定 Gemini 或 Claude 自有 Key<br>
-          • Gemini / Claude Key 設定後，在任何環境都有效
+        <div style="margin-top:10px;padding:10px 12px;background:#dcfce7;border:1px solid #86efac;border-radius:8px;font-size:.78rem;line-height:1.7;color:#166534">
+          <strong>✅ 任何環境皆可使用 AI：</strong><br>
+          • <strong>claude.ai 內開啟</strong>：使用內建 Claude，無需設定 Key<br>
+          • <strong>GitHub Pages / 本地開啟</strong>：自動使用內建預設 Key（Gemini 優先，失敗改 DeepSeek）<br>
+          • 自行設定 Key 後，將優先使用你的設定
         </div>
       </div>
 
@@ -1566,6 +1567,26 @@ nav {
   </div>
 </div>
 
+<div class="modal-bg" id="modal-batch-translate">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <h3 style="font-size:1rem;margin:0">🌐 批次補譯</h3>
+      <button class="btn btn-ghost btn-sm" id="batch-trans-close-btn" onclick="stopBatchTranslate()">✕</button>
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:12px" id="batch-trans-status">準備中…</div>
+      <div style="background:var(--surface);border-radius:6px;height:8px;overflow:hidden;margin-bottom:10px">
+        <div id="batch-trans-bar" style="height:100%;width:0%;background:#0369a1;transition:width .3s;border-radius:6px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)">
+        <span id="batch-trans-count">0 / 0</span>
+        <span id="batch-trans-skip" style="color:var(--green)"></span>
+      </div>
+      <div id="batch-trans-log" style="margin-top:14px;max-height:160px;overflow-y:auto;font-size:.75rem;color:var(--muted);line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-stats-detail">
   <div class="modal" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column">
     <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
@@ -1689,6 +1710,21 @@ async function batchInsertWords(listId, words) {
   return inserted;
 }
 async function deleteWordDB(id) { return delItem('words', id) }
+async function updateWordTranslation(id, translation) {
+  return new Promise((res, rej) => {
+    const s = store('words', 'readwrite');
+    const req = s.get(id);
+    req.onsuccess = () => {
+      const rec = req.result;
+      if (!rec) { res(); return; }
+      rec.translation = translation;
+      const upd = s.put(rec);
+      upd.onsuccess = () => res();
+      upd.onerror = () => rej(upd.error);
+    };
+    req.onerror = () => rej(req.error);
+  });
+}
 
 // ── word_details ──
 // Primary store: localStorage (survives iframe reloads in claude.ai)
@@ -1861,13 +1897,19 @@ async function testAI(provider) {
   }
 }
 
+// ── 預設 API Keys（使用者未設定時自動使用）──
+const DEFAULT_GEMINI_KEY   = 'AIzaSyDEFCjrmecOT05S30plNwMFp5MPqEsf9t0';
+const DEFAULT_DEEPSEEK_KEY = 'sk-5cc17261ea674b44880681c57b57703b';
+const DEFAULT_GEMINI_MODEL   = 'gemini-2.5-flash';
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
+
 // ── 統一 AI 呼叫入口 ──
 async function callAI(prompt) {
   const s = loadAISettings();
 
-  // 1. 使用者設定 Gemini（需下載到本地才能用，claude.ai 有 CORS 限制）
+  // 1. 使用者設定 Gemini
   if (s.provider === 'gemini' && s.geminiKey) {
-    return callGeminiRaw(s.geminiKey, s.geminiModel || 'gemini-2.5-flash', prompt);
+    return callGeminiRaw(s.geminiKey, s.geminiModel || DEFAULT_GEMINI_MODEL, prompt);
   }
 
   // 2. 使用者設定 Claude + 自己的 key
@@ -1875,13 +1917,24 @@ async function callAI(prompt) {
     return callClaudeRaw(s.claudeKey, s.claudeModel || 'claude-haiku-4-5-20251001', prompt);
   }
 
-  // 3. DeepSeek
+  // 3. 使用者設定 DeepSeek
   if (s.provider === 'deepseek' && s.deepseekKey) {
-    return callDeepSeekRaw(s.deepseekKey, s.deepseekModel || 'deepseek-chat', prompt);
+    return callDeepSeekRaw(s.deepseekKey, s.deepseekModel || DEFAULT_DEEPSEEK_MODEL, prompt);
   }
 
-  // 4. 預設：使用 claude.ai 內建（不需 key，僅在此環境有效）
-  return callClaudeRaw('', 'claude-sonnet-4-20250514', prompt);
+  // 4. claude.ai 內建環境（不需 key）
+  if (typeof window !== 'undefined' && window.location.hostname.includes('claude.ai')) {
+    return callClaudeRaw('', 'claude-sonnet-4-20250514', prompt);
+  }
+
+  // 5. 非 claude.ai 環境 → 用預設 Gemini Key
+  try {
+    return await callGeminiRaw(DEFAULT_GEMINI_KEY, DEFAULT_GEMINI_MODEL, prompt);
+  } catch(e) {
+    // Gemini 失敗 → 改用預設 DeepSeek Key
+    console.warn('預設 Gemini 失敗，改用 DeepSeek：', e.message);
+    return callDeepSeekRaw(DEFAULT_DEEPSEEK_KEY, DEFAULT_DEEPSEEK_MODEL, prompt);
+  }
 }
 
 async function callGeminiRaw(key, model, prompt) {
@@ -3608,6 +3661,116 @@ function stopBatchCache() {
     document.getElementById('batch-cache-status').textContent = '停止中…';
   } else {
     closeModal('modal-batch-cache');
+  }
+}
+
+// ── 批次補譯（補上空白翻譯）──
+let _batchTransRunning = false;
+let _batchTransStop = false;
+
+async function startBatchTranslate() {
+  if (!activeListId) { toast('請先選擇一個單字庫'); return; }
+
+  const allWords = await getWordsForList(activeListId);
+  const missing = allWords.filter(w => !w.translation || !w.translation.trim());
+
+  if (!missing.length) {
+    toast('✅ 所有單字都已有翻譯，無需補譯');
+    return;
+  }
+
+  openModal('modal-batch-translate');
+  _batchTransStop = false;
+  _batchTransRunning = true;
+  document.getElementById('batch-trans-close-btn').textContent = '停止';
+  document.getElementById('batch-trans-close-btn').onclick = stopBatchTranslate;
+  document.getElementById('batch-trans-log').innerHTML = '';
+  document.getElementById('batch-trans-skip').textContent = '';
+
+  const total = missing.length;
+  let done = 0, failed = 0;
+
+  const setStatus = (msg) => document.getElementById('batch-trans-status').textContent = msg;
+  const setBar = (pct) => document.getElementById('batch-trans-bar').style.width = pct + '%';
+  const setCount = () => document.getElementById('batch-trans-count').textContent = `${done} / ${total}`;
+  const setSkip = () => document.getElementById('batch-trans-skip').textContent = failed ? `失敗 ${failed} 筆` : '';
+  const addLog = (msg) => {
+    const el = document.getElementById('batch-trans-log');
+    el.innerHTML += msg + '<br>';
+    el.scrollTop = el.scrollHeight;
+  };
+
+  setStatus(`找到 ${total} 個缺少翻譯的單字，開始補譯…`);
+  setCount();
+
+  // 每批 10 個送 AI，節省 API 呼叫次數
+  const BATCH = 10;
+  for (let i = 0; i < missing.length; i += BATCH) {
+    if (_batchTransStop) break;
+
+    const chunk = missing.slice(i, i + BATCH);
+    const wordList = chunk.map(w => w.word);
+    setStatus(`補譯中：${wordList.join('、')}`);
+
+    try {
+      const results = await batchTranslateAI(wordList);
+      const map = {};
+      results.forEach(r => { if (r.word && r.translation) map[r.word.toLowerCase()] = r.translation; });
+
+      for (const w of chunk) {
+        if (_batchTransStop) break;
+        const trans = map[w.word.toLowerCase()];
+        if (trans) {
+          // 更新 DB
+          w.translation = s2t(trans);
+          await updateWordTranslation(w.id, w.translation);
+          addLog(`<span style="color:var(--green)">✓</span> ${w.word} → ${w.translation}`);
+        } else {
+          addLog(`<span style="color:var(--muted)">— ${w.word}（無結果）</span>`);
+          failed++;
+        }
+        done++;
+        setBar(Math.round(done / total * 100));
+        setCount();
+        setSkip();
+      }
+    } catch(e) {
+      for (const w of chunk) {
+        addLog(`<span style="color:#e74c3c">✗</span> ${w.word}：${e.message}`);
+        failed++;
+        done++;
+      }
+      setBar(Math.round(done / total * 100));
+      setCount();
+      setSkip();
+    }
+
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  _batchTransRunning = false;
+  const stopped = _batchTransStop;
+  document.getElementById('batch-trans-close-btn').textContent = '✕';
+  document.getElementById('batch-trans-close-btn').onclick = () => closeModal('modal-batch-translate');
+
+  if (stopped) {
+    setStatus(`已停止（完成 ${done}/${total}）`);
+  } else {
+    setStatus(`✅ 完成！共補譯 ${done - failed} 個單字${failed ? `，失敗 ${failed} 筆` : ''}`);
+    setBar(100);
+    toast(`🌐 批次補譯完成，補上 ${done - failed} 個翻譯`);
+  }
+
+  // 重新載入單字列表以反映新翻譯
+  loadWords();
+}
+
+function stopBatchTranslate() {
+  if (_batchTransRunning) {
+    _batchTransStop = true;
+    document.getElementById('batch-trans-status').textContent = '停止中…';
+  } else {
+    closeModal('modal-batch-translate');
   }
 }
 
@@ -5666,28 +5829,24 @@ async function exportBackup() {
 
 async function importBackup(e) {
   const f = e.target.files[0]; if (!f) return;
-  // use showConfirm (async-friendly wrapper)
+  e.target.value = '';
   await new Promise(resolve => showConfirm(
     '匯入備份',
-    '匯入將清除所有現有資料，確定繼續？',
+    '匯入將合併資料（不重複的單字會新增，不覆蓋現有資料），確定繼續？',
     resolve
   ));
-  const text = await f.text();
-  const data = JSON.parse(text);
-
-  // Clear all
-  for (const s of ['practice_history','practice_records','word_details','words','word_lists']) {
-    await req2p(store(s,'readwrite').clear());
+  try {
+    const text = await f.text();
+    const data = JSON.parse(text);
+    await importBackupData(data);
+    toast('備份匯入成功 ✓');
+    refreshHome();
+    renderLists();
+    loadAISettingsUI();
+  } catch(err) {
+    toast('匯入失敗：' + err.message);
+    console.error(err);
   }
-  // Restore
-  for (const l of (data.lists||[])) await req2p(store('word_lists','readwrite').add(l));
-  for (const w of (data.words||[])) await req2p(store('words','readwrite').add(w));
-  for (const d of (data.details||[])) await req2p(store('word_details','readwrite').add(d));
-  for (const r of (data.records||[])) await req2p(store('practice_records','readwrite').add(r));
-  for (const h of (data.history||[])) await req2p(store('practice_history','readwrite').add(h));
-
-  toast('備份匯入成功 ✓');
-  refreshHome();
 }
 
 // ═══════════════════════════════════════
@@ -5922,15 +6081,19 @@ async function exportAllData() {
     req.onerror = () => res([]);
   });
 
-  // 備份 localStorage 設定（AI Key、GDrive Client ID 等）
+  // 備份 localStorage 設定（AI Key、GDrive Client ID、分類、token 等）
   const settings = {
-    aiSettings:      localStorage.getItem('aiSettings')        || '',
-    gdrive_client_id: localStorage.getItem('gdrive_client_id') || '',
-    gdrive_auto:     localStorage.getItem('gdrive_auto')       || '',
+    aiSettings:         localStorage.getItem('aiSettings')         || '',
+    gdrive_client_id:   localStorage.getItem('gdrive_client_id')   || '',
+    gdrive_auto:        localStorage.getItem('gdrive_auto')        || '',
+    wf_list_categories: localStorage.getItem('wf_list_categories') || '{}',
+    wf_cat_collapsed:   localStorage.getItem('wf_cat_collapsed')   || '{}',
+    gdrive_token:       localStorage.getItem('gdrive_token')       || '',
+    gdrive_token_exp:   localStorage.getItem('gdrive_token_exp')   || '',
   };
 
   return {
-    version: 2,
+    version: 3,
     exported_at: new Date().toISOString(),
     lists,
     words: allWords,
@@ -6050,21 +6213,42 @@ async function gdriveRestore() {
 async function importBackupData(data) {
   if (!data?.lists) throw new Error('備份格式不正確');
 
-  // 還原 localStorage 設定
+  // 還原 localStorage 設定（AI Key、GDrive 等）
   if (data.settings) {
     if (data.settings.aiSettings)       localStorage.setItem('aiSettings', data.settings.aiSettings);
     if (data.settings.gdrive_client_id) localStorage.setItem('gdrive_client_id', data.settings.gdrive_client_id);
     if (data.settings.gdrive_auto)      localStorage.setItem('gdrive_auto', data.settings.gdrive_auto);
+
+    // 還原 Google Drive token（只在 token 仍有效時才還原）
+    const savedToken = data.settings.gdrive_token;
+    const savedExp   = parseInt(data.settings.gdrive_token_exp || '0');
+    if (savedToken && savedExp > Date.now()) {
+      localStorage.setItem('gdrive_token', savedToken);
+      localStorage.setItem('gdrive_token_exp', savedExp);
+      _gdriveToken = savedToken;
+      updateGDriveUI(true);
+    } else if (savedToken) {
+      // token 已過期，清掉舊的避免誤用
+      localStorage.removeItem('gdrive_token');
+      localStorage.removeItem('gdrive_token_exp');
+      _gdriveToken = null;
+      updateGDriveUI(false);
+    }
+
     updateAIBadge();
   }
 
+  // 建立 oldListId → newListId 對應表（還原分類時用）
+  const listIdMap = {};
+
   for (const list of data.lists) {
-    // Find or create list by name
     const existing = (await getAllLists()).find(l => l.name === list.name);
     let listId = existing?.id;
     if (!listId) {
       listId = await createListDB(list.name);
     }
+    listIdMap[list.id] = listId;
+
     // Import words
     const words = (data.words || []).filter(w => w.list_id === list.id);
     const existingWords = await getWordsForList(listId);
@@ -6073,6 +6257,31 @@ async function importBackupData(data) {
     if (newWords.length) {
       await batchInsertWords(listId, newWords);
     }
+  }
+
+  // 還原單字庫分類（用新 listId 重建 category map）
+  if (data.settings?.wf_list_categories) {
+    try {
+      const oldCats = JSON.parse(data.settings.wf_list_categories);
+      const currentCats = getListCategories();
+      for (const [oldId, cat] of Object.entries(oldCats)) {
+        const newId = listIdMap[oldId] || oldId;
+        if (cat && !currentCats[newId]) {
+          currentCats[newId] = cat;
+        }
+      }
+      localStorage.setItem('wf_list_categories', JSON.stringify(currentCats));
+    } catch(e) { console.warn('分類還原失敗:', e); }
+  }
+
+  // 還原摺疊狀態（分類名稱為 key，直接覆蓋合併）
+  if (data.settings?.wf_cat_collapsed) {
+    try {
+      const oldCollapsed = JSON.parse(data.settings.wf_cat_collapsed);
+      const currentCollapsed = JSON.parse(localStorage.getItem('wf_cat_collapsed') || '{}');
+      const merged = { ...oldCollapsed, ...currentCollapsed };
+      localStorage.setItem('wf_cat_collapsed', JSON.stringify(merged));
+    } catch(e) { console.warn('摺疊狀態還原失敗:', e); }
   }
 
   // Merge practice records
@@ -6110,7 +6319,7 @@ async function importBackupData(data) {
   for (const s of (data.study_sessions || [])) {
     if (!existingSAt.has(s.started_at)) {
       try {
-        const { id, ...rest } = s; // 移除舊 id，讓 autoIncrement 產生新 id
+        const { id, ...rest } = s;
         await req2p(store('study_sessions','readwrite').add(rest));
       } catch(e) {}
     }
