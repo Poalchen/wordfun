@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v10.2 – 智慧單字學習</title>
+<title>WordFun v10.4 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1182,6 +1182,7 @@ nav {
           </label>
           <div style="display:flex;gap:6px">
             <input id="gemini-key" type="password" placeholder="AIzaSy..." autocomplete="off"
+              oninput="this.style.color='';this.title=''"
               style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem;font-family:monospace">
             <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('gemini-key', this)">👁</button>
           </div>
@@ -1240,6 +1241,7 @@ nav {
           </label>
           <div style="display:flex;gap:6px">
             <input id="deepseek-key" type="password" placeholder="sk-..." autocomplete="off"
+              oninput="this.style.color='';this.title=''"
               style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.85rem;font-family:monospace">
             <button class="btn btn-ghost btn-sm" onclick="toggleKeyVisibility('deepseek-key', this)">👁</button>
           </div>
@@ -1613,7 +1615,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v10.2';
+const APP_VERSION = 'v10.4';
 const DB_NAME = 'wordfun', DB_VER = 3;
 let db;
 
@@ -1850,6 +1852,26 @@ function onProviderChange() {
   document.getElementById('settings-gemini').style.display   = v === 'gemini'   ? 'block' : 'none';
   document.getElementById('settings-claude').style.display   = v === 'claude'   ? 'block' : 'none';
   document.getElementById('settings-deepseek').style.display = v === 'deepseek' ? 'block' : 'none';
+
+  // 如果切換到 Gemini 且 Key 欄位是空白，自動填入預設 Key
+  if (v === 'gemini') {
+    const el = document.getElementById('gemini-key');
+    if (el && !el.value.trim()) {
+      el.value = DEFAULT_GEMINI_KEY;
+      el.style.color = 'var(--muted)';
+      el.title = '使用內建預設 Key，可自行替換';
+    }
+  }
+
+  // 如果切換到 DeepSeek 且 Key 欄位是空白，自動填入預設 Key
+  if (v === 'deepseek') {
+    const el = document.getElementById('deepseek-key');
+    if (el && !el.value.trim()) {
+      el.value = DEFAULT_DEEPSEEK_KEY;
+      el.style.color = 'var(--muted)';
+      el.title = '使用內建預設 Key，可自行替換';
+    }
+  }
 }
 
 function toggleKeyVisibility(id, btn) {
@@ -1863,12 +1885,25 @@ function initSettingsPage() {
   const s = loadAISettings();
   const radio = document.querySelector(`input[name="ai-provider"][value="${s.provider || 'none'}"]`);
   if (radio) radio.checked = true;
-  if (s.geminiKey)     document.getElementById('gemini-key').value      = s.geminiKey;
+
+  // Gemini Key：有存就填自己的，空白則填預設
+  const geminiKeyEl = document.getElementById('gemini-key');
+  if (geminiKeyEl) {
+    geminiKeyEl.value = s.geminiKey || DEFAULT_GEMINI_KEY;
+    if (!s.geminiKey) { geminiKeyEl.style.color = 'var(--muted)'; geminiKeyEl.title = '使用內建預設 Key，可自行替換'; }
+  }
   if (s.geminiModel)   document.getElementById('gemini-model').value    = s.geminiModel;
   if (s.claudeKey)     document.getElementById('claude-key').value      = s.claudeKey;
   if (s.claudeModel)   document.getElementById('claude-model').value    = s.claudeModel;
-  if (s.deepseekKey)   document.getElementById('deepseek-key').value    = s.deepseekKey;
+
+  // DeepSeek Key：有存就填自己的，空白則填預設
+  const deepseekKeyEl = document.getElementById('deepseek-key');
+  if (deepseekKeyEl) {
+    deepseekKeyEl.value = s.deepseekKey || DEFAULT_DEEPSEEK_KEY;
+    if (!s.deepseekKey) { deepseekKeyEl.style.color = 'var(--muted)'; deepseekKeyEl.title = '使用內建預設 Key，可自行替換'; }
+  }
   if (s.deepseekModel) document.getElementById('deepseek-model').value  = s.deepseekModel;
+
   const rate = s.speechRate || 0.75;
   const rateEl = document.getElementById('speech-rate');
   if (rateEl) { rateEl.value = rate; document.getElementById('speech-rate-val').textContent = rate; }
