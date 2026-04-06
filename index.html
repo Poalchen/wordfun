@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v11.2 – 智慧單字學習</title>
+<title>WordFun v11.3 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1597,7 +1597,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v11.2';
+const APP_VERSION = 'v11.3';
 
 // ── 預設 API Keys（使用者未設定時自動使用）──
 // Gemini Key 以混淆方式儲存，避免被 GitHub secret scanner 偵測
@@ -5964,10 +5964,14 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 // GOOGLE DRIVE BACKUP SYNC
 // ═══════════════════════════════════════════════════════
-// ── JSONBin.io 雲端備份（無需登入）──
-const JSONBIN_API_KEY = '$2a$10$fUzcT.LbDohTYGj.R1dlnujTGpMB.0c9v6wO5HGgKtA6C0k28yrBW';
-const JSONBIN_BIN_ID  = '69d36df1aaba882197cb86f7';
-const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// ── Supabase 雲端備份（無需登入）──
+const SUPA_URL     = 'https://mglmsvdmycooxjdjrpsf.supabase.co';
+const SUPA_KEY     = 'sb_publishable_10jBaAxXdw_eH5QxC2fP8Q_ShcVdRoE';
+const SUPA_HEADERS = {
+  'Content-Type':  'application/json',
+  'apikey':        SUPA_KEY,
+  'Authorization': `Bearer ${SUPA_KEY}`,
+};
 
 function gdriveMsg(msg, color='var(--muted)') {
   const el = document.getElementById('gdrive-msg');
@@ -6028,39 +6032,32 @@ async function exportAllData() {
   };
 }
 
-// ── JSONBin 上傳 ──
+// ── Supabase 上傳（upsert）──
 async function gdriveUploadFile(json) {
-  const res = await fetch(JSONBIN_URL, {
-    method: 'PUT',
+  const res = await fetch(`${SUPA_URL}/rest/v1/backups`, {
+    method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_API_KEY,
-      'X-Bin-Versioning': 'false',
+      ...SUPA_HEADERS,
+      'Prefer': 'resolution=merge-duplicates',
     },
-    body: JSON.stringify(json),
+    body: JSON.stringify({ id: 'wordfun', data: json, updated_at: new Date().toISOString() }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `上傳失敗 ${res.status}`);
   }
-  return await res.json();
 }
 
-// ── JSONBin 下載 ──
+// ── Supabase 下載 ──
 async function gdriveDownloadFile() {
-  const res = await fetch(`${JSONBIN_URL}/latest`, {
-    headers: { 'X-Master-Key': JSONBIN_API_KEY },
-  });
-  if (!res.ok) {
-    if (res.status === 404) return null;
-    throw new Error(`下載失敗 ${res.status}`);
-  }
-  const result = await res.json();
-  // JSONBin 回傳格式：{ record: {...}, metadata: { createdAt: ... } }
-  const data = result.record;
-  const modifiedTime = result.metadata?.createdAt || new Date().toISOString();
-  if (!data?.lists) return null;
-  return { data, modifiedTime };
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/backups?id=eq.wordfun&select=data,updated_at`,
+    { headers: SUPA_HEADERS }
+  );
+  if (!res.ok) throw new Error(`下載失敗 ${res.status}`);
+  const rows = await res.json();
+  if (!rows?.length || !rows[0]?.data?.lists) return null;
+  return { data: rows[0].data, modifiedTime: rows[0].updated_at };
 }
 
 // ── 備份 ──
