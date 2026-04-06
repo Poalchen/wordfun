@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v10.9 – 智慧單字學習</title>
+<title>WordFun v11.1 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1292,33 +1292,14 @@ nav {
     <div class="card-header"><span style="font-weight:700">☁️ Google Drive 備份同步</span></div>
     <div class="card-body">
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.7">
-        單字庫與練習記錄自動備份至 Google Drive，手機資料被清除也能一鍵還原。
+        單字庫與練習記錄自動備份至 Google Drive 公開資料夾，無需登入，任何裝置皆可使用。
       </div>
-      <div style="font-size:.78rem;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:8px 12px;margin-bottom:14px">
-        ⚠️ Google Drive 備份需在 <strong>GitHub Pages</strong>（poalchen.github.io/wordfun/）上使用，claude.ai 環境因安全限制無法連結 Google 帳號。
-      </div>
-      <div id="gdrive-status" style="margin-bottom:14px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#f3f4f6;color:var(--muted)">
-        ⬜ 尚未連結 Google 帳號
-      </div>
-      <div id="gdrive-setup" style="margin-bottom:14px">
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;line-height:1.7">
-          需要 Google OAuth Client ID（免費）。
-          <a href="#" onclick="showGDriveHelp();return false" style="color:var(--accent2)">查看設定說明 ↗</a>
-        </div>
-        <label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px">Google OAuth Client ID</label>
-        <div style="display:flex;gap:6px">
-          <input id="gdrive-client-id" type="text" placeholder="xxx.apps.googleusercontent.com"
-            style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font-size:.8rem;font-family:monospace">
-          <button class="btn btn-ghost btn-sm" onclick="saveGDriveClientId()">儲存</button>
-        </div>
+      <div id="gdrive-status" style="margin-bottom:14px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#dcfce7;color:#166534">
+        ✅ 已就緒，無需登入即可備份
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <button class="btn btn-primary btn-sm" id="gdrive-login-btn" onclick="gdriveLogin()">🔑 連結 Google 帳號</button>
-        <button class="btn btn-ghost btn-sm" id="gdrive-logout-btn" onclick="gdriveLogout()" style="display:none">登出</button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" id="gdrive-backup-btn" onclick="gdriveBackup()" disabled>⬆ 立即備份</button>
-        <button class="btn btn-ghost btn-sm" id="gdrive-restore-btn" onclick="gdriveRestore()" disabled>⬇ 從雲端還原</button>
+        <button class="btn btn-primary btn-sm" id="gdrive-backup-btn" onclick="gdriveBackup()">⬆ 立即備份</button>
+        <button class="btn btn-ghost btn-sm" id="gdrive-restore-btn" onclick="gdriveRestore()">⬇ 從雲端還原</button>
       </div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:10px">
         <label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer">
@@ -1616,7 +1597,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v10.9';
+const APP_VERSION = 'v11.1';
 
 // ── 預設 API Keys（使用者未設定時自動使用）──
 // Gemini Key 以混淆方式儲存，避免被 GitHub secret scanner 偵測
@@ -1893,8 +1874,6 @@ function onProviderChange() {
 }
 
 function resetToDefaultKeys() {
-  const DEFAULT_GDRIVE_ID = '564471027775-glm7bsh49hoevld3a70nu6uatg3s1kn9.apps.googleusercontent.com';
-
   // 填入 Gemini 預設 Key
   const geminiEl = document.getElementById('gemini-key');
   if (geminiEl) {
@@ -1911,16 +1890,11 @@ function resetToDefaultKeys() {
     deepseekEl.title = '使用內建預設 Key，可自行替換';
   }
 
-  // 填入 Google Drive 預設 Client ID
-  const gdriveEl = document.getElementById('gdrive-client-id');
-  if (gdriveEl) gdriveEl.value = DEFAULT_GDRIVE_ID;
-
   // 清除 localStorage 中自訂的 Key，改回預設
   const s = loadAISettings();
   s.geminiKey   = '';
   s.deepseekKey = '';
   localStorage.setItem('aiSettings', JSON.stringify(s));
-  localStorage.setItem('gdrive_client_id', DEFAULT_GDRIVE_ID);
 
   const msg = document.getElementById('settings-save-msg');
   if (msg) { msg.textContent = '✓ 已恢復預設值'; setTimeout(() => msg.textContent = '', 2500); }
@@ -5990,95 +5964,14 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 // GOOGLE DRIVE BACKUP SYNC
 // ═══════════════════════════════════════════════════════
-const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
-const GDRIVE_FILENAME = 'wordfun-backup.json';
-let _gdriveToken = null;
+// ── Google Drive API Key 模式（無需登入）──
+const GDRIVE_FILENAME   = 'wordfun-backup.json';
+const GDRIVE_FOLDER_ID  = '1-6opbgIuPrI_yLn7mEFjVgXwplf8yzXF';
+const GDRIVE_API_KEY    = 'AIzaSyCFNhy28Ch8pLyk4gnsj-deZi0Xnd2Gf-c';
 
 function gdriveMsg(msg, color='var(--muted)') {
   const el = document.getElementById('gdrive-msg');
   if (el) { el.textContent = msg; el.style.color = color; }
-}
-
-function saveGDriveClientId() {
-  const val = document.getElementById('gdrive-client-id').value.trim();
-  if (!val) { gdriveMsg('請輸入 Client ID', 'var(--accent)'); return; }
-  localStorage.setItem('gdrive_client_id', val);
-  gdriveMsg('✓ Client ID 已儲存', 'var(--green)');
-}
-
-function showGDriveHelp() { openModal('modal-gdrive-help'); }
-
-function getGDriveClientId() {
-  return localStorage.getItem('gdrive_client_id') || '564471027775-glm7bsh49hoevld3a70nu6uatg3s1kn9.apps.googleusercontent.com';
-}
-
-function gdriveLogin() {
-  const clientId = getGDriveClientId();
-  if (!clientId) {
-    gdriveMsg('請先填入 Google OAuth Client ID', 'var(--accent)');
-    document.getElementById('gdrive-client-id').focus();
-    return;
-  }
-  const redirectUri = location.origin + location.pathname;
-  const url = `https://accounts.google.com/o/oauth2/v2/auth` +
-    `?client_id=${encodeURIComponent(clientId)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=token` +
-    `&scope=${encodeURIComponent(GDRIVE_SCOPE)}` +
-    `&include_granted_scopes=true`;
-
-  // 用 popup 視窗，不跳離主頁面
-  const w = 500, h = 600;
-  const left = Math.max(0, (screen.width - w) / 2);
-  const top  = Math.max(0, (screen.height - h) / 2);
-  const popup = window.open(url, 'gdriveAuth',
-    `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`);
-
-  if (!popup) {
-    // popup 被封鎖，fallback 到 redirect
-    localStorage.setItem('gdrive_login_pending', '1');
-    window.location.href = url;
-    return;
-  }
-
-  // 輪詢 popup 是否已取得 token
-  gdriveMsg('等待 Google 授權中…', 'var(--muted)');
-  const timer = setInterval(() => {
-    try {
-      if (popup.closed) {
-        clearInterval(timer);
-        gdriveMsg('授權視窗已關閉', 'var(--muted)');
-        return;
-      }
-      const hash = popup.location.hash;
-      if (hash && hash.includes('access_token=')) {
-        clearInterval(timer);
-        popup.close();
-        // 解析 token
-        const params = new URLSearchParams(hash.slice(1));
-        const token = params.get('access_token');
-        const expiresIn = parseInt(params.get('expires_in') || '3600');
-        if (token) {
-          _gdriveToken = token;
-          localStorage.setItem('gdrive_token', token);
-          localStorage.setItem('gdrive_token_exp', Date.now() + expiresIn * 1000);
-          updateGDriveUI(true);
-          gdriveMsg('✅ 連結成功！', 'var(--green)');
-          toast('☁️ Google 帳號連結成功！');
-        }
-      }
-    } catch(e) {
-      // cross-origin 暫時無法存取，繼續等
-    }
-  }, 500);
-}
-
-function gdriveLogout() {
-  _gdriveToken = null;
-  localStorage.removeItem('gdrive_token');
-  localStorage.removeItem('gdrive_token_exp');
-  updateGDriveUI(false);
-  gdriveMsg('已登出 Google 帳號');
 }
 
 function toggleGDriveAuto(on) {
@@ -6086,65 +5979,10 @@ function toggleGDriveAuto(on) {
   gdriveMsg(on ? '✓ 已開啟自動備份' : '自動備份已關閉', on ? 'var(--green)' : 'var(--muted)');
 }
 
-function updateGDriveUI(loggedIn) {
-  const status = document.getElementById('gdrive-status');
-  const loginBtn = document.getElementById('gdrive-login-btn');
-  const logoutBtn = document.getElementById('gdrive-logout-btn');
-  const backupBtn = document.getElementById('gdrive-backup-btn');
-  const restoreBtn = document.getElementById('gdrive-restore-btn');
-  if (!status) return;
-  if (loggedIn) {
-    status.textContent = '✅ 已連結 Google 帳號';
-    status.style.background = '#dcfce7';
-    status.style.color = '#166534';
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = '';
-    backupBtn.disabled = false;
-    restoreBtn.disabled = false;
-    document.getElementById('gdrive-auto').checked = localStorage.getItem('gdrive_auto') === '1';
-  } else {
-    status.textContent = '⬜ 尚未連結 Google 帳號';
-    status.style.background = '#f3f4f6';
-    status.style.color = 'var(--muted)';
-    loginBtn.style.display = '';
-    logoutBtn.style.display = 'none';
-    backupBtn.disabled = true;
-    restoreBtn.disabled = true;
-  }
-}
-
-// ── OAuth token handling ──
 function initGDriveFromHash() {
-  // Handle OAuth redirect with #access_token=...
-  const hash = window.location.hash;
-  if (hash.includes('access_token=')) {
-    const params = new URLSearchParams(hash.slice(1));
-    const token = params.get('access_token');
-    const expiresIn = parseInt(params.get('expires_in') || '3600');
-    if (token) {
-      _gdriveToken = token;
-      localStorage.setItem('gdrive_token', token);
-      localStorage.setItem('gdrive_token_exp', Date.now() + expiresIn * 1000);
-      localStorage.removeItem('gdrive_login_pending');
-      // Clean up URL
-      history.replaceState(null, '', location.pathname + location.search);
-      updateGDriveUI(true);
-      gdriveMsg('✅ 連結成功！', 'var(--green)');
-      // Auto-restore if first login
-      toast('Google 帳號連結成功！');
-      return true;
-    }
-  }
-  // Check saved token
-  const saved = localStorage.getItem('gdrive_token');
-  const exp = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
-  if (saved && Date.now() < exp) {
-    _gdriveToken = saved;
-    updateGDriveUI(true);
-    return true;
-  }
-  updateGDriveUI(false);
-  return false;
+  // API Key 模式不需要 OAuth，直接就緒
+  const autoEl = document.getElementById('gdrive-auto');
+  if (autoEl) autoEl.checked = localStorage.getItem('gdrive_auto') === '1';
 }
 
 // ── Export all data to JSON ──
@@ -6171,15 +6009,12 @@ async function exportAllData() {
     req.onerror = () => res([]);
   });
 
-  // 備份 localStorage 設定（AI Key、GDrive Client ID、分類、token 等）
+  // 備份 localStorage 設定（AI Key、分類等）
   const settings = {
     aiSettings:         localStorage.getItem('aiSettings')         || '',
-    gdrive_client_id:   localStorage.getItem('gdrive_client_id')   || '',
     gdrive_auto:        localStorage.getItem('gdrive_auto')        || '',
     wf_list_categories: localStorage.getItem('wf_list_categories') || '{}',
     wf_cat_collapsed:   localStorage.getItem('wf_cat_collapsed')   || '{}',
-    gdrive_token:       localStorage.getItem('gdrive_token')       || '',
-    gdrive_token_exp:   localStorage.getItem('gdrive_token_exp')   || '',
   };
 
   return {
@@ -6194,67 +6029,58 @@ async function exportAllData() {
   };
 }
 
-// ── Upload to Drive appdata folder ──
+// ── 上傳到公開 Drive 資料夾（API Key 模式）──
 async function gdriveUploadFile(json) {
-  const token = _gdriveToken;
-  if (!token) throw new Error('未登入');
-
-  // Check if file exists
+  const q = encodeURIComponent(`name='${GDRIVE_FILENAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`);
   const listRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${GDRIVE_FILENAME}%27&fields=files(id)`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&key=${GDRIVE_API_KEY}`
   );
+  if (!listRes.ok) throw new Error(`查詢失敗 ${listRes.status}`);
   const listData = await listRes.json();
   const fileId = listData.files?.[0]?.id;
 
   const blob = new Blob([JSON.stringify(json)], {type: 'application/json'});
-  const meta = JSON.stringify({
+  const meta = JSON.stringify(fileId ? {} : {
     name: GDRIVE_FILENAME,
-    parents: fileId ? undefined : ['appDataFolder'],
+    parents: [GDRIVE_FOLDER_ID],
   });
 
   const form = new FormData();
-  form.append('metadata', new Blob([meta], {type:'application/json'}));
+  form.append('metadata', new Blob([meta], {type: 'application/json'}));
   form.append('file', blob);
 
   const url = fileId
-    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
-    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&key=${GDRIVE_API_KEY}`
+    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=${GDRIVE_API_KEY}`;
 
-  const method = fileId ? 'PATCH' : 'POST';
-  const res = await fetch(url, {
-    method,
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
-  });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+  const res = await fetch(url, { method: fileId ? 'PATCH' : 'POST', body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `上傳失敗 ${res.status}`);
+  }
   return await res.json();
 }
 
-// ── Download from Drive ──
+// ── 從公開 Drive 資料夾下載（API Key 模式）──
 async function gdriveDownloadFile() {
-  const token = _gdriveToken;
-  if (!token) throw new Error('未登入');
-
+  const q = encodeURIComponent(`name='${GDRIVE_FILENAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`);
   const listRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27${GDRIVE_FILENAME}%27&fields=files(id,modifiedTime)`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&key=${GDRIVE_API_KEY}`
   );
+  if (!listRes.ok) throw new Error(`查詢失敗 ${listRes.status}`);
   const listData = await listRes.json();
   const file = listData.files?.[0];
   if (!file) return null;
 
   const dlRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${GDRIVE_API_KEY}`
   );
-  if (!dlRes.ok) throw new Error(`Download failed: ${dlRes.status}`);
+  if (!dlRes.ok) throw new Error(`下載失敗 ${dlRes.status}`);
   return { data: await dlRes.json(), modifiedTime: file.modifiedTime };
 }
 
-// ── Backup ──
+// ── 備份 ──
 async function gdriveBackup() {
-  if (!_gdriveToken) { toast('請先連結 Google 帳號'); return; }
   gdriveMsg('備份中…', 'var(--muted)');
   try {
     const data = await exportAllData();
@@ -6265,18 +6091,12 @@ async function gdriveBackup() {
     toast('☁️ 備份到 Google Drive 完成！');
   } catch(e) {
     console.error(e);
-    if (e.message?.includes('401') || e.message?.includes('未登入')) {
-      gdriveLogout();
-      gdriveMsg('⚠️ 登入已過期，請重新連結', 'var(--accent)');
-    } else {
-      gdriveMsg('⚠️ 備份失敗：' + e.message, 'var(--accent)');
-    }
+    gdriveMsg('⚠️ 備份失敗：' + e.message, 'var(--accent)');
   }
 }
 
-// ── Restore ──
+// ── 還原 ──
 async function gdriveRestore() {
-  if (!_gdriveToken) { toast('請先連結 Google 帳號'); return; }
   gdriveMsg('讀取雲端資料中…', 'var(--muted)');
   try {
     const result = await gdriveDownloadFile();
@@ -6306,24 +6126,7 @@ async function importBackupData(data) {
   // 還原 localStorage 設定（AI Key、GDrive 等）
   if (data.settings) {
     if (data.settings.aiSettings)       localStorage.setItem('aiSettings', data.settings.aiSettings);
-    if (data.settings.gdrive_client_id) localStorage.setItem('gdrive_client_id', data.settings.gdrive_client_id);
     if (data.settings.gdrive_auto)      localStorage.setItem('gdrive_auto', data.settings.gdrive_auto);
-
-    // 還原 Google Drive token（只在 token 仍有效時才還原）
-    const savedToken = data.settings.gdrive_token;
-    const savedExp   = parseInt(data.settings.gdrive_token_exp || '0');
-    if (savedToken && savedExp > Date.now()) {
-      localStorage.setItem('gdrive_token', savedToken);
-      localStorage.setItem('gdrive_token_exp', savedExp);
-      _gdriveToken = savedToken;
-      updateGDriveUI(true);
-    } else if (savedToken) {
-      // token 已過期，清掉舊的避免誤用
-      localStorage.removeItem('gdrive_token');
-      localStorage.removeItem('gdrive_token_exp');
-      _gdriveToken = null;
-      updateGDriveUI(false);
-    }
 
     updateAIBadge();
   }
@@ -6418,7 +6221,7 @@ async function importBackupData(data) {
 
 // ── Auto-backup after practice ──
 async function gdriveAutoBackup() {
-  if (localStorage.getItem('gdrive_auto') === '1' && _gdriveToken) {
+  if (localStorage.getItem('gdrive_auto') === '1') {
     try { await gdriveBackup(); } catch(e) {}
   }
 }
@@ -6426,10 +6229,8 @@ async function gdriveAutoBackup() {
 // Init on page load
 window.addEventListener('load', () => {
   initGDriveFromHash();
-  const saved = localStorage.getItem('gdrive_client_id') || '564471027775-glm7bsh49hoevld3a70nu6uatg3s1kn9.apps.googleusercontent.com';
-  if (saved) document.getElementById('gdrive-client-id').value = saved;
   const lastBackup = localStorage.getItem('gdrive_last_backup');
-  if (lastBackup && _gdriveToken) gdriveMsg(`上次備份：${lastBackup}`);
+  if (lastBackup) gdriveMsg(`上次備份：${lastBackup}`);
 });
 
 
