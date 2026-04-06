@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v11.1 – 智慧單字學習</title>
+<title>WordFun v11.2 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1287,12 +1287,12 @@ nav {
       <div>字典資料存於瀏覽器本地（IndexedDB），API Key 僅存於 localStorage，不會上傳至任何伺服器。</div>
     </div>
   </div>
-<!-- Google Drive 同步 -->
+<!-- 雲端備份同步 -->
   <div class="card" style="margin-top:16px">
-    <div class="card-header"><span style="font-weight:700">☁️ Google Drive 備份同步</span></div>
+    <div class="card-header"><span style="font-weight:700">☁️ 雲端備份同步</span></div>
     <div class="card-body">
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.7">
-        單字庫與練習記錄自動備份至 Google Drive 公開資料夾，無需登入，任何裝置皆可使用。
+        單字庫與練習記錄自動備份至雲端，無需登入，任何裝置皆可還原。
       </div>
       <div id="gdrive-status" style="margin-bottom:14px;padding:10px 12px;border-radius:8px;font-size:.82rem;background:#dcfce7;color:#166534">
         ✅ 已就緒，無需登入即可備份
@@ -1597,7 +1597,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v11.1';
+const APP_VERSION = 'v11.2';
 
 // ── 預設 API Keys（使用者未設定時自動使用）──
 // Gemini Key 以混淆方式儲存，避免被 GitHub secret scanner 偵測
@@ -5964,10 +5964,10 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 // GOOGLE DRIVE BACKUP SYNC
 // ═══════════════════════════════════════════════════════
-// ── Google Drive API Key 模式（無需登入）──
-const GDRIVE_FILENAME   = 'wordfun-backup.json';
-const GDRIVE_FOLDER_ID  = '1-6opbgIuPrI_yLn7mEFjVgXwplf8yzXF';
-const GDRIVE_API_KEY    = 'AIzaSyCFNhy28Ch8pLyk4gnsj-deZi0Xnd2Gf-c';
+// ── JSONBin.io 雲端備份（無需登入）──
+const JSONBIN_API_KEY = '$2a$10$fUzcT.LbDohTYGj.R1dlnujTGpMB.0c9v6wO5HGgKtA6C0k28yrBW';
+const JSONBIN_BIN_ID  = '69d36df1aaba882197cb86f7';
+const JSONBIN_URL     = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
 function gdriveMsg(msg, color='var(--muted)') {
   const el = document.getElementById('gdrive-msg');
@@ -5980,7 +5980,6 @@ function toggleGDriveAuto(on) {
 }
 
 function initGDriveFromHash() {
-  // API Key 模式不需要 OAuth，直接就緒
   const autoEl = document.getElementById('gdrive-auto');
   if (autoEl) autoEl.checked = localStorage.getItem('gdrive_auto') === '1';
 }
@@ -6029,54 +6028,39 @@ async function exportAllData() {
   };
 }
 
-// ── 上傳到公開 Drive 資料夾（API Key 模式）──
+// ── JSONBin 上傳 ──
 async function gdriveUploadFile(json) {
-  const q = encodeURIComponent(`name='${GDRIVE_FILENAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`);
-  const listRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&key=${GDRIVE_API_KEY}`
-  );
-  if (!listRes.ok) throw new Error(`查詢失敗 ${listRes.status}`);
-  const listData = await listRes.json();
-  const fileId = listData.files?.[0]?.id;
-
-  const blob = new Blob([JSON.stringify(json)], {type: 'application/json'});
-  const meta = JSON.stringify(fileId ? {} : {
-    name: GDRIVE_FILENAME,
-    parents: [GDRIVE_FOLDER_ID],
+  const res = await fetch(JSONBIN_URL, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': JSONBIN_API_KEY,
+      'X-Bin-Versioning': 'false',
+    },
+    body: JSON.stringify(json),
   });
-
-  const form = new FormData();
-  form.append('metadata', new Blob([meta], {type: 'application/json'}));
-  form.append('file', blob);
-
-  const url = fileId
-    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&key=${GDRIVE_API_KEY}`
-    : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=${GDRIVE_API_KEY}`;
-
-  const res = await fetch(url, { method: fileId ? 'PATCH' : 'POST', body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `上傳失敗 ${res.status}`);
+    throw new Error(err.message || `上傳失敗 ${res.status}`);
   }
   return await res.json();
 }
 
-// ── 從公開 Drive 資料夾下載（API Key 模式）──
+// ── JSONBin 下載 ──
 async function gdriveDownloadFile() {
-  const q = encodeURIComponent(`name='${GDRIVE_FILENAME}' and '${GDRIVE_FOLDER_ID}' in parents and trashed=false`);
-  const listRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&key=${GDRIVE_API_KEY}`
-  );
-  if (!listRes.ok) throw new Error(`查詢失敗 ${listRes.status}`);
-  const listData = await listRes.json();
-  const file = listData.files?.[0];
-  if (!file) return null;
-
-  const dlRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${GDRIVE_API_KEY}`
-  );
-  if (!dlRes.ok) throw new Error(`下載失敗 ${dlRes.status}`);
-  return { data: await dlRes.json(), modifiedTime: file.modifiedTime };
+  const res = await fetch(`${JSONBIN_URL}/latest`, {
+    headers: { 'X-Master-Key': JSONBIN_API_KEY },
+  });
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error(`下載失敗 ${res.status}`);
+  }
+  const result = await res.json();
+  // JSONBin 回傳格式：{ record: {...}, metadata: { createdAt: ... } }
+  const data = result.record;
+  const modifiedTime = result.metadata?.createdAt || new Date().toISOString();
+  if (!data?.lists) return null;
+  return { data, modifiedTime };
 }
 
 // ── 備份 ──
@@ -6088,7 +6072,7 @@ async function gdriveBackup() {
     const time = new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
     localStorage.setItem('gdrive_last_backup', time);
     gdriveMsg(`✅ 備份完成 ${time}`, 'var(--green)');
-    toast('☁️ 備份到 Google Drive 完成！');
+    toast('☁️ 雲端備份完成！');
   } catch(e) {
     console.error(e);
     gdriveMsg('⚠️ 備份失敗：' + e.message, 'var(--accent)');
@@ -6110,7 +6094,7 @@ async function gdriveRestore() {
     gdriveMsg('還原中…', 'var(--muted)');
     await importBackupData(data);
     gdriveMsg('✅ 還原完成！', 'var(--green)');
-    toast('☁️ 從 Google Drive 還原完成！');
+    toast('☁️ 從雲端還原完成！');
     refreshHome();
     renderLists();
   } catch(e) {
