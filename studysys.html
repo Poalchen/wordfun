@@ -1,0 +1,3718 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>學測讀書計劃管理系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F7F5FF;
+  --card:#fff;
+  --primary:#6C5CE7;
+  --primary-light:#A29BFE;
+  --primary-dark:#5A4FCF;
+  --accent:#FD79A8;
+  --accent2:#00CEC9;
+  --accent3:#FDCB6E;
+  --green:#00B894;
+  --orange:#E17055;
+  --blue:#0984E3;
+  --pink:#E91E8C;
+  --text:#2D3436;
+  --muted:#636E72;
+  --border:#E8E4FF;
+  --border2:#EEE;
+  --radius:16px;
+  --radius-sm:10px;
+  --font:'Nunito',sans-serif;
+  --shadow:0 4px 20px rgba(108,92,231,.12);
+}
+html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;overflow:hidden}
+
+/* ===== PHONE SHELL ===== */
+.phone-shell{
+  width:390px;height:844px;background:var(--bg);
+  border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.25),inset 0 0 0 1px rgba(255,255,255,.3);
+  display:flex;flex-direction:column;
+}
+.screen-wrap{
+  flex:1;min-height:0;position:relative;display:flex;flex-direction:column;
+}
+
+/* ===== ROLE SWITCHER ===== */
+.role-bar{
+  background:#fff;border-bottom:1px solid var(--border2);
+  display:flex;padding:8px 12px;gap:6px;flex-shrink:0;z-index:100;
+}
+.role-btn{
+  flex:1;padding:7px 4px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:11px;font-weight:800;font-family:var(--font);cursor:pointer;
+  background:transparent;color:var(--muted);transition:all .2s;
+}
+.role-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ===== SCROLL AREA ===== */
+.scroll-area{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:90px;position:relative}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* ===== PAGE ===== */
+.page{display:none}
+.page.active{display:block}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{
+  background:#fff;border-top:1px solid var(--border2);
+  display:flex;padding:8px 0 12px;z-index:50;flex-shrink:0;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;border:none;background:transparent;padding:4px 0;
+  font-family:var(--font);
+}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:10px;font-weight:700;color:var(--muted)}
+.nav-btn.active .nav-label{color:var(--primary)}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--primary);margin:1px auto 0}
+
+/* ===== COMMON ===== */
+.topbar{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start}
+.greeting-sub{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.greeting-name{font-size:22px;font-weight:900;margin-top:2px}
+.avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0}
+.av-student{background:linear-gradient(135deg,var(--primary),var(--accent))}
+.av-parent{background:linear-gradient(135deg,var(--green),var(--accent2))}
+.av-teacher{background:linear-gradient(135deg,var(--orange),var(--accent3))}
+
+.sec-title{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.06em;padding:0 20px;margin-bottom:10px;text-transform:uppercase}
+.card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);margin:0 16px 14px}
+.card-pad{padding:16px 18px}
+
+/* countdown */
+.cd-banner{margin:0 16px 14px;border-radius:var(--radius);background:var(--primary);padding:16px 20px;color:#fff;display:flex;justify-content:space-between;align-items:center;overflow:hidden;position:relative}
+.cd-banner::before{content:'';position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.08)}
+.cd-lbl{font-size:11px;opacity:.8;font-weight:700;letter-spacing:.05em}
+.cd-ttl{font-size:15px;font-weight:900;margin-top:3px}
+.cd-date-txt{font-size:11px;opacity:.7;margin-top:2px}
+.cd-num{font-size:44px;font-weight:900;line-height:1;position:relative;z-index:1;text-align:center}
+.cd-num small{font-size:13px;font-weight:700;opacity:.8;display:block}
+
+/* progress */
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.prog-title{font-size:15px;font-weight:800}
+.prog-pct{font-size:13px;font-weight:700;color:var(--primary)}
+.prog-track{height:10px;background:#EDEBFF;border-radius:99px;overflow:hidden;margin-bottom:14px}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--primary-light));transition:width .5s cubic-bezier(.34,1.56,.64,1)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat-pill{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
+.stat-n{font-size:18px;font-weight:900}
+.stat-l{font-size:10px;color:var(--muted);font-weight:600;margin-top:1px}
+
+/* task */
+.task-list{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.task-card{background:var(--card);border-radius:var(--radius);padding:13px 14px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px;transition:transform .1s}
+.task-card:active{transform:scale(.98)}
+.task-card.done .task-name{text-decoration:line-through;color:var(--muted)}
+.task-card.done{opacity:.65}
+.sdot{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0}
+.task-info{flex:1;min-width:0}
+.task-subj{font-size:10px;font-weight:700;letter-spacing:.04em;margin-bottom:2px}
+.task-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.chk{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;transition:all .2s}
+.chk.on{background:var(--accent2);border-color:var(--accent2)}
+.chk svg{width:13px;height:13px}
+
+/* session */
+.session-card{background:var(--card);border-radius:14px;padding:12px 16px;border:1.5px solid var(--border);display:flex;gap:12px;align-items:center;margin:0 16px 8px}
+.stime{text-align:center;min-width:42px}
+.stime-h{font-size:12px;font-weight:800;color:var(--primary)}
+.stime-d{font-size:10px;color:var(--muted);font-weight:600}
+.sdiv{width:2px;height:36px;border-radius:99px;background:var(--border)}
+.sinfo .ss{font-size:11px;font-weight:700;letter-spacing:.03em}
+.sinfo .st{font-size:12px;color:var(--muted);font-weight:600;margin-top:1px}
+.sbadge{margin-left:auto;font-size:10px;padding:3px 8px;border-radius:99px;font-weight:700;flex-shrink:0}
+.b-soon{background:#FFF3CD;color:#B7791F}
+.b-done{background:#D1FAE5;color:#065F46}
+.b-pending{background:#EDE9FE;color:#5A4FCF}
+
+/* FAB */
+.fab{
+  position:absolute;bottom:76px;right:16px;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--primary);color:#fff;border:none;cursor:pointer;
+  font-size:28px;font-weight:300;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(108,92,231,.4);transition:transform .15s;z-index:80;
+  font-family:var(--font);
+}
+.fab:active{transform:scale(.9)}
+
+/* subject colors */
+.s-eng{background:#EDE9FE;color:#6C5CE7}
+.s-math{background:#FFF0F6;color:#FD79A8}
+.s-geo{background:#E0FFF8;color:#00B894}
+.s-hist{background:#FFF8E7;color:#E17055}
+.s-chi{background:#EBF5FB;color:#0984E3}
+.s-civ{background:#FDF2F8;color:#E91E8C}
+.c-eng{color:#6C5CE7} .c-math{color:#FD79A8} .c-geo{color:#00B894}
+.c-hist{color:#E17055} .c-chi{color:#0984E3} .c-civ{color:#E91E8C}
+
+/* ===== SUBJECT PAGE ===== */
+.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 14px}
+.subj-card{border-radius:var(--radius);padding:16px;border:1.5px solid var(--border);background:var(--card);cursor:pointer}
+.subj-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.subj-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900}
+.subj-pct-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--bg)}
+.subj-name{font-size:14px;font-weight:800;margin-bottom:4px}
+.subj-track{height:5px;background:#f0f0f0;border-radius:99px;overflow:hidden}
+.subj-fill{height:100%;border-radius:99px;transition:width .4s}
+.subj-meta{font-size:10px;color:var(--muted);margin-top:5px}
+
+/* chapter list */
+.ch-section{padding:0 16px 14px}
+.ch-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-radius:12px;margin-bottom:6px;border:1.5px solid var(--border);cursor:pointer}
+.ch-status{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ch-st-done{background:#D1FAE5;color:var(--green)}
+.ch-st-wip{background:#FFF3CD;color:#B7791F}
+.ch-st-none{background:#F3F4F6;color:var(--muted)}
+.ch-info{flex:1}
+.ch-num{font-size:10px;font-weight:700;color:var(--muted)}
+.ch-name{font-size:13px;font-weight:700}
+.ch-tag{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--bg);color:var(--muted);font-weight:600;flex-shrink:0}
+
+/* ===== CALENDAR PAGE ===== */
+.cal-header{padding:16px 20px 8px;display:flex;justify-content:space-between;align-items:center}
+.cal-month{font-size:18px;font-weight:900}
+.cal-nav{display:flex;gap:8px}
+.cal-arrow{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.cal-arrow:active{background:var(--bg)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;padding:0 12px 12px}
+.cal-dow{font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:8px 0 4px}
+.cal-day{width:100%;height:38px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:13px;font-weight:700;cursor:pointer;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cal-day:active{background:var(--bg)}
+.cal-day.today{background:var(--primary);color:#fff}
+.cal-day.other-month{color:#ccc}
+/* 選取色改為橄欖綠/深青，明顯不同於今日紫色 */
+.cal-day.cal-selected{background:#0984E3;color:#fff}
+/* 一般事件點：藍色 */
+.cal-day.has-event::after{content:'';width:5px;height:5px;border-radius:50%;background:#0984E3;position:absolute;bottom:3px;left:50%;transform:translateX(-50%)}
+/* 今日有一般事件：白點 */
+.cal-day.today.has-event::after{background:#fff}
+/* 老師A排課點：綠色 */
+.cal-day.ev-teacher-a::after{content:'';width:5px;height:5px;border-radius:50%;background:#00B894;position:absolute;bottom:3px;left:calc(50% - 5px);transform:translateX(-50%)}
+/* 老師B排課點：橘色 */
+.cal-day.ev-teacher-b::after{content:'';width:5px;height:5px;border-radius:50%;background:#E17055;position:absolute;bottom:3px;left:calc(50% + 5px);transform:translateX(-50%)}
+/* 同時有A和B：兩點都顯示，用 box-shadow 模擬 */
+.cal-day.ev-teacher-a.ev-teacher-b::after{content:'';width:5px;height:5px;border-radius:50%;background:#00B894;position:absolute;bottom:3px;left:calc(50% - 5px);transform:translateX(-50%);box-shadow:10px 0 0 #E17055}
+/* 今日的老師點改白色 */
+.cal-day.today.ev-teacher-a::after{background:#fff}
+.cal-day.today.ev-teacher-b::after{background:rgba(255,255,255,.7)}
+.cal-ev-card{background:var(--card);border-radius:14px;padding:12px 16px;border:1.5px solid var(--border);display:flex;gap:12px;align-items:center}
+.cal-ev-card{background:var(--card);border-radius:14px;padding:12px 16px;border:1.5px solid var(--border);display:flex;gap:12px;align-items:center}
+.ev-stripe{width:4px;height:40px;border-radius:99px;flex-shrink:0}
+.ev-info .ev-title{font-size:13px;font-weight:700}
+.ev-info .ev-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ===== ANALYSIS PAGE ===== */
+.radar-wrap{padding:16px;display:flex;justify-content:center}
+.score-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 14px}
+.score-card{background:var(--card);border-radius:12px;padding:12px;border:1.5px solid var(--border);text-align:center}
+.score-n{font-size:20px;font-weight:900}
+.score-l{font-size:10px;color:var(--muted);font-weight:600;margin-top:2px}
+.weak-list{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
+.weak-item{background:var(--card);border-radius:12px;padding:10px 14px;border:1.5px solid var(--border);display:flex;align-items:center;gap:10px}
+.weak-bar-wrap{flex:1;height:6px;background:#f0f0f0;border-radius:99px;overflow:hidden}
+.weak-bar{height:100%;border-radius:99px}
+.weak-pct{font-size:11px;font-weight:700;min-width:30px;text-align:right}
+
+/* ===== TEACHER PAGE ===== */
+.record-form{margin:0 16px 14px;background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);padding:16px}
+.form-title{font-size:15px;font-weight:800;margin-bottom:14px}
+.form-row{margin-bottom:12px}
+.form-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;letter-spacing:.04em}
+.form-sel,.form-inp,.form-ta{
+  width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);
+  outline:none;
+}
+.form-ta{height:72px;resize:none}
+.form-sel:focus,.form-inp:focus,.form-ta:focus{border-color:var(--primary)}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.submit-btn{
+  width:100%;padding:13px;background:var(--primary);color:#fff;border:none;
+  border-radius:12px;font-size:14px;font-weight:800;font-family:var(--font);cursor:pointer;
+  margin-top:4px;transition:transform .1s;
+}
+.submit-btn:active{transform:scale(.97)}
+.rec-history{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.rec-item{background:var(--card);border-radius:14px;padding:13px 16px;border:1.5px solid var(--border)}
+.rec-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.rec-chapter{font-size:13px;font-weight:800}
+.rec-date-badge{font-size:10px;color:var(--muted);font-weight:600}
+.rec-note{font-size:12px;color:var(--muted);line-height:1.5}
+.rec-tags{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.rec-tag{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);font-weight:600}
+
+/* ===== PARENT PAGE ===== */
+.parent-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 14px}
+.parent-stat{background:var(--card);border-radius:14px;padding:14px;border:1.5px solid var(--border)}
+.ps-num{font-size:26px;font-weight:900}
+.ps-label{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.ps-sub{font-size:10px;color:var(--muted);margin-top:4px}
+.weekly-chart{padding:0 16px 14px}
+.wc-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);padding:16px}
+.wc-title{font-size:14px;font-weight:800;margin-bottom:14px}
+.wc-bars{display:flex;gap:6px;align-items:flex-end;height:80px}
+.wc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wc-bar{width:100%;border-radius:6px 6px 0 0;transition:height .4s}
+.wc-day{font-size:10px;color:var(--muted);font-weight:600}
+.tutor-summary{padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.ts-card{background:var(--card);border-radius:14px;padding:13px 16px;border:1.5px solid var(--border);display:flex;align-items:center;gap:12px}
+.ts-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.ts-info{flex:1}
+.ts-name{font-size:13px;font-weight:800}
+.ts-detail{font-size:11px;color:var(--muted);margin-top:2px}
+.ts-count{text-align:right}
+.ts-hrs{font-size:16px;font-weight:900;color:var(--primary)}
+.ts-hr-l{font-size:10px;color:var(--muted)}
+
+/* notification badge */
+.notif{background:var(--accent);color:#fff;font-size:9px;font-weight:800;border-radius:99px;padding:1px 5px;margin-left:4px;vertical-align:top}
+
+/* modal overlay */
+.modal-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.45);z-index:200;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal-sheet{
+  background:#fff;border-radius:24px 24px 0 0;width:100%;padding:20px 20px 32px;
+}
+.modal-handle{width:36px;height:4px;background:#E0E0E0;border-radius:99px;margin:0 auto 16px}
+.modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);margin-top:-2px}
+
+/* animation */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page.active .card,.page.active .task-card,.page.active .session-card,
+.page.active .subj-card,.page.active .rec-item,.page.active .ts-card{
+  animation:fadeIn .3s ease both;
+}
+
+/* outer layout */
+.outer{display:flex;min-height:100vh;align-items:center;justify-content:center;background:#1a1a2e;padding:20px;gap:40px}
+.device-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.device-label{color:rgba(255,255,255,.5);font-size:13px;font-family:var(--font);font-weight:600}
+@media(max-width:500px){
+  .outer{padding:0;background:var(--bg);align-items:flex-start}
+  .phone-shell{width:100%;height:100vh;border-radius:0;box-shadow:none}
+  .device-wrap{gap:0}
+  .device-label{display:none}
+}
+
+/* ===== SETTINGS PAGE ===== */
+.settings-list{padding:0 16px;display:flex;flex-direction:column;gap:0;margin-bottom:10px;background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden}
+.set-subj-card{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.set-subj-card:last-child{border-bottom:none}
+.set-subj-card:active{background:var(--bg)}
+.set-subj-info{flex:1;min-width:0}
+.set-subj-name{font-size:14px;font-weight:800}
+.set-subj-ver{font-size:11px;color:var(--muted);margin-top:2px}
+.set-subj-right{display:flex;align-items:center;gap:6px}
+.set-badge{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--primary);color:#fff;font-weight:700;white-space:nowrap}
+.set-badge-self{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.set-arrow{font-size:18px;color:var(--muted)}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.set-row:last-child{border-bottom:none}
+.set-row:active{background:var(--bg)}
+.set-row-left{display:flex;align-items:center;gap:12px}
+.set-row-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.set-row-label{font-size:13px;font-weight:700}
+.set-row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.set-tag{font-size:10px;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);border:1px solid var(--border);font-weight:600}
+.set-tag-admin{background:#D1FAE5;color:#065F46;border-color:#A7F3D0}
+.toggle-sw{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle-sw input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track-sw{position:absolute;inset:0;background:var(--border);border-radius:99px;transition:background .2s;cursor:pointer}
+.toggle-track-sw::after{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-sw input:checked + .toggle-track-sw{background:var(--primary)}
+.toggle-sw input:checked + .toggle-track-sw::after{transform:translateX(20px)}
+
+/* chapter edit modal */
+.ver-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.ver-tab{padding:5px 12px;border:1.5px solid var(--border);border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);font-family:var(--font);transition:all .15s}
+.ver-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.ce-ch-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg);border-radius:10px;font-size:13px}
+.ce-ch-num{font-size:10px;color:var(--muted);min-width:52px;font-weight:600}
+.ce-ch-name{flex:1;font-weight:600}
+.ce-del-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;color:#ccc;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:var(--font);flex-shrink:0;transition:color .15s}
+.ce-del-btn:hover{color:var(--accent)}
+
+/* add teacher modal */
+.subj-pick{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.subj-pick:has(input:checked){background:var(--primary);color:#fff;border-color:var(--primary)}
+.subj-pick input{display:none}
+
+/* chapter edit - tabs & info */
+.ce-info-bar{font-size:11px;color:var(--primary);background:#EDE9FE;border-radius:8px;padding:8px 10px;margin-bottom:12px;line-height:1.5;font-weight:600}
+.ce-tab-bar{display:flex;border-bottom:1.5px solid var(--border);margin-bottom:12px}
+.ce-tab{flex:1;padding:8px;font-size:12px;font-weight:700;background:transparent;border:none;cursor:pointer;color:var(--muted);font-family:var(--font);border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s}
+.ce-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* mapping table */
+.map-row{display:grid;grid-template-columns:1fr 24px 1fr;gap:6px;align-items:center;padding:8px 10px;background:var(--bg);border-radius:8px;font-size:11px}
+.map-row.pending{background:#FFF8E7;border:1px solid #FDE68A}
+.map-row.mapped{background:#F0FDF4;border:1px solid #A7F3D0}
+.map-row.no-match{background:#FEF2F2;border:1px solid #FECACA}
+.map-old{font-weight:600;color:var(--text);line-height:1.4}
+.map-arrow{text-align:center;color:var(--muted);font-size:14px}
+.map-sel{width:100%;font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:#fff;font-family:var(--font);color:var(--text)}
+.map-status{font-size:10px;font-weight:700;margin-top:3px}
+
+/* migration banner */
+.migrate-banner{background:#FFF3CD;border:1px solid #FDE68A;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5}
+.migrate-banner-title{font-weight:800;color:#B7791F;margin-bottom:4px}
+.migrate-banner-body{color:#744210}
+
+/* ===== LOGIN SCREEN ===== */
+#login-screen{
+  position:fixed;inset:0;background:#1a1a2e;
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;font-family:var(--font);
+}
+.login-card{
+  background:#fff;border-radius:24px;padding:32px 28px;width:340px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+.login-logo{font-size:32px;text-align:center;margin-bottom:6px}
+.login-title{font-size:20px;font-weight:900;text-align:center;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
+.login-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.login-role-btn{
+  padding:12px 8px;border:1.5px solid var(--border);border-radius:12px;
+  background:transparent;cursor:pointer;font-family:var(--font);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .15s;
+}
+.login-role-btn.selected{border-color:var(--primary);background:#EDE9FE}
+.login-role-btn:active{transform:scale(.97)}
+.login-role-icon{font-size:22px}
+.login-role-name{font-size:12px;font-weight:800;color:var(--text)}
+.login-pw-wrap{position:relative;margin-bottom:14px}
+.login-pw-inp{
+  width:100%;padding:12px 44px 12px 14px;
+  border:1.5px solid var(--border);border-radius:12px;
+  font-size:14px;font-family:var(--font);outline:none;
+  transition:border-color .15s;
+}
+.login-pw-inp:focus{border-color:var(--primary)}
+.login-pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);
+}
+.login-btn{
+  width:100%;padding:13px;background:var(--primary);color:#fff;
+  border:none;border-radius:12px;font-size:14px;font-weight:800;
+  font-family:var(--font);cursor:pointer;transition:transform .1s;
+}
+.login-btn:active{transform:scale(.97)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{
+  font-size:12px;color:#E24B4A;font-weight:600;
+  text-align:center;margin-top:8px;min-height:18px;
+}
+.login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6}
+
+/* ===== SYNC INDICATOR ===== */
+#sync-indicator{
+  position:absolute;top:12px;right:16px;
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;font-family:var(--font);
+  z-index:60;pointer-events:none;
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sync-dot.connected{background:#00B894}
+.sync-dot.syncing{background:#FDCB6E;animation:pulse-dot .8s ease-in-out infinite}
+.sync-dot.offline{background:#E24B4A}
+.sync-label{color:var(--muted)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* 右上角登出按鈕 */
+#logout-btn{
+  position:absolute;top:10px;left:14px;
+  background:none;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;color:var(--muted);
+  font-family:var(--font);z-index:60;padding:4px 6px;
+  border-radius:6px;transition:background .15s;
+}
+#logout-btn:hover{background:var(--bg)}
+
+/* ===== ROLE SWITCH MODAL ===== */
+#role-switch-modal{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  z-index:200;display:none;align-items:flex-end;justify-content:center;
+}
+#role-switch-modal.open{display:flex}
+.rs-sheet{
+  background:#fff;border-radius:24px 24px 0 0;width:100%;
+  padding:20px 20px 32px;
+}
+.rs-handle{width:36px;height:4px;background:#E0E0E0;border-radius:99px;margin:0 auto 16px}
+.rs-title{font-size:15px;font-weight:800;margin-bottom:4px}
+.rs-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.rs-btn{
+  padding:14px 8px;border:1.5px solid var(--border);border-radius:14px;
+  background:transparent;cursor:pointer;font-family:var(--font);
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .15s;
+}
+.rs-btn:active{transform:scale(.97)}
+.rs-btn.current{border-color:var(--primary);background:#EDE9FE}
+.rs-icon{font-size:24px}
+.rs-name{font-size:12px;font-weight:800;color:var(--text)}
+.rs-detail{font-size:10px;color:var(--muted)}
+.rs-logout{
+  width:100%;padding:11px;background:transparent;color:var(--muted);
+  border:1.5px solid var(--border);border-radius:12px;
+  font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;
+}
+.rs-logout:active{background:var(--bg)}
+
+/* avatar 可點擊樣式 */
+.avatar{cursor:pointer;transition:opacity .15s}
+.avatar:active{opacity:.7}
+
+/* ===== TASK CRUD ===== */
+.task-card{position:relative}
+.task-edit-btn{
+  width:28px;height:28px;border-radius:50%;border:none;
+  background:transparent;color:var(--muted);font-size:16px;
+  cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font);transition:background .15s;padding:0;
+}
+.task-edit-btn:active{background:var(--bg)}
+.task-source-tag{
+  font-size:9px;padding:1px 6px;border-radius:99px;font-weight:700;
+  white-space:nowrap;flex-shrink:0;
+}
+.src-self{background:#EDE9FE;color:#6C5CE7}
+.src-teacher{background:#E0FFF8;color:#00B894}
+.src-parent{background:#FFF0F6;color:#FD79A8}
+
+/* task edit modal */
+#task-edit-modal .modal-sheet{padding-bottom:24px}
+.task-date-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.task-date-inp{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:var(--font);background:var(--bg);color:var(--text);outline:none}
+.task-date-inp:focus{border-color:var(--primary)}
+.del-btn{
+  width:100%;padding:11px;background:transparent;
+  border:1.5px solid #FECACA;border-radius:12px;
+  color:#E24B4A;font-size:13px;font-weight:700;
+  font-family:var(--font);cursor:pointer;margin-top:8px;
+}
+.del-btn:active{background:#FEF2F2}
+
+/* 家長/老師「幫學生排任務」區塊 */
+.arrange-task-card{
+  margin:0 16px 14px;background:var(--card);
+  border-radius:var(--radius);border:1.5px solid var(--border);padding:16px;
+}
+.arrange-task-title{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* ===== TASK DONE MODAL ===== */
+#done-modal .modal-sheet{padding-bottom:24px}
+.done-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.done-stat-card{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+.done-stat-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.done-stepper{display:flex;align-items:center;justify-content:center;gap:8px}
+.done-step-btn{
+  width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);
+  background:var(--card);font-size:18px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font);color:var(--primary);transition:background .15s;
+}
+.done-step-btn:active{background:var(--bg)}
+.done-step-val{font-size:22px;font-weight:900;color:var(--text);min-width:44px;text-align:center}
+.done-step-unit{font-size:11px;color:var(--muted);margin-top:3px}
+.done-task-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;
+  padding:10px 12px;background:var(--bg);border-radius:10px;line-height:1.5}
+
+/* ===== MINS STEPPER ===== */
+.mins-stepper{display:flex;align-items:center;gap:8px;margin-top:4px}
+.mins-step-btn{
+  width:34px;height:34px;border-radius:50%;
+  border:1.5px solid var(--border);background:var(--card);
+  font-size:18px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font);color:var(--primary);flex-shrink:0;
+  transition:background .15s;
+}
+.mins-step-btn:active{background:var(--bg)}
+.mins-step-display{
+  flex:1;text-align:center;font-size:16px;font-weight:800;
+  color:var(--text);
+}
+.mins-step-unit{font-size:12px;color:var(--muted);font-weight:400}
+</style>
+
+</head>
+<body>
+
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">📚</div>
+    <div class="login-title">學測讀書計劃</div>
+    <div class="login-sub">2027 學科能力測驗 · 請選擇你的角色</div>
+
+    <div class="login-roles" style="grid-template-columns:1fr 1fr;gap:10px">
+      <button class="login-role-btn" onclick="enterAsRole('student')">
+        <span class="login-role-icon">📖</span>
+        <span class="login-role-name">學生</span>
+      </button>
+      <button class="login-role-btn" onclick="enterAsRole('parent')">
+        <span class="login-role-icon">👨‍👩‍👧</span>
+        <span class="login-role-name">家長</span>
+      </button>
+      <button class="login-role-btn" onclick="enterAsRole('teacher-a')">
+        <span class="login-role-icon">📝</span>
+        <span class="login-role-name">老師A</span>
+        <span style="font-size:10px;color:var(--muted)">英文</span>
+      </button>
+      <button class="login-role-btn" onclick="enterAsRole('teacher-b')">
+        <span class="login-role-icon">📐</span>
+        <span class="login-role-name">老師B</span>
+        <span style="font-size:10px;color:var(--muted)">數學・地理</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="outer">
+<div class="device-wrap">
+<div class="device-label">學測讀書計劃系統 · 原型展示</div>
+<div class="phone-shell">
+
+  <!-- 同步狀態指示器 -->
+  <div id="sync-indicator">
+    <span class="sync-dot offline" id="sync-dot"></span>
+    <span class="sync-label" id="sync-label-text">未連線</span>
+  </div>
+  <!-- 登出 -->
+  <button id="logout-btn" onclick="doLogout()">登出</button>
+
+  <!-- Role switcher -->
+  <div class="role-bar" id="role-bar" style="display:none">
+    <button class="role-btn active" onclick="switchRole('student')">📖 學生</button>
+    <button class="role-btn" onclick="switchRole('parent')">👨‍👩‍👧 家長</button>
+    <button class="role-btn" onclick="switchRole('teacher-b')">📐 老師B</button>
+    <button class="role-btn" onclick="switchRole('teacher-a')">📝 老師A</button>
+  </div>
+
+<div class="screen-wrap">
+  <div class="scroll-area" id="main-scroll">
+
+  <!-- ============ STUDENT PAGES ============ -->
+  <!-- Student Home -->
+  <div class="page active" id="pg-student-home">
+    <div class="topbar">
+      <div>
+        <div class="greeting-sub" id="s-greet-sub">早安！今天也加油 💪</div>
+        <div class="greeting-name">學測倒數中</div>
+      </div>
+      <div class="avatar av-student" onclick="openRoleSwitchModal()" title="切換角色">學</div>
+    </div>
+
+    <div class="cd-banner">
+      <div>
+        <div class="cd-lbl">距離學測</div>
+        <div class="cd-ttl">學科能力測驗</div>
+        <div class="cd-date-txt">2027年 1月 16日</div>
+      </div>
+      <div class="cd-num" id="cd-days"><small>天</small></div>
+    </div>
+
+    <div class="sec-title">今日進度</div>
+    <div class="card card-pad">
+      <div class="prog-row">
+        <div class="prog-title" id="today-date-label">今日讀書計劃</div>
+        <div class="prog-pct" id="s-pct">40%</div>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="s-prog" style="width:40%"></div></div>
+      <div class="stats-grid">
+        <div class="stat-pill"><div class="stat-n" style="color:var(--accent2)" id="s-done">2</div><div class="stat-l">已完成</div></div>
+        <div class="stat-pill"><div class="stat-n" style="color:var(--accent)" id="s-left">3</div><div class="stat-l">待完成</div></div>
+        <div class="stat-pill"><div class="stat-n" style="color:var(--accent3)">🔥 12</div><div class="stat-l">連續天數</div></div>
+      </div>
+    </div>
+
+    <div class="sec-title">今日任務</div>
+    <div class="task-list" id="s-tasks">
+      <div style="padding:20px 0;text-align:center;font-size:12px;color:var(--muted)" id="tasks-empty">載入中…</div>
+    </div>
+
+    <div class="sec-title">今日家教課</div>
+    <div class="session-card">
+      <div class="stime"><div class="stime-h">15:00</div><div class="stime-d">90分</div></div>
+      <div class="sdiv"></div>
+      <div class="sinfo"><div class="ss c-math">數學・地理</div><div class="st">老師 B</div></div>
+      <div class="sbadge b-soon">即將開始</div>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+
+  <!-- Student Subject -->
+  <div class="page" id="pg-student-subject">
+    <div class="topbar">
+      <div><div class="greeting-sub">所有科目</div><div class="greeting-name">章節進度</div></div>
+      <div class="avatar av-student" onclick="openRoleSwitchModal()" title="切換角色">學</div>
+    </div>
+    <div class="subj-grid">
+      <div class="subj-card" onclick="showChapters('eng')">
+        <div class="subj-card-top"><div class="subj-icon s-eng">英</div><div class="subj-pct-badge c-eng">62%</div></div>
+        <div class="subj-name">英文</div>
+        <div class="subj-track"><div class="subj-fill" style="width:62%;background:#6C5CE7"></div></div>
+        <div class="subj-meta">老師A · B1–B5</div>
+      </div>
+      <div class="subj-card" onclick="showChapters('math')">
+        <div class="subj-card-top"><div class="subj-icon s-math">數</div><div class="subj-pct-badge c-math">45%</div></div>
+        <div class="subj-name">數學</div>
+        <div class="subj-track"><div class="subj-fill" style="width:45%;background:#FD79A8"></div></div>
+        <div class="subj-meta">老師B · 晟景版</div>
+      </div>
+      <div class="subj-card" onclick="showChapters('geo')">
+        <div class="subj-card-top"><div class="subj-icon s-geo">地</div><div class="subj-pct-badge c-geo">38%</div></div>
+        <div class="subj-name">地理</div>
+        <div class="subj-track"><div class="subj-fill" style="width:38%;background:#00B894"></div></div>
+        <div class="subj-meta">老師B · 龍騰版</div>
+      </div>
+      <div class="subj-card" onclick="showChapters('hist')">
+        <div class="subj-card-top"><div class="subj-icon s-hist">史</div><div class="subj-pct-badge c-hist">28%</div></div>
+        <div class="subj-name">歷史</div>
+        <div class="subj-track"><div class="subj-fill" style="width:28%;background:#E17055"></div></div>
+        <div class="subj-meta">自學 · 龍騰版</div>
+      </div>
+      <div class="subj-card" onclick="showChapters('chi')">
+        <div class="subj-card-top"><div class="subj-icon s-chi">國</div><div class="subj-pct-badge c-chi">55%</div></div>
+        <div class="subj-name">國文</div>
+        <div class="subj-track"><div class="subj-fill" style="width:55%;background:#0984E3"></div></div>
+        <div class="subj-meta">自學 · 龍騰版</div>
+      </div>
+      <div class="subj-card" onclick="showChapters('civ')">
+        <div class="subj-card-top"><div class="subj-icon s-civ">公</div><div class="subj-pct-badge c-civ">20%</div></div>
+        <div class="subj-name">公民</div>
+        <div class="subj-track"><div class="subj-fill" style="width:20%;background:#E91E8C"></div></div>
+        <div class="subj-meta">自學 · 龍騰版</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Analysis -->
+  <div class="page" id="pg-student-analysis">
+    <div class="topbar">
+      <div><div class="greeting-sub">學習分析</div><div class="greeting-name">弱點診斷</div></div>
+      <div class="avatar av-student" onclick="openRoleSwitchModal()" title="切換角色">學</div>
+    </div>
+    <div class="sec-title">六科能力雷達</div>
+    <div class="radar-wrap" id="radar-wrap">
+      <svg width="260" height="240" viewBox="0 0 260 240" id="radar-svg">
+        <!-- 靜態格線 -->
+        <polygon points="130,96 181,124 181,178 130,206 79,178 79,124" fill="none" stroke="#eee" stroke-width="1"/>
+        <polygon points="130,57 206,96 206,171 130,210 54,171 54,96" fill="none" stroke="#eee" stroke-width="1"/>
+        <polygon points="130,20 220,68 220,164 130,212 40,164 40,68" fill="none" stroke="#eee" stroke-width="1"/>
+        <line x1="130" y1="20" x2="130" y2="212" stroke="#eee" stroke-width="1"/>
+        <line x1="40" y1="68" x2="220" y2="164" stroke="#eee" stroke-width="1"/>
+        <line x1="220" y1="68" x2="40" y2="164" stroke="#eee" stroke-width="1"/>
+        <!-- 動態資料區 -->
+        <polygon id="radar-data" fill="rgba(108,92,231,0.18)" stroke="var(--primary)" stroke-width="2" stroke-linejoin="round"/>
+        <text id="rl-eng" x="130" y="14" text-anchor="middle" font-size="11" font-weight="700" fill="#6C5CE7"></text>
+        <text id="rl-math" x="228" y="72" text-anchor="start" font-size="11" font-weight="700" fill="#FD79A8"></text>
+        <text id="rl-geo" x="228" y="168" text-anchor="start" font-size="11" font-weight="700" fill="#00B894"></text>
+        <text id="rl-hist" x="130" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#E17055"></text>
+        <text id="rl-civ" x="32" y="168" text-anchor="end" font-size="11" font-weight="700" fill="#E91E8C"></text>
+        <text id="rl-chi" x="32" y="72" text-anchor="end" font-size="11" font-weight="700" fill="#0984E3"></text>
+      </svg>
+    </div>
+    <div class="sec-title">各科完成率</div>
+    <div class="score-grid" id="analysis-score-grid"></div>
+    <div class="sec-title">練習題數統計</div>
+    <div id="practice-stats" style="padding:0 16px 8px"></div>
+    <div class="sec-title">需要繼續努力的科目</div>
+    <div class="weak-list" id="analysis-weak-list"></div>
+  </div>
+
+  <!-- Student Calendar -->
+  <div class="page" id="pg-student-calendar">
+    <div class="topbar">
+      <div><div class="greeting-sub">行事曆</div><div class="greeting-name">課程與考試</div></div>
+      <div class="avatar av-student" onclick="openRoleSwitchModal()" title="切換角色">學</div>
+    </div>
+    <div class="cal-header">
+      <div class="cal-month">2025年 10月</div>
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="prevMonth('cal-grid','cal-ev-list')">‹</button>
+        <button class="cal-arrow" onclick="nextMonth('cal-grid','cal-ev-list')">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="padding:0 16px" id="cal-ev-list"></div>
+    <div style="height:16px"></div>
+  </div>
+
+  <!-- ============ TEACHER-B PAGES ============ -->
+  <div class="page" id="pg-teacher-b-home">
+    <div class="topbar">
+      <div><div class="greeting-sub">老師 B · 數學・地理</div><div class="greeting-name">授課管理</div></div>
+      <div class="avatar av-teacher" onclick="openRoleSwitchModal()" title="切換角色">B</div>
+    </div>
+
+    <!-- ① 排課（事前） -->
+    <div class="sec-title">📅 排課（事前安排）</div>
+    <div class="record-form">
+      <div class="form-2col">
+        <div class="form-row">
+          <div class="form-label">科目</div>
+          <select class="form-sel" id="tb-sched-subj" onchange="refreshSchedChapters('b')">
+            <option value="math">數學</option><option value="geo">地理</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-label">上課日期</div>
+          <input class="form-inp" type="date" id="tb-sched-date">
+        </div>
+      </div>
+      <div class="form-2col" style="margin-top:2px">
+        <div class="form-row">
+          <div class="form-label">開始時間</div>
+          <input class="form-inp" type="time" id="tb-sched-time" value="19:00">
+        </div>
+        <div class="form-row">
+          <div class="form-label">時數</div>
+          <select class="form-sel" id="tb-sched-dur">
+            <option value="60">60 分鐘</option>
+            <option value="90">90 分鐘</option>
+            <option value="120" selected>120 分鐘</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:2px">
+        <div class="form-label">預計上課章節</div>
+        <select class="form-sel" id="tb-sched-ch"></select>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label">備註（選填）</div>
+        <input class="form-inp" id="tb-sched-note" placeholder="例：帶課本、準備考卷…">
+      </div>
+      <button class="submit-btn" style="margin-top:10px" onclick="addTeacherSession('b',this)">排課並同步至行事曆</button>
+    </div>
+
+    <!-- ② 已排課程清單 -->
+    <div class="sec-title">本週課程</div>
+    <div id="tb-sessions">
+      <div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>
+    </div>
+
+    <!-- ③ 授課記錄（事後填寫） -->
+    <div class="sec-title">📝 授課記錄（事後填寫）</div>
+    <div class="record-form">
+      <div class="info-bar" style="background:#EDE9FE;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:#5a3da8;font-weight:600">
+        上完課後填寫，可指派作業直接加入學生讀書計劃
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <div class="form-label">上課日期</div>
+          <input class="form-inp" type="date" id="tb-rec-date">
+        </div>
+        <div class="form-row">
+          <div class="form-label">科目版本</div>
+          <select class="form-sel" id="tb-rec-subj" onchange="refreshRecChapters('b')">
+            <option value="math">數學（晟景版）</option>
+            <option value="geo">地理（龍騰版）</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:2px">
+        <div class="form-label">實際上課章節</div>
+        <select class="form-sel" id="tb-rec-ch"></select>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label">課堂內容摘要</div>
+        <textarea class="form-ta" id="tb-rec-note" placeholder="今天教了什麼、學生哪裡有問題…"></textarea>
+      </div>
+      <div class="form-2col" style="margin-top:8px">
+        <div class="form-row">
+          <div class="form-label">指派作業</div>
+          <input class="form-inp" id="tb-rec-hw" placeholder="作業說明">
+        </div>
+        <div class="form-row">
+          <div class="form-label">截止日</div>
+          <input class="form-inp" type="date" id="tb-rec-hwdate">
+        </div>
+      </div>
+      <button class="submit-btn" style="margin-top:10px" onclick="submitRecordAndTask('b',this)">儲存記錄並指派作業</button>
+    </div>
+
+    <!-- ④ 歷史授課紀錄 -->
+    <div class="sec-title">歷史授課記錄</div>
+    <div class="rec-history" id="tb-rec-history">
+      <div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無記錄</div>
+    </div>
+
+  </div>
+
+  <!-- Teacher-B Subject nav pages placeholder -->
+  <div class="page" id="pg-teacher-b-subject">
+    <div class="topbar">
+      <div><div class="greeting-sub">老師 B</div><div class="greeting-name">章節進度管理</div></div>
+      <div class="avatar av-teacher" onclick="openRoleSwitchModal()" title="切換角色">B</div>
+    </div>
+    <div class="subj-grid">
+      <div class="subj-card">
+        <div class="subj-card-top"><div class="subj-icon s-math">數</div><div class="subj-pct-badge c-math">45%</div></div>
+        <div class="subj-name">數學</div>
+        <div class="subj-track"><div class="subj-fill" style="width:45%;background:#FD79A8"></div></div>
+        <div class="subj-meta">晟景版 · 第1–4冊</div>
+      </div>
+      <div class="subj-card">
+        <div class="subj-card-top"><div class="subj-icon s-geo">地</div><div class="subj-pct-badge c-geo">38%</div></div>
+        <div class="subj-name">地理</div>
+        <div class="subj-track"><div class="subj-fill" style="width:38%;background:#00B894"></div></div>
+        <div class="subj-meta">龍騰版 · 第1–4冊</div>
+      </div>
+    </div>
+    <div class="sec-title">數學・晟景版進度</div>
+    <div class="ch-section">
+      <div class="ch-item">
+        <div class="ch-status ch-st-done">✓</div>
+        <div class="ch-info"><div class="ch-num">第一冊 1-1(上)</div><div class="ch-name">乘法公式與有理數</div></div>
+        <div class="ch-tag">已完成</div>
+      </div>
+      <div class="ch-item">
+        <div class="ch-status ch-st-done">✓</div>
+        <div class="ch-info"><div class="ch-num">第一冊 1-2</div><div class="ch-name">絕對值</div></div>
+        <div class="ch-tag">已完成</div>
+      </div>
+      <div class="ch-item">
+        <div class="ch-status ch-st-wip">→</div>
+        <div class="ch-info"><div class="ch-num">第三冊 3-2</div><div class="ch-name">平面向量的內積</div></div>
+        <div class="ch-tag c-math">進行中</div>
+      </div>
+      <div class="ch-item">
+        <div class="ch-status ch-st-none">○</div>
+        <div class="ch-info"><div class="ch-num">第三冊 3-3</div><div class="ch-name">直線向量性質與二階行列式</div></div>
+        <div class="ch-tag">未開始</div>
+      </div>
+      <div class="ch-item">
+        <div class="ch-status ch-st-none">○</div>
+        <div class="ch-info"><div class="ch-num">第四冊 1-1</div><div class="ch-name">空間概念</div></div>
+        <div class="ch-tag">未開始</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher-A Pages -->
+  <div class="page" id="pg-teacher-a-home">
+    <div class="topbar">
+      <div><div class="greeting-sub">老師 A · 英文</div><div class="greeting-name">授課管理</div></div>
+      <div class="avatar av-teacher" onclick="openRoleSwitchModal()" title="切換角色" style="background:linear-gradient(135deg,var(--primary),var(--primary-light))">A</div>
+    </div>
+
+    <!-- ① 排課（事前） -->
+    <div class="sec-title">📅 排課（事前安排）</div>
+    <div class="record-form">
+      <div class="form-2col">
+        <div class="form-row">
+          <div class="form-label">科目</div>
+          <select class="form-sel"><option>英文</option></select>
+        </div>
+        <div class="form-row">
+          <div class="form-label">上課日期</div>
+          <input class="form-inp" type="date" id="ta-sched-date">
+        </div>
+      </div>
+      <div class="form-2col" style="margin-top:2px">
+        <div class="form-row">
+          <div class="form-label">開始時間</div>
+          <input class="form-inp" type="time" id="ta-sched-time" value="19:00">
+        </div>
+        <div class="form-row">
+          <div class="form-label">時數</div>
+          <select class="form-sel" id="ta-sched-dur">
+            <option value="60">60 分鐘</option>
+            <option value="90">90 分鐘</option>
+            <option value="120" selected>120 分鐘</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:2px">
+        <div class="form-label">預計上課章節</div>
+        <select class="form-sel" id="ta-sched-ch"></select>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label">備註（選填）</div>
+        <input class="form-inp" id="ta-sched-note" placeholder="例：準備克漏字、帶單字卡…">
+      </div>
+      <button class="submit-btn" style="margin-top:10px" onclick="addTeacherSession('a',this)">排課並同步至行事曆</button>
+    </div>
+
+    <!-- ② 已排課程清單 -->
+    <div class="sec-title">本週課程</div>
+    <div id="ta-sessions">
+      <div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>
+    </div>
+
+    <!-- ③ 授課記錄（事後填寫） -->
+    <div class="sec-title">📝 授課記錄（事後填寫）</div>
+    <div class="record-form">
+      <div class="info-bar" style="background:#EDE9FE;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:#5a3da8;font-weight:600">
+        上完課後填寫，可指派作業直接加入學生讀書計劃
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <div class="form-label">上課日期</div>
+          <input class="form-inp" type="date" id="ta-rec-date">
+        </div>
+        <div class="form-row">
+          <div class="form-label">科目</div>
+          <select class="form-sel"><option>英文（龍騰版）</option></select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:2px">
+        <div class="form-label">實際上課章節</div>
+        <select class="form-sel" id="ta-rec-ch"></select>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label">課堂內容摘要</div>
+        <textarea class="form-ta" id="ta-rec-note" placeholder="今天教了什麼、學生哪裡有問題…"></textarea>
+      </div>
+      <div class="form-2col" style="margin-top:8px">
+        <div class="form-row">
+          <div class="form-label">指派作業</div>
+          <input class="form-inp" id="ta-rec-hw" placeholder="作業說明">
+        </div>
+        <div class="form-row">
+          <div class="form-label">截止日</div>
+          <input class="form-inp" type="date" id="ta-rec-hwdate">
+        </div>
+      </div>
+      <button class="submit-btn" style="margin-top:10px" onclick="submitRecordAndTask('a',this)">儲存記錄並指派作業</button>
+    </div>
+
+    <!-- ④ 歷史授課記錄 -->
+    <div class="sec-title">歷史授課記錄</div>
+    <div class="rec-history" id="ta-rec-history">
+      <div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無記錄</div>
+    </div>
+
+  </div>
+
+  <!-- Teacher-A Subject -->
+  <div class="page" id="pg-teacher-a-subject">
+    <div class="topbar">
+      <div><div class="greeting-sub">老師 A</div><div class="greeting-name">英文章節進度</div></div>
+      <div class="avatar av-teacher" onclick="openRoleSwitchModal()" title="切換角色" style="background:linear-gradient(135deg,var(--primary),var(--primary-light))">A</div>
+    </div>
+    <div class="sec-title">龍騰版 B1–B5 進度</div>
+    <div class="ch-section">
+      <div class="ch-item"><div class="ch-status ch-st-done">✓</div><div class="ch-info"><div class="ch-num">Book 1</div><div class="ch-name">Firsts in Life ～ The Life of a Plastic Bag（全6課）</div></div><div class="ch-tag">完成</div></div>
+      <div class="ch-item"><div class="ch-status ch-st-done">✓</div><div class="ch-info"><div class="ch-num">Book 2</div><div class="ch-name">The Heart of a Champion ～ Story behind Eponyms（全9課）</div></div><div class="ch-tag">完成</div></div>
+      <div class="ch-item"><div class="ch-status ch-st-wip">→</div><div class="ch-info"><div class="ch-num">Book 3 L1–L2</div><div class="ch-name">The Day I Broke the Rules / Keeping Your Distance</div></div><div class="ch-tag c-eng">授課中</div></div>
+      <div class="ch-item"><div class="ch-status ch-st-none">○</div><div class="ch-info"><div class="ch-num">Book 3 L3–L9</div><div class="ch-name">The Birthmark ～ The Power of Gratitude</div></div><div class="ch-tag">未開始</div></div>
+      <div class="ch-item"><div class="ch-status ch-st-none">○</div><div class="ch-info"><div class="ch-num">Book 4–5</div><div class="ch-name">全冊待安排</div></div><div class="ch-tag">未開始</div></div>
+    </div>
+  </div>
+
+  <!-- ============ PARENT PAGES ============ -->
+  <div class="page" id="pg-parent-home">
+    <div class="topbar">
+      <div><div class="greeting-sub">家長總覽</div><div class="greeting-name">本週學習狀況</div></div>
+      <div class="avatar av-parent" onclick="openRoleSwitchModal()" title="切換角色">家</div>
+    </div>
+
+    <div class="cd-banner" style="background:linear-gradient(135deg,var(--green),var(--accent2))">
+      <div>
+        <div class="cd-lbl">距離學測</div>
+        <div class="cd-ttl">學科能力測驗</div>
+        <div class="cd-date-txt">2027年 1月 16日</div>
+      </div>
+      <div class="cd-num" id="cd-days-parent"><small>天</small></div>
+    </div>
+
+    <div class="parent-grid">
+      <div class="parent-stat">
+        <div class="ps-num" style="color:var(--green)">78%</div>
+        <div class="ps-label">本週打卡率</div>
+        <div class="ps-sub">↑ 較上週 +12%</div>
+      </div>
+      <div class="parent-stat">
+        <div class="ps-num" style="color:var(--primary)">6</div>
+        <div class="ps-label">本週家教堂數</div>
+        <div class="ps-sub">英文3・數學2・地理1</div>
+      </div>
+      <div class="parent-stat">
+        <div class="ps-num" style="color:var(--accent3)">🔥 12</div>
+        <div class="ps-label">連續打卡天數</div>
+        <div class="ps-sub">歷史最高紀錄</div>
+      </div>
+      <div class="parent-stat">
+        <div class="ps-num" style="color:var(--orange)">2</div>
+        <div class="ps-label">待繳作業</div>
+        <div class="ps-sub">地理・歷史各1件</div>
+      </div>
+    </div>
+
+    <div class="sec-title">本週每日完成率</div>
+    <div class="weekly-chart">
+      <div class="wc-card">
+        <div class="wc-bars">
+          <div class="wc-col"><div class="wc-bar" style="height:60%;background:var(--primary-light);border-radius:6px 6px 0 0"></div><div class="wc-day">一</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:100%;background:var(--primary);border-radius:6px 6px 0 0"></div><div class="wc-day">二</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:80%;background:var(--primary-light);border-radius:6px 6px 0 0"></div><div class="wc-day">三</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:75%;background:var(--primary-light);border-radius:6px 6px 0 0"></div><div class="wc-day">四</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:50%;background:var(--primary-light);border-radius:6px 6px 0 0"></div><div class="wc-day">五</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:90%;background:var(--primary);border-radius:6px 6px 0 0"></div><div class="wc-day">六</div></div>
+          <div class="wc-col"><div class="wc-bar" style="height:40%;background:#eee;border-radius:6px 6px 0 0"></div><div class="wc-day">日</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title">幫學生排任務</div>
+    <div class="arrange-task-card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">指定日期和科目，直接為學生新增讀書任務</div>
+      <div class="form-row">
+        <div class="form-label">日期</div>
+        <input class="form-inp" type="date" id="parent-task-date">
+      </div>
+      <div class="form-2col" style="margin-top:8px">
+        <div class="form-row">
+          <div class="form-label">科目</div>
+          <select class="form-sel" id="parent-task-subj">
+            <option value="eng">英文</option><option value="math">數學</option>
+            <option value="geo">地理</option><option value="hist">歷史</option>
+            <option value="chi">國文</option><option value="civ">公民</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-label">預計時間</div>
+          <div class="mins-stepper">
+            <button class="mins-step-btn" onclick="adjustMins('parent-task-mins',-15)">−</button>
+            <div class="mins-step-display">
+              <span id="parent-task-mins-display">60</span>
+              <span class="mins-step-unit"> 分</span>
+            </div>
+            <button class="mins-step-btn" onclick="adjustMins('parent-task-mins',15)">+</button>
+          </div>
+          <input type="hidden" id="parent-task-mins" value="60">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label">任務說明</div>
+        <input class="form-inp" id="parent-task-name" placeholder="例：複習歷史第三冊">
+      </div>
+      <button class="submit-btn" style="margin-top:10px;background:var(--green)" onclick="addTaskForStudent('parent',this)">新增至學生讀書計劃</button>
+    </div>
+
+    <div class="sec-title">家教老師狀況</div>
+    <div class="tutor-summary">
+      <div class="ts-card">
+        <div class="ts-avatar" style="background:#EDE9FE;color:#6C5CE7">A</div>
+        <div class="ts-info">
+          <div class="ts-name">老師 A（英文）</div>
+          <div class="ts-detail">本月 6 堂 · 下次 10/30</div>
+        </div>
+        <div class="ts-count"><div class="ts-hrs">9h</div><div class="ts-hr-l">本月時數</div></div>
+      </div>
+      <div class="ts-card">
+        <div class="ts-avatar" style="background:#FFF0F6;color:#FD79A8">B</div>
+        <div class="ts-info">
+          <div class="ts-name">老師 B（數學・地理）</div>
+          <div class="ts-detail">本月 8 堂 · 下次 今天</div>
+        </div>
+        <div class="ts-count"><div class="ts-hrs">12h</div><div class="ts-hr-l">本月時數</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parent Subject -->
+  <div class="page" id="pg-parent-subject">
+    <div class="topbar">
+      <div><div class="greeting-sub">家長</div><div class="greeting-name">六科進度總覽</div></div>
+      <div class="avatar av-parent" onclick="openRoleSwitchModal()" title="切換角色">家</div>
+    </div>
+    <div class="subj-grid" id="parent-subj-grid"></div>
+  </div>
+
+  <!-- Parent Calendar -->
+  <div class="page" id="pg-parent-calendar">
+    <div class="topbar">
+      <div><div class="greeting-sub">家長</div><div class="greeting-name">課程行事曆</div></div>
+      <div class="avatar av-parent" onclick="openRoleSwitchModal()" title="切換角色">家</div>
+    </div>
+    <div class="cal-header">
+      <div class="cal-month">2025年 10月</div>
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="prevMonth('cal-grid-parent','cal-ev-parent')">‹</button>
+        <button class="cal-arrow" onclick="nextMonth('cal-grid-parent','cal-ev-parent')">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid-parent"></div>
+    <div style="padding:0 16px" id="cal-ev-parent"></div>
+
+    <div class="sec-title" style="margin-top:14px">新增學校行程 / 考試</div>
+    <div class="record-form">
+      <div class="form-row">
+        <div class="form-label">事項名稱</div>
+        <input class="form-inp" id="p-ev-title" placeholder="例：學校期中考、模擬考、親師會">
+      </div>
+      <div class="form-2col" style="margin-top:10px">
+        <div class="form-row">
+          <div class="form-label">日期</div>
+          <input class="form-inp" type="date" id="p-ev-date">
+        </div>
+        <div class="form-row">
+          <div class="form-label">類型</div>
+          <select class="form-sel" id="p-ev-type">
+            <option value="#E17055">📝 學校考試</option>
+            <option value="#00B894">📊 模擬考</option>
+            <option value="#0984E3">📋 親師會議</option>
+            <option value="#FDCB6E">📌 其他提醒</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">備註（選填）</div>
+        <input class="form-inp" id="p-ev-note" placeholder="例：考試科目、地點…">
+      </div>
+      <button class="submit-btn" style="margin-top:12px;background:var(--green)" onclick="addParentEvent(this)">新增至行事曆</button>
+    </div>
+
+    <div class="sec-title">費用記錄</div>
+    <div style="padding:0 16px 20px">
+      <div class="card card-pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800">10月家教費用</div>
+          <div style="font-size:18px;font-weight:900;color:var(--primary)">$21,000</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;justify-content:space-between"><span>老師A 英文 × 6堂</span><span style="font-weight:700">$9,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span>老師B 數學・地理 × 8堂</span><span style="font-weight:700">$12,000</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ SETTINGS PAGE ============ -->
+  <div class="page" id="pg-settings">
+    <div class="topbar">
+      <div><div class="greeting-sub">系統管理</div><div class="greeting-name">設定</div></div>
+      <div class="avatar" onclick="openRoleSwitchModal()" title="切換角色" id="settings-avatar" style="background:linear-gradient(135deg,#6C5CE7,#FD79A8)">⚙</div>
+    </div>
+
+    <!-- 區塊1：科目版本與章節管理 -->
+    <div class="sec-title">科目版本與章節</div>
+
+    <div class="settings-list">
+      <!-- 英文 -->
+      <div class="set-subj-card" onclick="openChEdit('eng')">
+        <div class="sdot s-eng">英</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">英文</div>
+          <div class="set-subj-ver">龍騰版 · B1–B5 · 共 44 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge">老師A</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+      <!-- 數學 -->
+      <div class="set-subj-card" onclick="openChEdit('math')">
+        <div class="sdot s-math">數</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">數學</div>
+          <div class="set-subj-ver" id="math-ver-label">晟景版 · 第1–4冊 · 共 43 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge">老師B</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+      <!-- 地理 -->
+      <div class="set-subj-card" onclick="openChEdit('geo')">
+        <div class="sdot s-geo">地</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">地理</div>
+          <div class="set-subj-ver">龍騰版 · 第1–4冊 · 共 21 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge">老師B</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+      <!-- 歷史 -->
+      <div class="set-subj-card" onclick="openChEdit('hist')">
+        <div class="sdot s-hist">史</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">歷史</div>
+          <div class="set-subj-ver">龍騰版 · 第1–3冊 · 共 26 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge set-badge-self">自學</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+      <!-- 國文 -->
+      <div class="set-subj-card" onclick="openChEdit('chi')">
+        <div class="sdot s-chi">國</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">國文</div>
+          <div class="set-subj-ver">龍騰版 · 第1–5冊 · 共 30 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge set-badge-self">自學</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+      <!-- 公民 -->
+      <div class="set-subj-card" onclick="openChEdit('civ')">
+        <div class="sdot s-civ">公</div>
+        <div class="set-subj-info">
+          <div class="set-subj-name">公民</div>
+          <div class="set-subj-ver">龍騰版 · 第1–3冊 · 共 16 節</div>
+        </div>
+        <div class="set-subj-right">
+          <div class="set-badge set-badge-self">自學</div>
+          <div class="set-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 區塊2：帳號與角色 -->
+    <div class="sec-title" style="margin-top:6px">帳號與角色管理</div>
+    <div class="settings-list">
+      <div class="set-row">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#E1F5EE;color:#00B894">👨‍👩‍👧</div>
+          <div>
+            <div class="set-row-label">家長帳號</div>
+            <div class="set-row-sub">管理員・可編輯所有設定</div>
+          </div>
+        </div>
+        <div class="set-tag set-tag-admin">管理員</div>
+      </div>
+      <div class="set-row">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#FDCB6E33;color:#B7791F">📝</div>
+          <div>
+            <div class="set-row-label">老師 A（英文）</div>
+            <div class="set-row-sub">可管理英文章節・授課紀錄</div>
+          </div>
+        </div>
+        <div class="set-tag">老師</div>
+      </div>
+      <div class="set-row">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#FFF0F6;color:#FD79A8">📐</div>
+          <div>
+            <div class="set-row-label">老師 B（數學・地理）</div>
+            <div class="set-row-sub">可管理數學・地理章節・授課紀錄</div>
+          </div>
+        </div>
+        <div class="set-tag">老師</div>
+      </div>
+      <div class="set-row">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#EDE9FE;color:#6C5CE7">📖</div>
+          <div>
+            <div class="set-row-label">學生</div>
+            <div class="set-row-sub">可查看・自學打卡・新增任務</div>
+          </div>
+        </div>
+        <div class="set-tag">學生</div>
+      </div>
+      <div class="set-row set-row-add" onclick="showAddTeacher()">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#F3F4F6;color:#636E72">＋</div>
+          <div>
+            <div class="set-row-label" style="color:var(--primary)">新增第三位老師</div>
+            <div class="set-row-sub">點此新增帳號並分配科目</div>
+          </div>
+        </div>
+        <div style="color:var(--primary);font-size:18px">›</div>
+      </div>
+      <div class="set-row" onclick="openRoleSwitchModal()">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#EDE9FE;color:#6C5CE7">↔</div>
+          <div>
+            <div class="set-row-label">切換角色</div>
+            <div class="set-row-sub" id="settings-role-label">目前：—</div>
+          </div>
+        </div>
+        <div style="font-size:18px;color:var(--muted)">›</div>
+      </div>
+    </div>
+
+    <!-- 區塊3：系統設定 -->
+    <div class="sec-title" style="margin-top:6px">系統設定</div>
+    <div class="settings-list">
+      <div class="set-row">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#FCEBEB;color:#E24B4A">📅</div>
+          <div>
+            <div class="set-row-label">學測日期</div>
+            <div class="set-row-sub">2027年 1月 16–18日</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">固定</div>
+      </div>
+      <div class="set-row" style="justify-content:space-between">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#EDE9FE;color:#6C5CE7">🔔</div>
+          <div>
+            <div class="set-row-label">每日讀書提醒</div>
+            <div class="set-row-sub">每天 08:00 推播通知</div>
+          </div>
+        </div>
+        <label class="toggle-sw">
+          <input type="checkbox" checked onchange="toggleNotif(this)">
+          <span class="toggle-track-sw"></span>
+        </label>
+      </div>
+      <div class="set-row" style="justify-content:space-between">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#E0FFF8;color:#00B894">📊</div>
+          <div>
+            <div class="set-row-label">每週學習週報</div>
+            <div class="set-row-sub">每週日自動產生給家長</div>
+          </div>
+        </div>
+        <label class="toggle-sw">
+          <input type="checkbox" checked>
+          <span class="toggle-track-sw"></span>
+        </label>
+      </div>
+      <div class="set-row" onclick="exportData()">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#FFF8E7;color:#E17055">💾</div>
+          <div>
+            <div class="set-row-label">匯出所有資料</div>
+            <div class="set-row-sub">下載 JSON 備份檔</div>
+          </div>
+        </div>
+        <div style="font-size:18px;color:var(--muted)">›</div>
+      </div>
+      <div class="set-row" onclick="showSyncInfo()">
+        <div class="set-row-left">
+          <div class="set-row-icon" style="background:#EBF5FB;color:#0984E3">☁️</div>
+          <div>
+            <div class="set-row-label" id="sync-label">雲端同步</div>
+            <div class="set-row-sub" id="sync-sub">目前為本機模式・點此了解設定方式</div>
+          </div>
+        </div>
+        <div style="font-size:18px;color:var(--muted)">›</div>
+      </div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+
+
+  <!-- ===== ROLE SWITCH MODAL ===== -->
+  <div id="role-switch-modal" onclick="closeRoleSwitchModal(event)">
+    <div class="rs-sheet">
+      <div class="rs-handle"></div>
+      <div class="rs-title">切換角色</div>
+      <div class="rs-sub" id="rs-current-label">目前：家長</div>
+      <div class="rs-grid">
+        <button class="rs-btn" id="rs-student" onclick="switchToRole('student')">
+          <span class="rs-icon">📖</span>
+          <span class="rs-name">學生</span>
+          <span class="rs-detail">讀書計劃・打卡</span>
+        </button>
+        <button class="rs-btn" id="rs-parent" onclick="switchToRole('parent')">
+          <span class="rs-icon">👨‍👩‍👧</span>
+          <span class="rs-name">家長</span>
+          <span class="rs-detail">總覽・監控</span>
+        </button>
+        <button class="rs-btn" id="rs-teacher-a" onclick="switchToRole('teacher-a')">
+          <span class="rs-icon">📝</span>
+          <span class="rs-name">老師A</span>
+          <span class="rs-detail">英文</span>
+        </button>
+        <button class="rs-btn" id="rs-teacher-b" onclick="switchToRole('teacher-b')">
+          <span class="rs-icon">📐</span>
+          <span class="rs-name">老師B</span>
+          <span class="rs-detail">數學・地理</span>
+        </button>
+      </div>
+      <button class="rs-logout" onclick="doLogout()">登出（回到角色選擇畫面）</button>
+    </div>
+  </div>
+
+  <!-- ============ CHAPTER EDIT MODAL ============ -->
+  <div class="modal-overlay" id="ch-edit-modal" onclick="closeCEModal(event)">
+    <div class="modal-sheet" style="max-height:90%;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" id="ce-title" style="margin:0">英文 章節管理</div>
+        <button class="modal-close" onclick="document.getElementById('ch-edit-modal').classList.remove('open')">✕</button>
+      </div>
+
+      <!-- 快照說明 -->
+      <div class="ce-info-bar">
+        改章節名稱不影響歷史紀錄 — 授課時的章節名稱已永久快照保存
+      </div>
+
+      <!-- 版本選擇 -->
+      <div style="margin-bottom:12px">
+        <div class="form-label" style="margin-bottom:6px">課本版本</div>
+        <div class="ver-tabs" id="ver-tabs"></div>
+      </div>
+
+      <!-- 版本遷移提示（切換版本後出現） -->
+      <div id="migration-banner" style="display:none"></div>
+
+      <!-- Tab 切換：章節清單 / 版本對照 -->
+      <div class="ce-tab-bar">
+        <button class="ce-tab active" id="tab-chapters" onclick="ceSwitchTab('chapters')">章節清單</button>
+        <button class="ce-tab" id="tab-mapping" onclick="ceSwitchTab('mapping')">版本對照表</button>
+      </div>
+
+      <!-- 章節清單 tab -->
+      <div id="ce-panel-chapters">
+        <div style="font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="font-weight:700">章節</span>
+          <span id="ce-ch-count"></span>
+        </div>
+        <div id="ce-ch-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:12px"></div>
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <div class="form-label" style="margin-bottom:6px">新增章節</div>
+          <div style="display:flex;gap:8px">
+            <input class="form-inp" id="new-ch-inp" placeholder="輸入章節名稱…" style="flex:1">
+            <button class="submit-btn" style="width:52px;padding:0;margin:0;font-size:13px" onclick="addChapter()">新增</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 版本對照表 tab -->
+      <div id="ce-panel-mapping" style="display:none">
+        <div class="ce-info-bar" style="background:var(--bg);color:var(--muted)">
+          點選右側下拉框，手動指定舊版本章節對應到新版本的哪一節
+        </div>
+        <div id="ce-mapping-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;display:flex;gap:8px">
+          <button class="submit-btn" style="flex:1;font-size:13px" onclick="saveMappings(this)">儲存對應關係</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VERSION MIGRATE CONFIRM MODAL ============ -->
+  <div class="modal-overlay" id="migrate-modal" onclick="closeMigrateModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" style="margin:0">版本切換確認</div>
+        <button class="modal-close" onclick="document.getElementById('migrate-modal').classList.remove('open')">✕</button>
+      </div>
+      <div id="migrate-body" style="font-size:13px;line-height:1.7;color:var(--text)"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="submit-btn" style="flex:1;background:var(--bg);color:var(--text);border:1.5px solid var(--border)"
+          onclick="document.getElementById('migrate-modal').classList.remove('open')">稍後再說</button>
+        <button class="submit-btn" style="flex:1" onclick="goToMapping()">前往版本對照表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD TEACHER MODAL ============ -->
+  <div class="modal-overlay" id="add-teacher-modal" onclick="closeATModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" style="margin:0">新增第三位老師</div>
+        <button class="modal-close" onclick="document.getElementById('add-teacher-modal').classList.remove('open')">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-label">老師姓名</div>
+        <input class="form-inp" id="new-teacher-name" placeholder="例：陳老師">
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">負責科目（可複選）</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="teacher-subj-picks">
+          <label class="subj-pick"><input type="checkbox" value="chi"> 國文</label>
+          <label class="subj-pick"><input type="checkbox" value="hist"> 歷史</label>
+          <label class="subj-pick"><input type="checkbox" value="civ"> 公民</label>
+          <label class="subj-pick"><input type="checkbox" value="eng"> 英文</label>
+          <label class="subj-pick"><input type="checkbox" value="math"> 數學</label>
+          <label class="subj-pick"><input type="checkbox" value="geo"> 地理</label>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">登入密碼（暫用）</div>
+        <input class="form-inp" type="password" id="new-teacher-pw" placeholder="設定初始密碼">
+      </div>
+      <button class="submit-btn" style="margin-top:14px" onclick="confirmAddTeacher(this)">建立老師帳號</button>
+    </div>
+  </div>
+
+  <!-- ============ SYNC INFO MODAL ============ -->
+  <div class="modal-overlay" id="sync-modal" onclick="closeSyncModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" style="margin:0">多裝置同步說明</div>
+        <button class="modal-close" onclick="document.getElementById('sync-modal').classList.remove('open')">✕</button>
+      </div>
+      <div style="font-size:13px;color:var(--text);line-height:1.7;display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--bg);border-radius:10px;padding:12px">
+          <div style="font-weight:800;margin-bottom:4px">目前狀態：本機模式</div>
+          <div style="color:var(--muted);font-size:12px">資料只存在這台裝置的瀏覽器記憶體中，關閉後消失，無法跨裝置共享。</div>
+        </div>
+        <div style="background:#E0FFF8;border-radius:10px;padding:12px">
+          <div style="font-weight:800;color:#00B894;margin-bottom:4px">☁️ 建議方案：Firebase</div>
+          <div style="color:#065F46;font-size:12px">免費方案支援 5 人即時同步。老師電腦新增授課紀錄，家長手機幾秒內同步顯示。正式開發時建議採用此方案。</div>
+        </div>
+        <div style="background:#FFF8E7;border-radius:10px;padding:12px">
+          <div style="font-weight:800;color:#B7791F;margin-bottom:4px">📊 過渡方案：Google Sheets</div>
+          <div style="color:#744210;font-size:12px">用 Google Apps Script 串接 Sheets 當資料庫，家長可直接查看原始資料，需手動刷新。</div>
+        </div>
+        <div style="background:#EBF5FB;border-radius:10px;padding:12px">
+          <div style="font-weight:800;color:#0984E3;margin-bottom:4px">💾 暫時方案：匯出 JSON</div>
+          <div style="color:#1a5276;font-size:12px">從設定頁匯出資料，分享給其他人匯入。適合原型測試階段使用。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- end scroll-area -->
+
+  <!-- Bottom Nav (role-specific) -->
+  <div class="bottom-nav" id="bottom-nav"></div>
+
+</div><!-- screen-wrap -->
+
+  <!-- FAB (掛在 phone-shell，position:absolute 相對於 phone-shell) -->
+  <button class="fab" id="fab-btn" onclick="openModal()">+</button>
+
+  <!-- Chapter modal -->
+  <div class="modal-overlay" id="ch-modal" onclick="closeModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <button class="modal-close" onclick="document.getElementById('ch-modal').classList.remove('open')">✕</button>
+      <div class="modal-title" id="modal-title">英文 章節清單</div>
+      <div id="modal-body" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- ===== TASK DONE MODAL ===== -->
+  <div class="modal-overlay" id="done-modal" onclick="closeDoneModal(event)">
+    <div class="modal-sheet" id="done-modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="modal-title" style="margin:0">✅ 任務完成回報</div>
+        <button class="modal-close" onclick="document.getElementById('done-modal').classList.remove('open')">✕</button>
+      </div>
+      <div class="done-task-name" id="done-task-name">任務名稱</div>
+      <div class="done-stat-row">
+        <!-- 耗時 -->
+        <div class="done-stat-card">
+          <div class="done-stat-label">⏱ 實際耗時</div>
+          <div class="done-stepper">
+            <button class="done-step-btn" onclick="adjustDone('mins',-15)">−</button>
+            <div>
+              <div class="done-step-val" id="done-mins-val">60</div>
+              <div class="done-step-unit">分鐘</div>
+            </div>
+            <button class="done-step-btn" onclick="adjustDone('mins',15)">+</button>
+          </div>
+        </div>
+        <!-- 練習題數 -->
+        <div class="done-stat-card">
+          <div class="done-stat-label">📝 練習題數</div>
+          <div class="done-stepper">
+            <button class="done-step-btn" onclick="adjustDone('count',-1)">−</button>
+            <div>
+              <div class="done-step-val" id="done-count-val">0</div>
+              <div class="done-step-unit">題</div>
+            </div>
+            <button class="done-step-btn" onclick="adjustDone('count',1)">+</button>
+          </div>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="confirmDoneTask()">確認完成</button>
+      <button class="del-btn" style="margin-top:8px;border-color:var(--border);color:var(--muted)"
+        onclick="closeDoneModal(null)">取消</button>
+    </div>
+  </div>
+
+  <!-- Task add/edit modal -->
+  <div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
+    <div class="modal-sheet" id="task-edit-modal">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" id="add-modal-title" style="margin:0">新增任務</div>
+        <button class="modal-close" onclick="document.getElementById('add-modal').classList.remove('open')">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-label">日期</div>
+        <input class="task-date-inp" type="date" id="add-date">
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">科目</div>
+        <select class="form-sel" id="add-subj">
+          <option value="eng">英文</option><option value="math">數學</option>
+          <option value="geo">地理</option><option value="hist">歷史</option>
+          <option value="chi">國文</option><option value="civ">公民</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">任務說明</div>
+        <input class="form-inp" id="add-task-name" placeholder="例：第三冊 第2章 閱讀筆記">
+      </div>
+      <div class="form-2col" style="margin-top:10px">
+        <div class="form-row">
+          <div class="form-label">預計時間</div>
+          <div class="mins-stepper">
+            <button class="mins-step-btn" onclick="adjustMins('add-mins',-15)">−</button>
+            <div class="mins-step-display">
+              <span id="add-mins-display">60</span>
+              <span class="mins-step-unit"> 分</span>
+            </div>
+            <button class="mins-step-btn" onclick="adjustMins('add-mins',15)">+</button>
+          </div>
+          <input type="hidden" id="add-mins" value="60">
+        </div>
+        <div class="form-row">
+          <div class="form-label">來源</div>
+          <select class="form-sel" id="add-source">
+            <option value="self">自學</option>
+            <option value="teacher">老師指派</option>
+            <option value="parent">家長安排</option>
+          </select>
+        </div>
+      </div>
+      <button class="submit-btn" style="margin-top:14px" id="add-modal-btn" onclick="confirmAddTask(this)">儲存任務</button>
+      <button class="del-btn" id="add-modal-del" style="display:none" onclick="confirmDeleteTask()">刪除此任務</button>
+    </div>
+  </div>
+
+</div><!-- phone-shell -->
+</div><!-- device-wrap -->
+</div><!-- outer -->
+
+<script>
+
+// ===== FIREBASE REST API =====
+// 不需要 SDK，直接用 fetch() 存取 Firebase Realtime Database REST API
+var FB_URL = 'https://gsat-c2940-default-rtdb.asia-southeast1.firebasedatabase.app';
+var _sseSource = null;
+
+// 偵測是否為 file:// 環境（本地模式，不嘗試 Firebase）
+var IS_LOCAL = (location.protocol === 'file:');
+if(IS_LOCAL) {
+  console.info('本地模式（file://）：Firebase 同步已停用，所有資料存於本機記憶體');
+}
+
+function initFirebase() {
+  if(IS_LOCAL) {
+    setSyncStatus('offline');
+    // 同步指示器改顯示本地模式提示
+    var lbl = document.getElementById('sync-label-text');
+    if(lbl) lbl.textContent = '本地模式';
+    return;
+  }
+  // REST API 不需要初始化，直接測試連線
+  fbGet('/.info/serverTimeOffset')
+    .then(function() { setSyncStatus('connected'); })
+    .catch(function() { setSyncStatus('offline'); });
+}
+
+// GET：讀取資料
+function fbGet(path) {
+  if(IS_LOCAL) return Promise.reject(new Error('local mode'));
+  return fetch(FB_URL + path + '.json')
+    .then(function(r) {
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+}
+
+// PUT：寫入資料（覆蓋）
+function fbPut(path, data) {
+  if(IS_LOCAL) return Promise.resolve(null);
+  setSyncStatus('syncing');
+  return fetch(FB_URL + path + '.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(function(r) {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    setSyncStatus('connected');
+    return r.json();
+  }).catch(function(e) {
+    setSyncStatus('offline');
+    // Firebase unavailable in local mode
+  });
+}
+
+// PATCH：部分更新
+function fbPatch(path, data) {
+  if(IS_LOCAL) return Promise.resolve(null);
+  setSyncStatus('syncing');
+  return fetch(FB_URL + path + '.json', {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(function(r) {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    setSyncStatus('connected');
+    return r.json();
+  }).catch(function(e) {
+    setSyncStatus('offline');
+    // Firebase unavailable in local mode
+  });
+}
+
+// POST：push 新資料（自動產生 key）
+function fbPost(path, data) {
+  if(IS_LOCAL) return Promise.resolve(null);
+  setSyncStatus('syncing');
+  return fetch(FB_URL + path + '.json', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(function(r) {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    setSyncStatus('connected');
+    return r.json();
+  }).catch(function(e) {
+    setSyncStatus('offline');
+    // Firebase unavailable in local mode
+  });
+}
+
+// 輪詢同步（每 10 秒拉一次最新資料）
+var _pollTimer = null;
+function startPolling() {
+  if(_pollTimer || IS_LOCAL) return;
+  _pollTimer = setInterval(function() {
+    syncFromFirebase();
+  }, 10000);
+}
+
+function syncFromFirebase() {
+  // 讀取 tasks
+  loadTodayTasks();
+
+  // 讀取行事曆
+  if(!IS_LOCAL) fbGet('/calendar').then(function(data) {
+    if(!data) return;
+    Object.keys(data).forEach(function(dateKey) {
+      if(data[dateKey]) calEvents[dateKey] = data[dateKey];
+    });
+    buildCalendar('cal-grid', 'cal-ev-list');
+    buildCalendar('cal-grid-parent', 'cal-ev-parent');
+  }).catch(function(){});
+}
+
+// ===== 密碼設定（正式上線前請修改）=====
+var PASSWORDS = {
+  'student':   'student',
+  'parent':    'parent',
+  'teacher-a': 'teacherA',
+  'teacher-b': 'teacherB'
+};
+
+// ===== 登入狀態 =====
+var loginRole = sessionStorage.getItem('gsatRole') || '';
+var selectedLoginRole = 'student';
+
+function enterAsRole(role) {
+  // 點角色直接進入，無需密碼
+  loginRole = role;
+  sessionStorage.setItem('gsatRole', role);
+  document.getElementById('login-screen').style.display = 'none';
+  initFirebase();
+  initAfterLogin(role);
+}
+
+function doLogout() {
+  sessionStorage.removeItem('gsatRole');
+  loginRole = '';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function initAfterLogin(role) {
+  // 切換到對應角色
+  switchRole(role);
+  // 啟動 Firebase 同步（只在第一次登入時啟動）
+  if(!window._fbSyncStarted) {
+    initFirebaseSync();
+    window._fbSyncStarted = true;
+  }
+  // 更新 topbar 顯示角色名稱
+  updateRoleDisplay(role);
+  // 更新設定頁角色標籤
+  var settingsLabel = document.getElementById('settings-role-label');
+  if(settingsLabel) settingsLabel.textContent = '目前：' + (roleDisplayNames[role] || role);
+  // 隱藏舊的 logout-btn（改用 modal 切換）
+  var oldLogout = document.getElementById('logout-btn');
+  if(oldLogout) oldLogout.style.display = 'none';
+  // 確保 fab 顯示狀態正確（家長和老師也可以點 + 幫學生新增任務）
+  var fab = document.getElementById('fab-btn');
+  if(fab) fab.style.display = 'flex';
+  // 載入今日任務
+  loadTodayTasks();
+  // add-date 預設今天
+  var addDate = document.getElementById('add-date');
+  if(addDate) addDate.value = getTodayKey();
+  // 家長排任務日期預設今天
+  var ptDate = document.getElementById('parent-task-date');
+  if(ptDate) ptDate.value = getTodayKey();
+  // 老師作業截止日預設今天
+  ['tb-rec-hwdate','ta-rec-hwdate'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && !el.value) el.value = getTodayKey();
+  });
+  // 初始分析
+  setTimeout(refreshAnalysis, 500);
+}
+
+var roleNames = {
+  'student': '學生',
+  'parent': '家長',
+  'teacher-a': '老師A',
+  'teacher-b': '老師B'
+};
+
+function updateRoleDisplay(role) {
+  var el = document.getElementById('s-greet-sub');
+  if(el) el.textContent = roleNames[role] + ' · 已登入';
+}
+
+// ===== FIREBASE 同步狀態 =====
+function setSyncStatus(status) {
+  var dot = document.getElementById('sync-dot');
+  var lbl = document.getElementById('sync-label-text');
+  if(!dot || !lbl) return;
+  dot.className = 'sync-dot ' + status;
+  var texts = {connected:'已同步', syncing:'同步中…', offline:'未連線'};
+  lbl.textContent = texts[status] || status;
+}
+
+// ===== FIREBASE 核心讀寫 =====
+function initFirebaseSync() {
+  // 初始拉取所有資料
+  syncFromFirebase();
+  // 讀取章節設定
+  if(!IS_LOCAL) fbGet('/settings/chapterDB').then(function(data) {
+    if(!data) return;
+    Object.keys(data).forEach(function(subj) {
+      if(chapterDB[subj] && data[subj]) {
+        if(data[subj].books) chapterDB[subj].books = data[subj].books;
+        if(data[subj].current) chapterDB[subj].current = data[subj].current;
+      }
+    });
+    initAllSchedSelects();
+  }).catch(function(){});
+  // 讀取 sessions
+  if(!IS_LOCAL) fbGet('/sessions').then(function(data) {
+    if(data) renderSessionHistory(data);
+  }).catch(function(){});
+  // 開始輪詢（每 10 秒同步一次）
+  startPolling();
+}
+
+// ===== 寫入 Firebase 的輔助函式 =====
+function getTodayKey() {
+  var d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+// 寫入任務打卡狀態到 Firebase
+function writeTaskDone(taskIndex, done) {
+  var today = getTodayKey();
+  var data = {};
+  data['task_' + taskIndex] = { done: done, updatedAt: Date.now() };
+  if(!IS_LOCAL) fbPatch('/tasks/' + today, data).catch(function(e) { console.error(e); });
+}
+
+// 寫入行事曆事件
+function writeCalEvent(dateKey, eventsArr) {
+  if(!IS_LOCAL) fbPut('/calendar/' + dateKey, eventsArr).catch(function(e) { console.error(e); });
+}
+
+// 寫入授課記錄
+function writeSession(sessionData) {
+  if(!IS_LOCAL) fbPost('/sessions', sessionData).catch(function(e) { console.error(e); });
+}
+
+// 寫入章節設定
+function writeChapterDB() {
+  var toSave = {};
+  Object.keys(chapterDB).forEach(function(subj) {
+    toSave[subj] = { current: chapterDB[subj].current, books: chapterDB[subj].books };
+  });
+  if(!IS_LOCAL) fbPut('/settings/chapterDB', toSave)
+    .then(function() { showToast('章節設定已同步至雲端'); })
+    .catch(function(e) { console.error(e); });
+}
+
+// 渲染授課歷史（從 Firebase 讀回）
+function renderSessionHistory(data) {
+  var tbList = document.getElementById('tb-sessions');
+  var taList = document.getElementById('ta-sessions');
+  if(!tbList && !taList) return;
+
+  // 取最新 5 筆
+  var sessions = Object.values(data).sort(function(a,b) {
+    return (b.createdAt||0) - (a.createdAt||0);
+  }).slice(0, 5);
+
+  sessions.forEach(function(s) {
+    // 根據 teacher 決定加到哪個列表
+    var listEl = s.teacher === 'teacher-b' ? tbList : taList;
+    if(!listEl) return;
+    // 避免重複加入（用 data-key）
+    if(listEl.querySelector('[data-key="' + s.key + '"]')) return;
+
+    var colorMap = {math:'#FD79A8', geo:'#00B894', eng:'#6C5CE7'};
+    var subjMap = {math:'數學', geo:'地理', eng:'英文'};
+    var card = document.createElement('div');
+    card.className = 'session-card';
+    card.setAttribute('data-key', s.key || '');
+    card.innerHTML =
+      '<div class="stime"><div class="stime-h">' + (s.date||'').slice(5) + '</div>' +
+      '<div class="stime-d">' + (s.time||'') + '</div></div>' +
+      '<div class="sdiv"></div>' +
+      '<div class="sinfo"><div class="ss" style="color:' + (colorMap[s.subj]||'#888') + '">' +
+      (subjMap[s.subj]||s.subj) + '</div>' +
+      '<div class="st">' + (s.chapter||'') + '</div></div>' +
+      '<div class="sbadge b-pending">已排課</div>';
+    listEl.appendChild(card);
+  });
+}
+
+
+// ===== DATA =====
+const subjData = {
+  eng:{ name:'英文', dot:'s-eng', tc:'c-eng', label:'英', chapters:['Book 1 L1 Firsts in Life','Book 1 L2 Goodbye, John','Book 1 L3 Do Animals Sleep Like You?','Book 2 L1 The Heart of a Champion','Book 2 L4 Malala','Book 3 L1 The Day I Broke the Rules','Book 3 L2 Keeping Your Distance','Book 3 L3 The Birthmark（進行中）'] },
+  math:{ name:'數學', dot:'s-math', tc:'c-math', label:'數', chapters:['1-1(上) 乘法公式與有理數','1-1(下) 根式運算與實數','1-2 絕對值','1-3 指數與常用對數','2-1 邏輯、集合與計數原理','3-1 平面向量的加減法','3-2 平面向量的內積（進行中）','3-3 直線向量性質與行列式'] },
+  geo:{ name:'地理', dot:'s-geo', tc:'c-geo', label:'地', chapters:['第一冊 第1章 為什麼要學地理','第一冊 第4章 地形系統','第一冊 第5章 氣候系統','第二冊 第3章 人口','第三冊 第1章 東南亞（進行中）','第三冊 第7章 全球化'] },
+  hist:{ name:'歷史', dot:'s-hist', tc:'c-hist', label:'史', chapters:['第一冊 第1課 台灣的原住民族','第一冊 第3課 帝國的邊陲','第一冊 第5課 近代化的開端（進行中）','第二冊 第1章 傳統政治權威'] },
+  chi:{ name:'國文', dot:'s-chi', tc:'c-chi', label:'國', chapters:['第一冊 L1 燭之武退秦師','第一冊 L2 鴻門宴','第二冊 L3 赤壁賦','第三冊 L1 廉恥（進行中）'] },
+  civ:{ name:'公民', dot:'s-civ', tc:'c-civ', label:'公', chapters:['第一冊 第1章 個人與社會','第二冊 第1章 政治與民主','第二冊 第2章 憲法與人權（進行中）'] },
+};
+
+// ===== ROLE CONFIG =====
+const roles = {
+  'student': {
+    pages: [
+      {id:'pg-student-home', icon:'📋', label:'今日'},
+      {id:'pg-student-subject', icon:'📚', label:'科目'},
+      {id:'pg-student-analysis', icon:'📊', label:'分析'},
+      {id:'pg-student-calendar', icon:'📅', label:'行事曆'},
+    ],
+    fab: true,
+  },
+  'parent': {
+    pages: [
+      {id:'pg-parent-home', icon:'🏠', label:'總覽'},
+      {id:'pg-parent-subject', icon:'📚', label:'六科'},
+      {id:'pg-parent-calendar', icon:'📅', label:'行事曆'},
+      {id:'pg-settings', icon:'⚙️', label:'設定'},
+    ],
+    fab: false,
+  },
+  'teacher-b': {
+    pages: [
+      {id:'pg-teacher-b-home', icon:'📋', label:'授課'},
+      {id:'pg-teacher-b-subject', icon:'📚', label:'進度'},
+      {id:'pg-student-calendar', icon:'📅', label:'行事曆'},
+      {id:'pg-settings', icon:'⚙️', label:'設定'},
+    ],
+    fab: false,
+  },
+  'teacher-a': {
+    pages: [
+      {id:'pg-teacher-a-home', icon:'📋', label:'授課'},
+      {id:'pg-teacher-a-subject', icon:'📚', label:'進度'},
+      {id:'pg-student-calendar', icon:'📅', label:'行事曆'},
+      {id:'pg-settings', icon:'⚙️', label:'設定'},
+    ],
+    fab: false,
+  },
+};
+
+let currentRole = 'student';
+let currentPageIdx = 0;
+
+function switchRole(role) {
+  currentRole = role;
+  currentPageIdx = 0;
+  document.querySelectorAll('.role-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['student','parent','teacher-b','teacher-a'][i] === role);
+  });
+  buildNav();
+  showPage(0);
+  document.getElementById('fab-btn').style.display = roles[role].fab ? 'flex' : 'none';
+  document.getElementById('main-scroll').scrollTop = 0;
+}
+
+function buildNav() {
+  const nav = document.getElementById('bottom-nav');
+  const cfg = roles[currentRole].pages;
+  nav.innerHTML = cfg.map((p,i) => `
+    <button class="nav-btn ${i===0?'active':''}" onclick="showPage(${i})" id="nav-btn-${i}">
+      <div class="nav-icon">${p.icon}</div>
+      <div class="nav-label">${p.label}</div>
+      ${i===0?'<div class="nav-dot"></div>':'<div style="height:5px"></div>'}
+    </button>`).join('');
+}
+
+function showPage(idx) {
+  const cfg = roles[currentRole].pages;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(cfg[idx].id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === idx);
+    const dot = b.querySelector('.nav-dot, [style="height:5px"]');
+    if(dot) dot.outerHTML = i===idx ? '<div class="nav-dot"></div>' : '<div style="height:5px"></div>';
+    b.querySelector('.nav-label').style.color = i===idx ? 'var(--primary)' : '';
+  });
+  currentPageIdx = idx;
+  document.getElementById('main-scroll').scrollTop = 0;
+  // 切到分析頁或六科進度時更新資料
+  var pageId = cfg[idx].id;
+  if(pageId === 'pg-student-analysis' || pageId === 'pg-parent-subject') {
+    refreshAnalysis();
+  }
+}
+
+// ===== COUNTDOWN =====
+function calcCountdown() {
+  // 用本地時間建構，避免 UTC 解析在 Safari/WebKit 差一天
+  const exam = new Date(2027, 0, 16); // 月份從0開始，0=1月
+  const now = new Date();
+  // 只比較日期，忽略時間
+  const examDay = new Date(exam.getFullYear(), exam.getMonth(), exam.getDate());
+  const todayDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.ceil((examDay - todayDay) / 86400000);
+  var text = (isNaN(diff) || diff < 0) ? '0' : String(diff);
+  ['cd-days','cd-days-parent'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el) {
+      el.textContent = '';
+      el.appendChild(document.createTextNode(text));
+      var sm = document.createElement('small');
+      sm.textContent = '天';
+      el.appendChild(sm);
+    }
+  });
+}
+calcCountdown();
+
+// ===== CALENDAR =====
+const calEvents = {
+  '2025-10-28': [{color:'#FD79A8', title:'數學・地理 家教課', sub:'15:00 · 老師B · 90分', teacher:'teacher-b'}],
+  '2025-10-30': [{color:'#6C5CE7', title:'英文 家教課', sub:'16:00 · 老師A · 90分', teacher:'teacher-a'}],
+  '2025-10-31': [{color:'#E17055', title:'學校期中考', sub:'全天 · 國英數'}],
+  '2025-11-15': [{color:'#00B894', title:'全科模擬考', sub:'全天 · 全科'}],
+  '2025-11-04': [{color:'#FD79A8', title:'數學・地理 家教課', sub:'15:00 · 老師B', teacher:'teacher-b'}],
+  '2025-11-06': [{color:'#6C5CE7', title:'英文 家教課', sub:'16:00 · 老師A', teacher:'teacher-a'}],
+};
+
+let calState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDay: new Date().getDate() };
+
+function buildCalendar(containerId, evListId) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const {year, month, selectedDay} = calState;
+  const first = new Date(year, month, 1).getDay();
+  const days = new Date(year, month+1, 0).getDate();
+  const now = new Date();
+  const isCurrentMonth = year===now.getFullYear() && month===now.getMonth();
+
+  let html = ['日','一','二','三','四','五','六'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++){
+    const prevDay = new Date(year,month,1-first+i).getDate();
+    html += `<div class="cal-day other-month">${prevDay}</div>`;
+  }
+  for(let d=1;d<=days;d++){
+    const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = isCurrentMonth && d===now.getDate();
+    const isSel = d===selectedDay && !(isToday);
+    const hasEv = !!calEvents[dateKey];
+    // 偵測老師A/B是否在這天有排課
+    var evA = false, evB = false;
+    if(calEvents[dateKey]) {
+      calEvents[dateKey].forEach(function(ev) {
+        if(ev.teacher === 'teacher-a') evA = true;
+        if(ev.teacher === 'teacher-b') evB = true;
+      });
+    }
+    var cls = 'cal-day';
+    if(isToday) cls += ' today';
+    if(isSel) cls += ' cal-selected';
+    if(evA && evB) cls += ' ev-teacher-a ev-teacher-b';
+    else if(evA) cls += ' ev-teacher-a';
+    else if(evB) cls += ' ev-teacher-b';
+    else if(hasEv) cls += ' has-event';
+    html += `<div class="${cls}" onclick="selectDay(${d},'${containerId}','${evListId||''}')">${d}</div>`;
+  }
+  el.innerHTML = html;
+
+  // update month label
+  const headers = document.querySelectorAll('.cal-month');
+  headers.forEach(h => h.textContent = `${year}年 ${month+1}月`);
+
+  if(evListId) renderEventList(evListId);
+}
+
+function selectDay(d, gridId, evListId) {
+  calState.selectedDay = d;
+  buildCalendar(gridId, evListId);
+}
+
+function renderEventList(evListId) {
+  const el = document.getElementById(evListId);
+  if(!el) return;
+  const {year, month, selectedDay} = calState;
+  const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(selectedDay).padStart(2,'0')}`;
+  const evs = calEvents[dateKey] || [];
+
+  // show selected date events + upcoming
+  const upcoming = Object.entries(calEvents)
+    .filter(([k])=>k>=dateKey)
+    .sort(([a],[b])=>a.localeCompare(b))
+    .slice(0,5);
+
+  const selLabel = `${month+1}月${selectedDay}日 的事項`;
+  let html = `<div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">${selLabel}</div>`;
+
+  if(evs.length===0){
+    html += `<div style="font-size:13px;color:var(--muted);padding:12px 0">這天沒有課程或考試</div>`;
+  } else {
+    evs.forEach(ev=>{
+      html += `<div class="cal-ev-card" style="margin-bottom:8px">
+        <div class="ev-stripe" style="background:${ev.color}"></div>
+        <div class="ev-info"><div class="ev-title">${ev.title}</div><div class="ev-sub">${ev.sub}</div></div>
+      </div>`;
+    });
+  }
+
+  html += `<div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 8px">即將到來的事項</div>`;
+  upcoming.forEach(([k,evList])=>{
+    const [y,m,d2] = k.split('-');
+    evList.forEach(ev=>{
+      html += `<div class="cal-ev-card" style="margin-bottom:8px">
+        <div class="ev-stripe" style="background:${ev.color}"></div>
+        <div class="ev-info"><div class="ev-title">${ev.title}</div><div class="ev-sub">${m}月${d2}日 · ${ev.sub}</div></div>
+      </div>`;
+    });
+  });
+
+  el.innerHTML = html;
+}
+
+function prevMonth(gridId, evListId) {
+  calState.month--;
+  if(calState.month<0){calState.month=11;calState.year--;}
+  calState.selectedDay=1;
+  buildCalendar(gridId, evListId);
+}
+function nextMonth(gridId, evListId) {
+  calState.month++;
+  if(calState.month>11){calState.month=0;calState.year++;}
+  calState.selectedDay=1;
+  buildCalendar(gridId, evListId);
+}
+
+// ===== TODAY GREETING =====
+function setGreeting() {
+  const h = new Date().getHours();
+  const greet = h < 12 ? '早安！今天也加油 💪' : h < 18 ? '午安！繼續保持 📖' : '晚安！今日任務完成了嗎？🌙';
+  const el = document.getElementById('s-greet-sub');
+  if(el) el.textContent = greet;
+  const dateEl = document.getElementById('today-date-label');
+  if(dateEl) {
+    const d = new Date();
+    const days = ['日','一','二','三','四','五','六'];
+    dateEl.textContent = `${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）讀書計劃`;
+  }
+}
+setGreeting();
+
+// ===== TASK TOGGLE =====
+// 完成回報狀態
+var _doneTaskCard = null;
+var _doneMins = 60;
+var _doneCount = 0;
+
+function toggleTask(btn) {
+  var card = btn.closest('.task-card');
+  var isDone = card.dataset.done === '1';
+
+  if(!isDone) {
+    // 打卡完成 → 彈出回報 modal
+    _doneTaskCard = card;
+    _doneMins = 60;
+    _doneCount = 0;
+    document.getElementById('done-mins-val').textContent = '60';
+    document.getElementById('done-count-val').textContent = '0';
+    // 顯示任務名稱
+    var nameEl = card.querySelector('.task-name');
+    document.getElementById('done-task-name').textContent = nameEl ? nameEl.textContent : '任務';
+    document.getElementById('done-modal').classList.add('open');
+  } else {
+    // 取消打卡 → 直接改回未完成
+    card.dataset.done = '0';
+    card.classList.remove('done');
+    btn.classList.remove('on');
+    btn.querySelector('path').setAttribute('stroke', '#ddd');
+    updateProgress();
+    var tid = card.dataset.tid;
+    var dateKey = card.dataset.date || getTodayKey();
+    if(tid && taskDateCache[dateKey] && taskDateCache[dateKey][tid]) {
+      taskDateCache[dateKey][tid].done = false;
+    }
+    if(tid && !IS_LOCAL) {
+      fbPatch('/tasks/' + dateKey + '/' + tid, { done: false, updatedAt: Date.now() })
+        .catch(function(e) { /* Firebase unavailable */ });
+    }
+  }
+}
+
+function adjustDone(field, delta) {
+  if(field === 'mins') {
+    _doneMins = Math.max(15, _doneMins + delta);
+    document.getElementById('done-mins-val').textContent = _doneMins;
+  } else {
+    _doneCount = Math.max(0, _doneCount + delta);
+    document.getElementById('done-count-val').textContent = _doneCount;
+  }
+}
+
+function confirmDoneTask() {
+  if(!_doneTaskCard) return;
+  var card = _doneTaskCard;
+  var btn = card.querySelector('.chk');
+  // 更新卡片狀態
+  card.dataset.done = '1';
+  card.classList.add('done');
+  if(btn) {
+    btn.classList.add('on');
+    btn.querySelector('path').setAttribute('stroke', '#fff');
+  }
+  updateProgress();
+  // 更新快取
+  var tid = card.dataset.tid;
+  var dateKey = card.dataset.date || getTodayKey();
+  if(tid && taskDateCache[dateKey] && taskDateCache[dateKey][tid]) {
+    taskDateCache[dateKey][tid].done = true;
+    taskDateCache[dateKey][tid].actualMins = _doneMins;
+    taskDateCache[dateKey][tid].practiceCount = _doneCount;
+    taskDateCache[dateKey][tid].doneAt = Date.now();
+  }
+  // Firebase 寫入
+  if(tid && !IS_LOCAL) {
+    fbPatch('/tasks/' + dateKey + '/' + tid, {
+      done: true, actualMins: _doneMins,
+      practiceCount: _doneCount, doneAt: Date.now()
+    }).catch(function(e) { /* Firebase unavailable */ });
+  }
+  document.getElementById('done-modal').classList.remove('open');
+  showToast('完成！耗時 ' + _doneMins + ' 分鐘，練習 ' + _doneCount + ' 題');
+  _doneTaskCard = null;
+}
+
+function closeDoneModal(e) {
+  if(!e || e.target.id === 'done-modal') {
+    document.getElementById('done-modal').classList.remove('open');
+  }
+}
+
+function updateProgress() {
+  const tasks = document.querySelectorAll('#s-tasks .task-card');
+  const total = tasks.length;
+  const done = [...tasks].filter(t=>t.dataset.done==='1').length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('s-prog').style.width = pct+'%';
+  document.getElementById('s-pct').textContent = pct+'%';
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-left').textContent = total-done;
+}
+
+// ===== CHAPTER MODAL =====
+function showChapters(subj) {
+  const d = subjData[subj];
+  document.getElementById('modal-title').textContent = d.name + ' · 章節清單';
+  document.getElementById('modal-body').innerHTML = d.chapters.map((ch,i) => {
+    const done = i < Math.floor(d.chapters.length * 0.6);
+    const wip = !done && i === Math.floor(d.chapters.length * 0.6);
+    const cls = done ? 'ch-st-done' : wip ? 'ch-st-wip' : 'ch-st-none';
+    const icon = done ? '✓' : wip ? '→' : '○';
+    const tag = done ? '完成' : wip ? '進行中' : '未開始';
+    return `<div class="ch-item">
+      <div class="ch-status ${cls}">${icon}</div>
+      <div class="ch-info"><div class="ch-name" style="font-size:12px">${ch}</div></div>
+      <div class="ch-tag">${tag}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ch-modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if(e.target.id==='ch-modal') document.getElementById('ch-modal').classList.remove('open');
+}
+
+// ===== TASK SYSTEM =====
+var editingTaskId = null; // 目前編輯的任務 id（null=新增模式）
+var taskDateCache = {}; // { dateKey: { taskId: taskObj } }
+
+// 產生唯一 task id
+function genTaskId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+// 來源標籤
+var srcLabel = { self:'自學', teacher:'老師指派', parent:'家長安排' };
+var srcClass = { self:'src-self', teacher:'src-teacher', parent:'src-parent' };
+
+// 步進器共用函式
+function adjustMins(inputId, delta) {
+  var inp = document.getElementById(inputId);
+  var dispId = inputId + '-display';
+  var disp = document.getElementById(dispId);
+  var cur = parseInt(inp.value) || 60;
+  var next = Math.max(15, cur + delta);
+  inp.value = next;
+  if(disp) disp.textContent = next;
+}
+
+// 開啟新增模式
+function openModal() {
+  editingTaskId = null;
+  document.getElementById('add-modal-title').textContent = '新增任務';
+  document.getElementById('add-task-name').value = '';
+  // 重置步進器為 60 分鐘
+  var minsInp = document.getElementById('add-mins');
+  var minsDisp = document.getElementById('add-mins-display');
+  if(minsInp) minsInp.value = '60';
+  if(minsDisp) minsDisp.textContent = '60';
+  document.getElementById('add-modal-del').style.display = 'none';
+  document.getElementById('add-modal-btn').textContent = '儲存任務';
+  // 日期預設今天
+  var dateEl = document.getElementById('add-date');
+  if(dateEl) dateEl.value = getTodayKey();
+  // 來源依角色預設
+  var srcSel = document.getElementById('add-source');
+  if(srcSel) {
+    if(loginRole === 'teacher-a' || loginRole === 'teacher-b') srcSel.value = 'teacher';
+    else if(loginRole === 'parent') srcSel.value = 'parent';
+    else srcSel.value = 'self';
+  }
+  document.getElementById('add-modal').classList.add('open');
+}
+
+// 事件委派：點 task-info 觸發編輯
+function handleTaskInfoClick(el) {
+  var tid = el.getAttribute('data-edit-tid');
+  var dateKey = el.getAttribute('data-edit-date');
+  if(tid && dateKey) openEditTask(tid, dateKey);
+}
+
+// 開啟編輯模式
+function openEditTask(taskId, dateKey) {
+  var tasks = taskDateCache[dateKey] || {};
+  var task = tasks[taskId];
+  if(!task) return;
+  editingTaskId = taskId;
+  document.getElementById('add-modal-title').textContent = '編輯任務';
+  document.getElementById('add-date').value = dateKey;
+  document.getElementById('add-subj').value = task.subj || 'eng';
+  document.getElementById('add-task-name').value = task.name || '';
+  var editMins = task.mins || '60';
+  document.getElementById('add-mins').value = editMins;
+  var editMinsDisp = document.getElementById('add-mins-display');
+  if(editMinsDisp) editMinsDisp.textContent = editMins;
+  document.getElementById('add-source').value = task.source || 'self';
+  document.getElementById('add-modal-del').style.display = 'block';
+  document.getElementById('add-modal-btn').textContent = '更新任務';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeAddModal(e) {
+  if(e.target.id === 'add-modal') document.getElementById('add-modal').classList.remove('open');
+}
+
+// 儲存任務（新增或更新）
+function confirmAddTask(btn) {
+  var dateKey = document.getElementById('add-date').value || getTodayKey();
+  var subj = document.getElementById('add-subj').value;
+  var name = document.getElementById('add-task-name').value.trim();
+  var mins = document.getElementById('add-mins').value || '60';
+  var source = document.getElementById('add-source').value || 'self';
+  if(!name) { alert('請填寫任務說明'); return; }
+
+  var taskId = editingTaskId || genTaskId();
+  var taskObj = {
+    id: taskId, subj: subj, name: name, mins: mins,
+    source: source, done: false,
+    createdBy: loginRole, createdAt: Date.now()
+  };
+
+  // 先寫入本地快取，立刻更新畫面（不等 Firebase）
+  var today = getTodayKey();
+  if(!taskDateCache[dateKey]) taskDateCache[dateKey] = {};
+  if(editingTaskId) {
+    // 更新：保留原本的 done 狀態
+    var existing = taskDateCache[dateKey][taskId] || {};
+    taskObj.done = existing.done || false;
+  }
+  taskDateCache[dateKey][taskId] = taskObj;
+  if(dateKey === today) renderTasks(taskDateCache[today], today);
+
+  document.getElementById('add-modal').classList.remove('open');
+  showToast(editingTaskId ? '任務已更新' : '任務已新增');
+  var wasEditing = editingTaskId;
+  editingTaskId = null;
+
+  // 非同步寫入 Firebase
+  if(!IS_LOCAL) fbPut('/tasks/' + dateKey + '/' + taskId, taskObj)
+    .catch(function(e) {});
+}
+
+// 刪除任務
+function confirmDeleteTask() {
+  if(!editingTaskId) return;
+  var dateKey = document.getElementById('add-date').value || getTodayKey();
+  if(!confirm('確定刪除此任務？')) return;
+  var tid = editingTaskId;
+  // 先從本地移除
+  if(taskDateCache[dateKey]) delete taskDateCache[dateKey][tid];
+  if(dateKey === getTodayKey()) renderTasks(taskDateCache[getTodayKey()] || {}, getTodayKey());
+  document.getElementById('add-modal').classList.remove('open');
+  showToast('任務已刪除');
+  editingTaskId = null;
+  // 非同步刪除 Firebase
+  if(!IS_LOCAL) fbPut('/tasks/' + dateKey + '/' + tid, null)
+    .then(function() {})
+    .catch(function(e) { /* Firebase unavailable */ });
+}
+
+// 載入今日任務：先顯示本地快取，再從 Firebase 更新
+function loadTodayTasks() {
+  var today = getTodayKey();
+  // 若有本地快取先顯示
+  if(taskDateCache[today] && Object.keys(taskDateCache[today]).length > 0) {
+    renderTasks(taskDateCache[today], today);
+  } else {
+    var list = document.getElementById('s-tasks');
+    if(list && !IS_LOCAL) list.innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--muted)">載入中…</div>';
+    if(list && IS_LOCAL) list.innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--muted)">今天還沒有任務<br>點右下角 + 新增</div>';
+  }
+  // 本地模式：只用快取，不發 fetch
+  if(IS_LOCAL) return;
+  // 從 Firebase 拉最新資料
+  fbGet('/tasks/' + today).then(function(data) {
+    taskDateCache[today] = data || {};
+    renderTasks(taskDateCache[today], today);
+  }).catch(function(e) {
+    renderTasks(taskDateCache[today] || {}, today);
+  });
+}
+
+// 渲染任務清單
+function renderTasks(tasks, dateKey) {
+  var list = document.getElementById('s-tasks');
+  if(!list) return;
+  var keys = Object.keys(tasks);
+  if(keys.length === 0) {
+    list.innerHTML = '<div style="padding:20px 0;text-align:center;font-size:12px;color:var(--muted)">今天還沒有任務<br>點右下角 + 新增</div>';
+    updateProgress();
+    return;
+  }
+  // 依建立時間排序
+  keys.sort(function(a,b) {
+    return (tasks[a].createdAt||0) - (tasks[b].createdAt||0);
+  });
+  list.innerHTML = keys.map(function(tid) {
+    var t = tasks[tid];
+    var d = subjData[t.subj] || {dot:'s-chi',label:'？',tc:'c-chi',name:t.subj};
+    var done = t.done;
+    var stroke = done ? '#fff' : '#ddd';
+    var chkCls = done ? 'chk on' : 'chk';
+    var cardCls = done ? 'task-card done' : 'task-card';
+    var srcTag = srcLabel[t.source] || t.source || '自學';
+    var srcCls = srcClass[t.source] || 'src-self';
+    return '<div class="' + cardCls + '" data-done="' + (done?'1':'0') + '" data-tid="' + tid + '" data-date="' + dateKey + '">' +
+      '<div class="sdot ' + d.dot + '">' + d.label + '</div>' +
+      '<div class="task-info" data-edit-tid="' + tid + '" data-edit-date="' + dateKey + '" onclick="handleTaskInfoClick(this)" style="cursor:pointer">' +
+        '<div class="task-subj ' + d.tc + '">' + d.name + '</div>' +
+        '<div class="task-name">' + t.name + '</div>' +
+        '<div class="task-meta">' +
+          '<span class="task-source-tag ' + srcCls + '">' + srcTag + '</span>' +
+          ' · ' + (t.mins||'30') + ' 分鐘' +
+        '</div>' +
+      '</div>' +
+      '<button class="chk ' + (done?'on':'') + '" onclick="toggleTask(this)">' +
+        '<svg viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="' + stroke + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+  updateProgress();
+}
+
+// 家長幫學生排任務
+function addTaskForStudent(fromRole, btn) {
+  var dateKey = document.getElementById('parent-task-date').value || getTodayKey();
+  var subj = document.getElementById('parent-task-subj').value;
+  var name = document.getElementById('parent-task-name').value.trim();
+  var mins = document.getElementById('parent-task-mins').value || '60';
+  if(!name) { alert('請填寫任務說明'); return; }
+  var taskId = genTaskId();
+  var taskObj = {
+    id: taskId, subj: subj, name: name, mins: mins,
+    source: 'parent', done: false,
+    createdBy: loginRole, createdAt: Date.now()
+  };
+  // 本地快取
+  if(!taskDateCache[dateKey]) taskDateCache[dateKey] = {};
+  taskDateCache[dateKey][taskId] = taskObj;
+  if(dateKey === getTodayKey()) renderTasks(taskDateCache[getTodayKey()], getTodayKey());
+  document.getElementById('parent-task-name').value = '';
+  if(btn) { btn.textContent = '✓ 已加入！'; btn.style.background = 'var(--accent2)'; }
+  setTimeout(function() {
+    if(btn) { btn.textContent = '新增至學生讀書計劃'; btn.style.background = ''; }
+  }, 2000);
+  showToast('已加入 ' + dateKey + ' 的讀書計劃');
+  // 非同步 Firebase
+  if(!IS_LOCAL) fbPut('/tasks/' + dateKey + '/' + taskId, taskObj)
+    .catch(function(e) {});
+}
+
+// 老師儲存授課記錄並指派作業為學生任務
+function submitRecordAndTask(teacher, btn) {
+  var isB = teacher === 'b';
+  var prefix = isB ? 'tb' : 'ta';
+  var recDate = document.getElementById(prefix + '-rec-date') ? document.getElementById(prefix + '-rec-date').value : getTodayKey();
+  var subj = isB && document.getElementById('tb-rec-subj') ? document.getElementById('tb-rec-subj').value : 'eng';
+  var chEl = document.getElementById(prefix + '-rec-ch');
+  var chapter = chEl ? (chEl.options[chEl.selectedIndex] ? chEl.options[chEl.selectedIndex].text : '') : '';
+  var noteEl = document.getElementById(prefix + '-rec-note');
+  var note = noteEl ? noteEl.value.trim() : '';
+  var hw = document.getElementById(prefix + '-rec-hw') ? document.getElementById(prefix + '-rec-hw').value.trim() : '';
+  var hwDate = document.getElementById(prefix + '-rec-hwdate') ? document.getElementById(prefix + '-rec-hwdate').value : '';
+
+  if(!recDate) { alert('請選擇上課日期'); return; }
+
+  var orig = btn.textContent;
+  btn.textContent = '儲存中…';
+  btn.disabled = true;
+
+  // 建立記錄物件
+  var recordObj = {
+    teacher: 'teacher-' + teacher,
+    subj: subj, chapter: chapter,
+    date: recDate, note: note, hw: hw, hwDate: hwDate,
+    createdAt: Date.now()
+  };
+
+  // 本地渲染歷史記錄
+  var histId = prefix + '-rec-history';
+  var hist = document.getElementById(histId);
+  if(hist) {
+    var subjNameMap2 = {eng:'英文',math:'數學',geo:'地理',hist:'歷史',chi:'國文',civ:'公民'};
+    var colorMap2 = {eng:'c-eng',math:'c-math',geo:'c-geo',hist:'c-hist',chi:'c-chi',civ:'c-civ'};
+    var item = document.createElement('div');
+    item.className = 'rec-item';
+    item.style.animation = 'fadeIn .3s ease both';
+    item.innerHTML =
+      '<div class="rec-top">' +
+        '<div class="rec-chapter ' + (colorMap2[subj]||'c-eng') + '">' + chapter + '</div>' +
+        '<div class="rec-date-badge">' + recDate + '</div>' +
+      '</div>' +
+      (note ? '<div class="rec-note">' + note + '</div>' : '') +
+      '<div class="rec-tags">' +
+        '<span class="rec-tag">' + (subjNameMap2[subj]||subj) + '</span>' +
+        (hw ? '<span class="rec-tag">作業：' + hw + '</span>' : '') +
+        (hwDate ? '<span class="rec-tag">截止 ' + hwDate + '</span>' : '') +
+      '</div>';
+    // 移除「尚無記錄」提示
+    var empty = hist.querySelector('[style*="尚無記錄"]');
+    if(empty) hist.removeChild(empty);
+    hist.insertBefore(item, hist.firstChild);
+  }
+
+  // Firebase 寫入記錄
+  if(!IS_LOCAL) {
+    fbPost('/sessions', recordObj).catch(function(e) { /* Firebase unavailable */ });
+  }
+
+  // 若有填作業和截止日，指派為學生任務
+  if(hw && hwDate) {
+    var taskId = genTaskId();
+    var taskObj = {
+      id: taskId, subj: subj, name: hw, mins: '60',
+      source: 'teacher', done: false,
+      createdBy: loginRole, createdAt: Date.now()
+    };
+    if(!taskDateCache[hwDate]) taskDateCache[hwDate] = {};
+    taskDateCache[hwDate][taskId] = taskObj;
+    if(hwDate === getTodayKey()) loadTodayTasks();
+    if(!IS_LOCAL) fbPut('/tasks/' + hwDate + '/' + taskId, taskObj)
+      .catch(function(e) { /* Firebase unavailable */ });
+    showToast('作業已加入學生 ' + hwDate + ' 讀書計劃');
+  } else {
+    showToast('授課記錄已儲存');
+  }
+
+  // 清空表單
+  if(noteEl) noteEl.value = '';
+  if(document.getElementById(prefix + '-rec-hw')) document.getElementById(prefix + '-rec-hw').value = '';
+  if(document.getElementById(prefix + '-rec-hwdate')) document.getElementById(prefix + '-rec-hwdate').value = getTodayKey();
+
+  setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 1000);
+}
+
+// ===== 家長新增事項 =====
+function addParentEvent(btn) {
+  const title = document.getElementById('p-ev-title').value.trim();
+  const date  = document.getElementById('p-ev-date').value;
+  const color = document.getElementById('p-ev-type').value;
+  const note  = document.getElementById('p-ev-note').value.trim();
+  if(!title || !date){ alert('請填寫事項名稱與日期'); return; }
+
+  if(!calEvents[date]) calEvents[date] = [];
+  calEvents[date].push({ color, title, sub: note || '家長新增' });
+
+  buildCalendar('cal-grid', 'cal-ev-list');
+  buildCalendar('cal-grid-parent', 'cal-ev-parent');
+
+  document.getElementById('p-ev-title').value = '';
+  document.getElementById('p-ev-note').value = '';
+
+  // 寫入 Firebase
+  if(loginRole && !IS_LOCAL) writeCalEvent(date, calEvents[date]);
+
+  if(btn) {
+    const orig = btn.textContent;
+    const origBg = btn.style.background;
+    btn.textContent = '✓ 已新增至行事曆！';
+    btn.style.background = 'var(--accent2)';
+    setTimeout(function(){ btn.textContent = orig; btn.style.background = origBg; }, 2000);
+  }
+}
+
+// ===== 老師排課 =====
+function addTeacherSession(teacher, btn) {
+  const isB = teacher === 'b';
+  const pfx = isB ? 'tb' : 'ta';
+
+  const dateEl    = document.getElementById(pfx+'-sched-date');
+  const timeEl    = document.getElementById(pfx+'-sched-time');
+  const durEl     = document.getElementById(pfx+'-sched-dur');
+  const chEl      = document.getElementById(pfx+'-sched-ch');
+  const subjEl    = isB ? document.getElementById('tb-sched-subj') : null;
+
+  const date    = dateEl ? dateEl.value : '';
+  const time    = timeEl ? timeEl.value : '';
+  const dur     = durEl  ? durEl.value  : '90';
+  const chapter = chEl   ? chEl.value   : '';
+  const subj    = isB ? (subjEl ? subjEl.value : 'math') : 'eng';
+
+  const subjMap  = { math:'數學', geo:'地理', eng:'英文' };
+  const colorMap = { math:'#FD79A8', geo:'#00B894', eng:'#6C5CE7' };
+  const teacherLabel = isB ? '老師B' : '老師A';
+
+  if(!date){ alert('請選擇日期'); return; }
+
+  // 寫入行事曆資料
+  if(!calEvents[date]) calEvents[date] = [];
+  calEvents[date].push({
+    color: colorMap[subj],
+    title: subjMap[subj] + ' 家教課',
+    sub: time + ' · ' + teacherLabel + ' · ' + dur + '分鐘',
+    teacher: isB ? 'teacher-b' : 'teacher-a'
+  });
+
+  // 新增到「本週課程」列表
+  const list = document.getElementById(pfx+'-sessions');
+  const parts = date.split('-');
+  const m = parts[1], d = parts[2];
+  const card = document.createElement('div');
+  card.className = 'session-card';
+  card.style.animation = 'fadeIn .3s ease both';
+  card.innerHTML =
+    '<div class="stime"><div class="stime-h">' + m + '/' + d + '</div><div class="stime-d">' + time + '</div></div>' +
+    '<div class="sdiv"></div>' +
+    '<div class="sinfo"><div class="ss" style="color:' + colorMap[subj] + '">' + subjMap[subj] + '</div><div class="st">' + chapter + '</div></div>' +
+    '<div class="sbadge b-pending">已排課</div>';
+  if(list) {
+    // 移除空狀態提示
+    var empty = list.querySelector('[style*="尚無排課"]');
+    if(!empty) empty = list.querySelector('div[style*="font-size:12px"]');
+    if(empty && empty.textContent.includes('尚無')) list.removeChild(empty);
+    list.appendChild(card);
+  }
+
+  // 重繪兩個行事曆
+  buildCalendar('cal-grid', 'cal-ev-list');
+  buildCalendar('cal-grid-parent', 'cal-ev-parent');
+
+  // 寫入行事曆到 Firebase
+  if(loginRole && date && !IS_LOCAL) writeCalEvent(date, calEvents[date]);
+
+  // 寫入授課 session 到 Firebase
+  if(loginRole) {
+    var sessionData = {
+      teacher: isB ? 'teacher-b' : 'teacher-a',
+      subj: subj,
+      date: date,
+      time: time,
+      dur: dur,
+      chapter: chapter,
+      createdAt: Date.now(),
+      key: Date.now().toString()
+    };
+    if(!IS_LOCAL) writeSession(sessionData);
+  }
+
+  // 按鈕回饋
+  showToast('✓ 排課完成！' + (m||'') + '/' + (d||'') + ' ' + (subjMap[subj]||'') + ' 已加入行事曆');
+  if(btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓ 已排課';
+    btn.style.background = 'var(--green)';
+    setTimeout(function(){ btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }
+}
+// ===== 授課紀錄儲存 =====
+function submitRecord(btn) {
+  const orig = btn ? btn.textContent : '';
+  if(btn) {
+    btn.textContent = '✓ 已儲存！';
+    btn.style.background = 'var(--green)';
+    setTimeout(function(){ btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }
+}
+
+
+
+// ===== 角色切換 MODAL =====
+var roleDisplayNames = {
+  'student': '學生',
+  'parent': '家長',
+  'teacher-a': '老師A（英文）',
+  'teacher-b': '老師B（數學・地理）'
+};
+
+function openRoleSwitchModal() {
+  // 標記目前角色
+  document.querySelectorAll('.rs-btn').forEach(function(btn) {
+    btn.classList.remove('current');
+  });
+  var curBtn = document.getElementById('rs-' + loginRole);
+  if(curBtn) curBtn.classList.add('current');
+
+  // 更新目前角色文字
+  var curLabel = roleDisplayNames[loginRole] || loginRole;
+  var rsLabel = document.getElementById('rs-current-label');
+  if(rsLabel) rsLabel.textContent = '目前：' + curLabel;
+
+  document.getElementById('role-switch-modal').classList.add('open');
+}
+
+function closeRoleSwitchModal(e) {
+  if(e.target.id === 'role-switch-modal') {
+    document.getElementById('role-switch-modal').classList.remove('open');
+  }
+}
+
+function switchToRole(role) {
+  document.getElementById('role-switch-modal').classList.remove('open');
+  if(role === loginRole) return; // 已是此角色
+  loginRole = role;
+  sessionStorage.setItem('gsatRole', role);
+  initAfterLogin(role);
+  // 更新設定頁的角色標籤
+  var settingsLabel = document.getElementById('settings-role-label');
+  if(settingsLabel) settingsLabel.textContent = '目前：' + (roleDisplayNames[role] || role);
+  showToast('已切換為' + (roleDisplayNames[role] || role));
+}
+
+
+// ===== 學習分析 =====
+
+// 計算各科完成率（從 taskDateCache 統計過去 N 天）
+function calcSubjStats(days) {
+  days = days || 30;
+  var stats = {};
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  subjKeys.forEach(function(s) {
+    stats[s] = { total: 0, done: 0, practiceTotal: 0, minsTotal: 0 };
+  });
+
+  // 計算過去 N 天的日期範圍
+  var now = new Date();
+  for(var i = 0; i < days; i++) {
+    var d = new Date(now);
+    d.setDate(d.getDate() - i);
+    var dateKey = d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+    var tasks = taskDateCache[dateKey];
+    if(!tasks) continue;
+    Object.values(tasks).forEach(function(t) {
+      if(!t || !t.subj) return;
+      var s = t.subj;
+      if(!stats[s]) return;
+      stats[s].total++;
+      if(t.done) {
+        stats[s].done++;
+        stats[s].practiceTotal += parseInt(t.practiceCount) || 0;
+        stats[s].minsTotal += parseInt(t.actualMins || t.mins) || 0;
+      }
+    });
+  }
+  return stats;
+}
+
+// 渲染雷達圖
+function renderRadar(stats) {
+  var cx = 130, cy = 116, r = 92;
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  // 六個頂點角度（從頂部順時針：eng=270°, math=330°, geo=30°, hist=90°, civ=150°, chi=210°）
+  var angles = [-90, -30, 30, 90, 150, 210];
+  var colors = { eng:'#6C5CE7', math:'#FD79A8', geo:'#00B894', hist:'#E17055', civ:'#E91E8C', chi:'#0984E3' };
+
+  var pts = subjKeys.map(function(s, i) {
+    var total = stats[s].total;
+    var pct = total > 0 ? stats[s].done / total : 0;
+    var angle = angles[i] * Math.PI / 180;
+    var dist = pct * r;
+    return [
+      Math.round(cx + dist * Math.cos(angle)),
+      Math.round(cy + dist * Math.sin(angle))
+    ];
+  });
+
+  var polygon = document.getElementById('radar-data');
+  if(polygon) polygon.setAttribute('points', pts.map(function(p) { return p[0]+','+p[1]; }).join(' '));
+
+  // 更新標籤
+  var labelIds = { eng:'rl-eng', math:'rl-math', geo:'rl-geo', hist:'rl-hist', civ:'rl-civ', chi:'rl-chi' };
+  var subjNameMap2 = { eng:'英文', math:'數學', geo:'地理', hist:'歷史', chi:'國文', civ:'公民' };
+  subjKeys.forEach(function(s) {
+    var el = document.getElementById(labelIds[s]);
+    if(!el) return;
+    var total = stats[s].total;
+    var pct = total > 0 ? Math.round(stats[s].done / total * 100) : 0;
+    el.textContent = subjNameMap2[s] + ' ' + pct + '%';
+  });
+}
+
+// 渲染各科完成率卡片
+function renderScoreGrid(stats) {
+  var grid = document.getElementById('analysis-score-grid');
+  if(!grid) return;
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  var subjNameMap2 = { eng:'英文', math:'數學', geo:'地理', hist:'歷史', chi:'國文', civ:'公民' };
+  var colorMap2 = { eng:'c-eng', math:'c-math', geo:'c-geo', hist:'c-hist', chi:'c-chi', civ:'c-civ' };
+  grid.innerHTML = subjKeys.map(function(s) {
+    var total = stats[s].total;
+    var pct = total > 0 ? Math.round(stats[s].done / total * 100) : 0;
+    return '<div class="score-card">' +
+      '<div class="score-n ' + colorMap2[s] + '">' + pct + '%</div>' +
+      '<div class="score-l">' + subjNameMap2[s] + '</div>' +
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + stats[s].done + '/' + stats[s].total + ' 任務</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 渲染練習題數統計
+function renderPracticeStats(stats) {
+  var el = document.getElementById('practice-stats');
+  if(!el) return;
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  var subjNameMap2 = { eng:'英文', math:'數學', geo:'地理', hist:'歷史', chi:'國文', civ:'公民' };
+  var colorMap2 = { eng:'c-eng', math:'c-math', geo:'c-geo', hist:'c-hist', chi:'c-chi', civ:'c-civ' };
+  var totalPractice = 0, totalMins = 0;
+  subjKeys.forEach(function(s) {
+    totalPractice += stats[s].practiceTotal;
+    totalMins += stats[s].minsTotal;
+  });
+
+  var rows = subjKeys.filter(function(s) {
+    return stats[s].minsTotal > 0 || stats[s].practiceTotal > 0;
+  }).map(function(s) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;' +
+      'padding:7px 0;border-bottom:1px solid var(--border)">' +
+      '<span class="' + colorMap2[s] + '" style="font-size:12px;font-weight:700">' + subjNameMap2[s] + '</span>' +
+      '<span style="font-size:11px;color:var(--muted)">' +
+        (stats[s].minsTotal > 0 ? Math.round(stats[s].minsTotal/60*10)/10 + ' 小時' : '—') +
+      '</span>' +
+      '<span style="font-size:11px;font-weight:700;color:var(--text)">' +
+        (stats[s].practiceTotal > 0 ? stats[s].practiceTotal + ' 題' : '—') +
+      '</span>' +
+    '</div>';
+  }).join('');
+
+  if(!rows) {
+    el.innerHTML = '<div style="text-align:center;padding:16px 0;font-size:12px;color:var(--muted)">尚無練習記錄</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);padding:4px 16px">' +
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:10px;color:var(--muted);font-weight:700">' +
+    '<span>科目</span><span>時數</span><span>練習題</span></div>' +
+    rows +
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;font-weight:800">' +
+    '<span>合計</span>' +
+    '<span style="color:var(--primary)">' + Math.round(totalMins/60*10)/10 + ' 小時</span>' +
+    '<span style="color:var(--primary)">' + totalPractice + ' 題</span></div>' +
+    '</div>';
+}
+
+// 渲染弱點清單（完成率最低的科目）
+function renderWeakList(stats) {
+  var list = document.getElementById('analysis-weak-list');
+  if(!list) return;
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  var subjNameMap2 = { eng:'英文', math:'數學', geo:'地理', hist:'歷史', chi:'國文', civ:'公民' };
+  var dotMap = { eng:'s-eng', math:'s-math', geo:'s-geo', hist:'s-hist', chi:'s-chi', civ:'s-civ' };
+  var colorMap2 = { eng:'#6C5CE7', math:'#FD79A8', geo:'#00B894', hist:'#E17055', chi:'#0984E3', civ:'#E91E8C' };
+
+  // 只顯示有任務的科目，按完成率由低到高
+  var sorted = subjKeys
+    .filter(function(s) { return stats[s].total > 0; })
+    .sort(function(a, b) {
+      var pctA = stats[a].done / stats[a].total;
+      var pctB = stats[b].done / stats[b].total;
+      return pctA - pctB;
+    })
+    .slice(0, 4); // 最多顯示 4 個
+
+  if(!sorted.length) {
+    list.innerHTML = '<div style="text-align:center;padding:16px 0;font-size:12px;color:var(--muted)">加油！先完成一些任務再來看分析</div>';
+    return;
+  }
+
+  list.innerHTML = sorted.map(function(s) {
+    var total = stats[s].total;
+    var pct = Math.round(stats[s].done / total * 100);
+    var remaining = total - stats[s].done;
+    return '<div class="weak-item">' +
+      '<div class="sdot ' + dotMap[s] + '" style="width:32px;height:32px;font-size:12px;border-radius:8px">' +
+        subjNameMap2[s][0] + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:12px;font-weight:700">' + subjNameMap2[s] + '</div>' +
+        '<div style="font-size:10px;color:var(--muted)">完成率 ' + pct + '% · 還有 ' + remaining + ' 個任務</div>' +
+      '</div>' +
+      '<div class="weak-bar-wrap"><div class="weak-bar" style="width:' + pct + '%;background:' + colorMap2[s] + '"></div></div>' +
+      '<div style="font-size:11px;font-weight:700;color:' + colorMap2[s] + '">' + pct + '%</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 渲染家長六科進度卡片
+function renderParentSubjGrid(stats) {
+  var grid = document.getElementById('parent-subj-grid');
+  if(!grid) return;
+  var subjKeys = ['eng','math','geo','hist','chi','civ'];
+  var subjNameMap2 = { eng:'英文', math:'數學', geo:'地理', hist:'歷史', chi:'國文', civ:'公民' };
+  var dotMap = { eng:'s-eng', math:'s-math', geo:'s-geo', hist:'s-hist', chi:'s-chi', civ:'s-civ' };
+  var colorMap2 = { eng:'c-eng', math:'c-math', geo:'c-geo', hist:'c-hist', chi:'c-chi', civ:'c-civ' };
+  var fillMap = { eng:'#6C5CE7', math:'#FD79A8', geo:'#00B894', hist:'#E17055', chi:'#0984E3', civ:'#E91E8C' };
+  var teacherMap = { eng:'老師A', math:'老師B', geo:'老師B', hist:'自學', chi:'自學', civ:'自學' };
+
+  grid.innerHTML = subjKeys.map(function(s) {
+    var total = stats[s].total;
+    var pct = total > 0 ? Math.round(stats[s].done / total * 100) : 0;
+    var meta = teacherMap[s] + (total > 0 ? ' · ' + stats[s].done + '/' + total + ' 任務' : ' · 尚無任務');
+    return '<div class="subj-card">' +
+      '<div class="subj-card-top">' +
+        '<div class="subj-icon ' + dotMap[s] + '">' + subjNameMap2[s][0] + '</div>' +
+        '<div class="subj-pct-badge ' + colorMap2[s] + '">' + pct + '%</div>' +
+      '</div>' +
+      '<div class="subj-name">' + subjNameMap2[s] + '</div>' +
+      '<div class="subj-track"><div class="subj-fill" style="width:' + pct + '%;background:' + fillMap[s] + '"></div></div>' +
+      '<div class="subj-meta">' + meta + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 主入口：更新所有分析資料
+function refreshAnalysis() {
+  // 先從 Firebase 拉所有任務（若非本地模式）
+  if(!IS_LOCAL) {
+    // 拉過去 30 天
+    var promises = [];
+    var now = new Date();
+    for(var i = 0; i < 30; i++) {
+      var d = new Date(now);
+      d.setDate(d.getDate() - i);
+      var dateKey = d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0');
+      if(!taskDateCache[dateKey]) {
+        (function(dk) {
+          promises.push(
+            fbGet('/tasks/' + dk).then(function(data) {
+              if(data) taskDateCache[dk] = data;
+            }).catch(function(){})
+          );
+        })(dateKey);
+      }
+    }
+    Promise.all(promises).then(function() { _renderAnalysis(); });
+  } else {
+    _renderAnalysis();
+  }
+}
+
+function _renderAnalysis() {
+  var stats = calcSubjStats(30);
+  renderRadar(stats);
+  renderScoreGrid(stats);
+  renderPracticeStats(stats);
+  renderWeakList(stats);
+  renderParentSubjGrid(stats);
+}
+
+// ===== SETTINGS PAGE =====
+
+// 章節資料（各科版本）
+const chapterDB = {
+  eng: {
+    versions: ['龍騰版'],
+    current: '龍騰版',
+    books: {
+      '龍騰版': [
+        {num:'B1 L1', name:'Firsts in Life'},
+        {num:'B1 L2', name:'Goodbye, John'},
+        {num:'B1 L3', name:'Do Animals Sleep Like You and Me?'},
+        {num:'B1 L4', name:'When in Rome'},
+        {num:'B1 L5', name:'Sniffing Out More Than Just Bones'},
+        {num:'B1 L6', name:'The Life of a Plastic Bag'},
+        {num:'B2 L1', name:'The Heart of a Champion'},
+        {num:'B2 L4', name:'Malala: Stronger Than Violence'},
+        {num:'B2 L7', name:'TED Talks: Spreading Ideas'},
+        {num:'B2 L9', name:'The Story behind Eponyms'},
+        {num:'B3 L1', name:'The Day I Broke the Rules'},
+        {num:'B3 L2', name:'Keeping Your Distance'},
+        {num:'B3 L3', name:'The Birthmark'},
+        {num:'B3 L5', name:'The Changing Face of Robots'},
+        {num:'B3 L8', name:'Coffee: Beyond the Cup'},
+        {num:'B3 L9', name:'The Power of Gratitude'},
+        {num:'B4 L1', name:'Beyond the Selfie'},
+        {num:'B4 L3', name:'Shark Tales'},
+        {num:'B4 L5', name:'Tattoo: Art or Taboo?'},
+        {num:'B4 L6', name:'When Elephants Weep'},
+        {num:'B4 L7', name:'Under the Knife'},
+        {num:'B5 L1', name:'The Genius of Mistakes'},
+        {num:'B5 L2', name:'Food for Thought'},
+        {num:'B5 L3', name:'Ghosts in the Machine'},
+        {num:'B5 L5', name:'The Nature of Language'},
+      ]
+    }
+  },
+  math: {
+    versions: ['晟景版', '龍騰版'],
+    current: '晟景版',
+    books: {
+      '晟景版': [
+        {num:'B1 1-1(上)', name:'乘法公式與有理數'},
+        {num:'B1 1-1(下)', name:'根式運算與實數'},
+        {num:'B1 1-2', name:'絕對值'},
+        {num:'B1 1-3', name:'指數與常用對數'},
+        {num:'B1 2-1', name:'坐標平面與直線方程式'},
+        {num:'B1 2-2', name:'直線方程式的應用'},
+        {num:'B1 2-3', name:'圓方程式'},
+        {num:'B1 2-4', name:'圓與直線的關係'},
+        {num:'B1 3-1', name:'多項式的除法'},
+        {num:'B1 3-2', name:'多項式函數'},
+        {num:'B1 3-3', name:'多項不等式'},
+        {num:'B2 1-1', name:'數列與遞迴關係'},
+        {num:'B2 1-2', name:'級數求和'},
+        {num:'B2 2-1', name:'邏輯、集合與計數原理'},
+        {num:'B2 2-2', name:'排列'},
+        {num:'B2 2-3', name:'組合與二項式定理'},
+        {num:'B2 2-4', name:'古典機率與期望值'},
+        {num:'B2 3-1', name:'一維數據分析'},
+        {num:'B2 3-2', name:'相關係數與迴歸直線'},
+        {num:'B2 4-1', name:'極坐標與三角比的定義'},
+        {num:'B2 4-2', name:'三角比的性質'},
+        {num:'B2 4-3', name:'正弦定理與餘弦定理'},
+        {num:'B2 4-4', name:'反三角與三角測量'},
+        {num:'B3 1-1', name:'弧度、扇形與三角比'},
+        {num:'B3 1-2', name:'和差角與倍半角公式'},
+        {num:'B3 1-3', name:'三角函數的圖形與正餘弦疊合'},
+        {num:'B3 2-1', name:'指數函數及其圖形'},
+        {num:'B3 2-2', name:'對數符號與對數律'},
+        {num:'B3 2-3', name:'對數函數及其應用'},
+        {num:'B3 3-1', name:'平面向量的加減法與係數積'},
+        {num:'B3 3-2', name:'平面向量的內積'},
+        {num:'B3 3-3', name:'直線的向量性質與二階行列式'},
+        {num:'B4 1-1', name:'空間概念'},
+        {num:'B4 1-2', name:'空間坐標與向量'},
+        {num:'B4 1-3', name:'空間向量的內積'},
+        {num:'B4 1-4', name:'外積與三階行列式'},
+        {num:'B4 2-1', name:'空間中的平面'},
+        {num:'B4 2-2', name:'空間中的直線方程式'},
+        {num:'B4 3-1', name:'條件機率'},
+        {num:'B4 3-2', name:'獨立事件'},
+        {num:'B4 4-1', name:'聯立方程的矩陣表達'},
+        {num:'B4 4-2', name:'矩陣的四則運算'},
+        {num:'B4 4-3', name:'反方陣與轉移方陣'},
+        {num:'B4 4-4', name:'平面的線性變換'},
+      ],
+      '龍騰版': [
+        {num:'第1冊 單元1', name:'實數'},
+        {num:'第1冊 單元2', name:'絕對值'},
+        {num:'第1冊 單元3', name:'指數'},
+        {num:'第1冊 單元4', name:'科學記號與常用對數'},
+        {num:'第1冊 單元5', name:'直線方程式'},
+        {num:'第1冊 單元6', name:'圓方程式'},
+        {num:'第1冊 單元7', name:'圓與直線的關係'},
+        {num:'第1冊 單元8', name:'多項式的除法原理'},
+        {num:'第1冊 單元9', name:'一次與二次函數'},
+        {num:'第1冊 單元10', name:'三次函數的圖形特徵'},
+        {num:'第1冊 單元11', name:'多項式不等式'},
+        {num:'第2冊 單元1', name:'三角比'},
+        {num:'第2冊 單元2', name:'三角形的解法'},
+        {num:'第2冊 單元3', name:'排列'},
+        {num:'第2冊 單元4', name:'組合'},
+        {num:'第2冊 單元5', name:'機率'},
+        {num:'第2冊 單元6', name:'統計（一）'},
+        {num:'第2冊 單元7', name:'統計（二）'},
+      ]
+    }
+  },
+  geo: {
+    versions: ['龍騰版'],
+    current: '龍騰版',
+    books: {
+      '龍騰版': [
+        {num:'第1冊 第1章', name:'為什麼要學地理'},
+        {num:'第1冊 第2章', name:'地圖'},
+        {num:'第1冊 第3章', name:'地理資訊'},
+        {num:'第1冊 第4章', name:'地形系統'},
+        {num:'第1冊 第5章', name:'氣候系統'},
+        {num:'第2冊 第1章', name:'土壤與植被'},
+        {num:'第2冊 第2章', name:'海洋地理'},
+        {num:'第2冊 第3章', name:'人口'},
+        {num:'第2冊 第4章', name:'聚落'},
+        {num:'第2冊 第5章', name:'農業地理'},
+        {num:'第2冊 第6章', name:'工業地理'},
+        {num:'第3冊 第1章', name:'東南亞'},
+        {num:'第3冊 第2章', name:'澳洲與紐西蘭'},
+        {num:'第3冊 第3章', name:'西亞與北非'},
+        {num:'第3冊 第4章', name:'歐洲'},
+        {num:'第3冊 第5章', name:'美國'},
+        {num:'第3冊 第6章', name:'中南美洲'},
+        {num:'第3冊 第7章', name:'全球化'},
+        {num:'第4冊 第1章', name:'台灣的自然環境'},
+        {num:'第4冊 第2章', name:'台灣的人文環境'},
+        {num:'第4冊 第3章', name:'台灣的產業發展'},
+      ]
+    }
+  },
+  hist: {
+    versions: ['龍騰版'],
+    current: '龍騰版',
+    books: {
+      '龍騰版': [
+        {num:'第1冊 導論', name:'如何認識過去'},
+        {num:'第1冊 第1課', name:'台灣的原住民族'},
+        {num:'第1冊 第2課', name:'從部落到原住民族'},
+        {num:'第1冊 第3課', name:'帝國的邊陲'},
+        {num:'第1冊 第4課', name:'台澎金馬一體化'},
+        {num:'第1冊 第5課', name:'近代化的開端'},
+        {num:'第1冊 第6課', name:'20世紀經濟發展'},
+        {num:'第1冊 第7課', name:'殖民地的政治運動'},
+        {num:'第1冊 第8課', name:'戰後台灣的政治變局'},
+        {num:'第1冊 第9課', name:'民主化的歷程'},
+        {num:'第2冊 第1章', name:'傳統政治權威的形塑'},
+        {num:'第2冊 第2章', name:'國家統治與社會結構'},
+        {num:'第2冊 第3章', name:'近代以前的人群移動'},
+        {num:'第2冊 第5章', name:'邁向現代化的東亞'},
+        {num:'第2冊 第6章', name:'東亞的戰爭與和平'},
+        {num:'第3冊 第1章', name:'古代文明的特質'},
+        {num:'第3冊 第2章', name:'中古歐洲與伊斯蘭'},
+        {num:'第3冊 第3章', name:'文藝復興與宗教改革'},
+        {num:'第3冊 第5章', name:'啟蒙運動與革命時代'},
+        {num:'第3冊 第7章', name:'兩次世界大戰'},
+        {num:'第3冊 第8章', name:'冷戰與當代世界'},
+      ]
+    }
+  },
+  chi: {
+    versions: ['龍騰版'],
+    current: '龍騰版',
+    books: {
+      '龍騰版': [
+        {num:'第1冊 L1', name:'燭之武退秦師'},
+        {num:'第1冊 L2', name:'鴻門宴'},
+        {num:'第1冊 L3', name:'大學（節錄）'},
+        {num:'第1冊 L4', name:'桃花源記'},
+        {num:'第1冊 L5', name:'湖心亭看雪'},
+        {num:'第2冊 L1', name:'諫逐客書'},
+        {num:'第2冊 L2', name:'出師表'},
+        {num:'第2冊 L3', name:'赤壁賦'},
+        {num:'第2冊 L4', name:'師說'},
+        {num:'第3冊 L1', name:'廉恥（顧炎武）'},
+        {num:'第3冊 L2', name:'左忠毅公軼事'},
+        {num:'第3冊 L4', name:'文天祥〈正氣歌〉'},
+        {num:'第4冊 L1', name:'勸學（荀子節錄）'},
+        {num:'第4冊 L3', name:'蘭亭集序'},
+        {num:'第4冊 L4', name:'醉翁亭記'},
+        {num:'第5冊 L1', name:'岳陽樓記'},
+        {num:'第5冊 L2', name:'諫太宗十思疏'},
+        {num:'第5冊 L3', name:'捕蛇者說'},
+      ]
+    }
+  },
+  civ: {
+    versions: ['龍騰版'],
+    current: '龍騰版',
+    books: {
+      '龍騰版': [
+        {num:'第1冊 第1章', name:'個人、自我與社會'},
+        {num:'第1冊 第2章', name:'文化'},
+        {num:'第1冊 第3章', name:'社會階層化'},
+        {num:'第1冊 第4章', name:'族群與性別'},
+        {num:'第1冊 第5章', name:'社會變遷'},
+        {num:'第2冊 第1章', name:'政治與民主'},
+        {num:'第2冊 第2章', name:'憲法與人權保障'},
+        {num:'第2冊 第3章', name:'政府體制'},
+        {num:'第2冊 第4章', name:'政治參與'},
+        {num:'第2冊 第5章', name:'國際關係'},
+        {num:'第3冊 第1章', name:'法律的基本概念'},
+        {num:'第3冊 第2章', name:'民法'},
+        {num:'第3冊 第3章', name:'刑法'},
+        {num:'第3冊 第4章', name:'經濟基本概念'},
+        {num:'第3冊 第5章', name:'總體經濟'},
+        {num:'第3冊 第6章', name:'國際經濟'},
+      ]
+    }
+  }
+};
+
+const subjNameMap = {eng:'英文',math:'數學',geo:'地理',hist:'歷史',chi:'國文',civ:'公民'};
+let ceCurrentSubj = 'eng';
+let ceCurrentVer = '';
+
+// 版本對照暫存（old_ver -> [{oldIdx, newIdx}]）
+var pendingMappings = {};
+var ceBeforeVer = '';
+
+function openChEdit(subj) {
+  ceCurrentSubj = subj;
+  var db = chapterDB[subj];
+  ceCurrentVer = db.current;
+  ceBeforeVer = db.current;
+
+  document.getElementById('ce-title').textContent = subjNameMap[subj] + ' 章節管理';
+  document.getElementById('migration-banner').style.display = 'none';
+  ceSwitchTab('chapters');
+  renderVerTabs();
+  renderCEList();
+  document.getElementById('ch-edit-modal').classList.add('open');
+}
+
+function renderVerTabs() {
+  var db = chapterDB[ceCurrentSubj];
+  var tabs = document.getElementById('ver-tabs');
+  tabs.innerHTML = db.versions.map(function(v) {
+    var cls = 'ver-tab' + (v === db.current ? ' active' : '');
+    return '<button class="' + cls + '" data-ver="' + v + '">' + v + '</button>';
+  }).join('');
+  tabs.querySelectorAll('.ver-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() { switchVersion(this.getAttribute('data-ver')); });
+  });
+}
+
+function switchVersion(ver) {
+  var db = chapterDB[ceCurrentSubj];
+  var oldVer = ceCurrentVer;
+  if(ver === oldVer) return;
+
+  ceCurrentVer = ver;
+  db.current = ver;
+
+  // 更新 ver-tab 狀態
+  document.querySelectorAll('#ver-tabs .ver-tab').forEach(function(t) {
+    t.classList.toggle('active', t.getAttribute('data-ver') === ver);
+  });
+
+  // 更新設定頁版本標籤
+  if(ceCurrentSubj === 'math') {
+    var lbl = ver === '晟景版' ? '晟景版 · 第1–4冊 · 共 43 節' : '龍騰版 · 第1–4冊 · 共 18 節';
+    document.getElementById('math-ver-label').textContent = lbl;
+  }
+
+  // 計算需要對應的筆數
+  var oldChapters = chapterDB[ceCurrentSubj].books[oldVer] || [];
+  var newChapters = chapterDB[ceCurrentSubj].books[ver] || [];
+
+  // 初始化對照表（用關鍵字自動匹配）
+  if(!pendingMappings[ceCurrentSubj]) pendingMappings[ceCurrentSubj] = {};
+  var mapping = {};
+  oldChapters.forEach(function(och, oi) {
+    var matched = -1;
+    newChapters.forEach(function(nch, ni) {
+      // 簡單關鍵字比對
+      var oldKey = och.name.replace(/[（）\s・]/g, '');
+      var newKey = nch.name.replace(/[（）\s・]/g, '');
+      if(oldKey === newKey || oldKey.includes(newKey) || newKey.includes(oldKey)) {
+        if(matched === -1) matched = ni;
+      }
+    });
+    mapping[oi] = matched; // -1 = 未對應
+  });
+  pendingMappings[ceCurrentSubj][oldVer + '->' + ver] = mapping;
+
+  var unmatched = Object.values(mapping).filter(function(v) { return v === -1; }).length;
+
+  // 顯示遷移提示 banner
+  var banner = document.getElementById('migration-banner');
+  if(unmatched > 0) {
+    banner.style.display = 'block';
+    banner.innerHTML =
+      '<div class="migrate-banner">' +
+      '<div class="migrate-banner-title">版本切換提示</div>' +
+      '<div class="migrate-banner-body">' +
+        '從「' + oldVer + '」切換至「' + ver + '」，' +
+        '舊版本共 ' + oldChapters.length + ' 節，' +
+        '其中 <strong>' + unmatched + ' 節</strong>無法自動對應新版本章節，' +
+        '請至「版本對照表」手動指定。' +
+      '</div>' +
+      '<button style="margin-top:8px;font-size:11px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font)" ' +
+        'onclick="ceSwitchTab(&quot;mapping&quot;)">前往版本對照表 →</button>' +
+      '</div>';
+  } else {
+    banner.style.display = 'block';
+    banner.innerHTML =
+      '<div class="migrate-banner" style="background:#F0FDF4;border-color:#A7F3D0">' +
+      '<div class="migrate-banner-title" style="color:#065F46">自動對應完成</div>' +
+      '<div class="migrate-banner-body" style="color:#14532D">' +
+        '從「' + oldVer + '」切換至「' + ver + '」，' +
+        '所有 ' + oldChapters.length + ' 節均已自動對應，可直接使用。' +
+      '</div></div>';
+  }
+
+  // 顯示遷移確認 modal
+  if(unmatched > 0) {
+    var body = document.getElementById('migrate-body');
+    body.innerHTML =
+      '<div style="background:#FFF3CD;border-radius:10px;padding:12px;margin-bottom:12px">' +
+        '<div style="font-weight:800;color:#B7791F;margin-bottom:6px">切換至「' + ver + '」</div>' +
+        '<div style="color:#744210;font-size:12px">' +
+          '舊版本「' + oldVer + '」有 <strong>' + unmatched + ' 個章節</strong>無法自動對應到新版本。<br>' +
+          '這些章節的歷史授課紀錄<strong>不會消失</strong>，原始快照永久保留，' +
+          '但需要手動指定對應關係，方便統計和查詢。' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--muted)">你可以現在前往版本對照表處理，或稍後再說。</div>';
+    document.getElementById('migrate-modal').classList.add('open');
+  }
+
+  renderCEList();
+}
+
+function ceSwitchTab(tab) {
+  var isChapters = tab === 'chapters';
+  document.getElementById('tab-chapters').classList.toggle('active', isChapters);
+  document.getElementById('tab-mapping').classList.toggle('active', !isChapters);
+  document.getElementById('ce-panel-chapters').style.display = isChapters ? 'block' : 'none';
+  document.getElementById('ce-panel-mapping').style.display = isChapters ? 'none' : 'block';
+  if(!isChapters) renderMappingTable();
+}
+
+function renderMappingTable() {
+  var db = chapterDB[ceCurrentSubj];
+  var versions = db.versions;
+  if(versions.length < 2) {
+    document.getElementById('ce-mapping-list').innerHTML =
+      '<div style="font-size:12px;color:var(--muted);padding:16px 0;text-align:center">此科目只有一個版本，無需對照</div>';
+    return;
+  }
+
+  // 找出非當前版本（舊版）
+  var otherVer = versions.find(function(v) { return v !== ceCurrentVer; });
+  var oldChapters = db.books[otherVer] || [];
+  var newChapters = db.books[ceCurrentVer] || [];
+  var mapKey = otherVer + '->' + ceCurrentVer;
+  var mapping = (pendingMappings[ceCurrentSubj] && pendingMappings[ceCurrentSubj][mapKey]) || {};
+
+  var newOptions = '<option value="-1">（未對應）</option>' +
+    newChapters.map(function(ch, i) {
+      return '<option value="' + i + '">' + ch.num + ' ' + ch.name + '</option>';
+    }).join('');
+
+  var html = '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">' +
+    '「' + otherVer + '」章節  →  對應「' + ceCurrentVer + '」章節</div>';
+
+  html += oldChapters.map(function(och, oi) {
+    var mappedIdx = (mapping[oi] !== undefined) ? mapping[oi] : -1;
+    var rowClass = mappedIdx === -1 ? 'pending' : 'mapped';
+    var statusText = mappedIdx === -1 ? '待確認' : '已對應';
+    var statusColor = mappedIdx === -1 ? '#B7791F' : '#065F46';
+
+    // 生成 select 選項（帶選中狀態）
+    var opts = '<option value="-1"' + (mappedIdx === -1 ? ' selected' : '') + '>（未對應）</option>' +
+      newChapters.map(function(nch, ni) {
+        return '<option value="' + ni + '"' + (mappedIdx === ni ? ' selected' : '') + '>' +
+          nch.num + ' ' + nch.name + '</option>';
+      }).join('');
+
+    return '<div class="map-row ' + rowClass + '" data-old-idx="' + oi + '">' +
+      '<div class="map-old">' + och.num + '<br>' + och.name +
+        '<div class="map-status" style="color:' + statusColor + '">' + statusText + '</div>' +
+      '</div>' +
+      '<div class="map-arrow">→</div>' +
+      '<select class="map-sel" onchange="updateMapping(' + oi + ', this.value)">' + opts + '</select>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('ce-mapping-list').innerHTML = html;
+}
+
+function updateMapping(oldIdx, newIdxStr) {
+  var db = chapterDB[ceCurrentSubj];
+  var versions = db.versions;
+  var otherVer = versions.find(function(v) { return v !== ceCurrentVer; });
+  var mapKey = otherVer + '->' + ceCurrentVer;
+  if(!pendingMappings[ceCurrentSubj]) pendingMappings[ceCurrentSubj] = {};
+  if(!pendingMappings[ceCurrentSubj][mapKey]) pendingMappings[ceCurrentSubj][mapKey] = {};
+  pendingMappings[ceCurrentSubj][mapKey][oldIdx] = parseInt(newIdxStr);
+
+  // 更新該行的樣式
+  var row = document.querySelector('.map-row[data-old-idx="' + oldIdx + '"]');
+  if(row) {
+    var mapped = parseInt(newIdxStr) !== -1;
+    row.className = 'map-row ' + (mapped ? 'mapped' : 'pending');
+    var statusEl = row.querySelector('.map-status');
+    if(statusEl) {
+      statusEl.textContent = mapped ? '已對應' : '待確認';
+      statusEl.style.color = mapped ? '#065F46' : '#B7791F';
+    }
+  }
+}
+
+function saveMappings(btn) {
+  var db = chapterDB[ceCurrentSubj];
+  var versions = db.versions;
+  if(versions.length < 2) { showToast('此科目只有一個版本'); return; }
+
+  var otherVer = versions.find(function(v) { return v !== ceCurrentVer; });
+  var mapKey = otherVer + '->' + ceCurrentVer;
+  var mapping = (pendingMappings[ceCurrentSubj] && pendingMappings[ceCurrentSubj][mapKey]) || {};
+  var total = Object.keys(mapping).length;
+  var unmatched = Object.values(mapping).filter(function(v) { return v === -1; }).length;
+
+  var orig = btn.textContent;
+  btn.textContent = unmatched > 0
+    ? '已儲存（仍有 ' + unmatched + ' 節待確認）'
+    : '✓ 對應關係已儲存完成！';
+  btn.style.background = unmatched > 0 ? '#B7791F' : 'var(--green)';
+  setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 2500);
+  showToast('版本對照已儲存');
+}
+
+function goToMapping() {
+  document.getElementById('migrate-modal').classList.remove('open');
+  ceSwitchTab('mapping');
+}
+
+function closeMigrateModal(e) {
+  if(e.target.id === 'migrate-modal') document.getElementById('migrate-modal').classList.remove('open');
+}
+
+function renderCEList() {
+  var chapters = chapterDB[ceCurrentSubj].books[ceCurrentVer] || [];
+  document.getElementById('ce-ch-count').textContent = '共 ' + chapters.length + ' 節';
+  document.getElementById('ce-ch-list').innerHTML = chapters.map(function(ch, i) {
+    return '<div class="ce-ch-item">' +
+      '<span class="ce-ch-num">' + ch.num + '</span>' +
+      '<span class="ce-ch-name">' + ch.name + '</span>' +
+      '<button class="ce-del-btn" onclick="deleteChapter(' + i + ')">×</button>' +
+      '</div>';
+  }).join('');
+}
+
+function addChapter() {
+  var inp = document.getElementById('new-ch-inp');
+  var name = inp.value.trim();
+  if(!name) return;
+  var chapters = chapterDB[ceCurrentSubj].books[ceCurrentVer];
+  chapters.push({num:'補充', name: name});
+  inp.value = '';
+  renderCEList();
+  showToast('章節已新增');
+  if(loginRole && !IS_LOCAL) writeChapterDB();
+}
+
+function deleteChapter(idx) {
+  var chapters = chapterDB[ceCurrentSubj].books[ceCurrentVer];
+  if(!confirm('確定刪除「' + chapters[idx].name + '」？')) return;
+  chapters.splice(idx, 1);
+  renderCEList();
+  showToast('章節已刪除');
+  if(loginRole && !IS_LOCAL) writeChapterDB();
+}
+
+function closeCEModal(e) {
+  if(e.target.id === 'ch-edit-modal') document.getElementById('ch-edit-modal').classList.remove('open');
+}
+
+// 新增老師
+function showAddTeacher() {
+  document.getElementById('add-teacher-modal').classList.add('open');
+}
+function closeATModal(e) {
+  if(e.target.id==='add-teacher-modal') document.getElementById('add-teacher-modal').classList.remove('open');
+}
+function confirmAddTeacher(btn) {
+  const name = document.getElementById('new-teacher-name').value.trim();
+  if(!name){ alert('請填寫老師姓名'); return; }
+  btn.textContent = '✓ 帳號已建立！';
+  btn.style.background = 'var(--green)';
+  setTimeout(function(){
+    document.getElementById('add-teacher-modal').classList.remove('open');
+    btn.textContent = '建立老師帳號';
+    btn.style.background = '';
+    showToast('老師帳號已建立，請通知老師登入');
+  }, 1500);
+}
+
+// 同步說明
+function showSyncInfo() {
+  document.getElementById('sync-modal').classList.add('open');
+}
+function closeSyncModal(e) {
+  if(e.target.id==='sync-modal') document.getElementById('sync-modal').classList.remove('open');
+}
+
+// 匯出資料
+function exportData() {
+  const data = { chapterDB, calEvents, exportTime: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'studyplan_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('資料已匯出');
+}
+
+// 通知切換
+function toggleNotif(cb) {
+  showToast(cb.checked ? '每日提醒已開啟' : '每日提醒已關閉');
+}
+
+// Toast 提示
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:#2D3436;color:#fff;padding:8px 18px;border-radius:99px;font-size:12px;font-weight:700;z-index:300;white-space:nowrap;font-family:var(--font);transition:opacity .3s;pointer-events:none';
+    document.querySelector('.phone-shell').appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.style.opacity = '0'; }, 2200);
+}
+
+
+// ===== 動態章節下拉 =====
+
+// 把 chapterDB 某科某版本的章節填入指定 select
+function fillChapterSelect(selectId, subj, ver) {
+  var sel = document.getElementById(selectId);
+  if(!sel) return;
+  var db = chapterDB[subj];
+  if(!db) return;
+  var v = ver || db.current;
+  var chapters = (db.books[v] || []);
+  // 依 num 排序（字串自然順序，節次編號格式統一）
+  var sorted = chapters.slice().sort(function(a, b) {
+    return a.num.localeCompare(b.num, 'zh-TW', {numeric: true});
+  });
+  sel.innerHTML = sorted.map(function(ch) {
+    return '<option value="' + ch.num + '">' + ch.num + ' ' + ch.name + '</option>';
+  }).join('');
+}
+
+// 老師B：排課時科目切換 → 重填章節
+function refreshSchedChapters(teacher) {
+  if(teacher === 'b') {
+    var subj = document.getElementById('tb-sched-subj').value;
+    fillChapterSelect('tb-sched-ch', subj);
+  }
+}
+
+// 老師B：授課記錄科目切換 → 重填章節
+function refreshRecChapters(teacher) {
+  if(teacher === 'b') {
+    var subj = document.getElementById('tb-rec-subj').value;
+    fillChapterSelect('tb-rec-ch', subj);
+  }
+}
+
+// 初始化所有排課/授課章節下拉
+function initAllSchedSelects() {
+  // 設定所有日期欄位預設為今天
+  var todayStr = getTodayKey();
+  ['tb-sched-date','ta-sched-date','tb-rec-date','ta-rec-date','ta-rec-date2','p-ev-date'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && !el.value) el.value = todayStr;
+  });
+
+  // 老師B 排課
+  var tbSubjSel = document.getElementById('tb-sched-subj');
+  if(tbSubjSel) fillChapterSelect('tb-sched-ch', tbSubjSel.value);
+
+  // 老師B 授課記錄
+  var tbRecSel = document.getElementById('tb-rec-subj');
+  if(tbRecSel) fillChapterSelect('tb-rec-ch', tbRecSel.value);
+
+  // 老師A 排課（英文固定）
+  fillChapterSelect('ta-sched-ch', 'eng');
+
+  // 老師A 授課記錄（英文固定）
+  fillChapterSelect('ta-rec-ch', 'eng');
+}
+
+// ===== INIT =====
+// 先建行事曆和章節（不依賴登入）
+buildCalendar('cal-grid','cal-ev-list');
+buildCalendar('cal-grid-parent','cal-ev-parent');
+initAllSchedSelects();
+calcCountdown();
+
+// 判斷是否已有登入 session
+if(loginRole) {
+  // 已有 session：直接進入系統
+  document.getElementById('login-screen').style.display = 'none';
+  initFirebase();
+  initAfterLogin(loginRole);
+} else {
+  // 未登入：顯示登入畫面，隱藏主畫面元素
+  document.getElementById('fab-btn').style.display = 'none';
+}
+
+</script>
+</body>
+</html>
