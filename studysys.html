@@ -1810,15 +1810,79 @@ function syncFromFirebase() {
   // 讀取 tasks
   loadTodayTasks();
 
-  // 讀取行事曆
-  if(!IS_LOCAL) fbGet('/calendar').then(function(data) {
-    if(!data) return;
-    Object.keys(data).forEach(function(dateKey) {
-      if(data[dateKey]) calEvents[dateKey] = data[dateKey];
+  // 讀取行事曆和排課
+  if(!IS_LOCAL) {
+    fbGet('/calendar').then(function(data) {
+      if(!data) return;
+      Object.keys(data).forEach(function(dateKey) {
+        if(data[dateKey]) calEvents[dateKey] = data[dateKey];
+      });
+      buildCalendar('cal-grid', 'cal-ev-list');
+      buildCalendar('cal-grid-parent', 'cal-ev-parent');
+      // 同步重繪本週課程
+      rebuildSessionLists();
+    }).catch(function(){});
+
+    // 讀取 sessions（排課紀錄）
+    fbGet('/sessions').then(function(data) {
+      if(data) renderSessionHistory(data);
+    }).catch(function(){});
+  }
+}
+
+// 從 calEvents 重建「本週課程」列表
+function rebuildSessionLists() {
+  var now = new Date();
+  var weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay()); // 本週日
+  var weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 13); // 往後兩週
+
+  var tbList = document.getElementById('tb-sessions');
+  var taList = document.getElementById('ta-sessions');
+  if(!tbList && !taList) return;
+
+  // 收集本週+下週的排課
+  var tbCards = [], taCards = [];
+
+  Object.keys(calEvents).sort().forEach(function(dateKey) {
+    var d = new Date(dateKey + 'T00:00:00');
+    if(d < weekStart || d > weekEnd) return;
+    var evs = calEvents[dateKey] || [];
+    evs.forEach(function(ev) {
+      if(!ev.teacher) return;
+      var parts = dateKey.split('-');
+      var label = parts[1] + '/' + parts[2];
+      var subjMap = {math:'數學', geo:'地理', eng:'英文'};
+      var colorMap = {math:'#FD79A8', geo:'#00B894', eng:'#6C5CE7', '#FD79A8':'#FD79A8', '#00B894':'#00B894', '#6C5CE7':'#6C5CE7'};
+      var timeStr = ev.sub ? ev.sub.split(' · ')[0] : '';
+      var cardHtml =
+        '<div class="session-card" data-date="' + dateKey + '">' +
+        '<div class="stime"><div class="stime-h">' + label + '</div><div class="stime-d">' + timeStr + '</div></div>' +
+        '<div class="sdiv"></div>' +
+        '<div class="sinfo"><div class="ss" style="color:' + (ev.color||'#888') + '">' + ev.title + '</div>' +
+        '<div class="st">' + (ev.sub||'') + '</div></div>' +
+        '<div class="sbadge b-pending">已排課</div>' +
+        '</div>';
+      if(ev.teacher === 'teacher-b') tbCards.push({date: dateKey, html: cardHtml});
+      if(ev.teacher === 'teacher-a') taCards.push({date: dateKey, html: cardHtml});
     });
-    buildCalendar('cal-grid', 'cal-ev-list');
-    buildCalendar('cal-grid-parent', 'cal-ev-parent');
-  }).catch(function(){});
+  });
+
+  if(tbList) {
+    if(tbCards.length === 0) {
+      tbList.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
+    } else {
+      tbList.innerHTML = tbCards.map(function(c) { return c.html; }).join('');
+    }
+  }
+  if(taList) {
+    if(taCards.length === 0) {
+      taList.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
+    } else {
+      taList.innerHTML = taCards.map(function(c) { return c.html; }).join('');
+    }
+  }
 }
 
 // ===== 密碼設定（正式上線前請修改）=====
@@ -1882,6 +1946,8 @@ function initAfterLogin(role) {
   });
   // 初始分析
   setTimeout(refreshAnalysis, 500);
+  // 重建課程清單
+  setTimeout(rebuildSessionLists, 300);
 }
 
 var roleNames = {
@@ -2771,6 +2837,8 @@ function addTeacherSession(teacher, btn) {
 
   // 寫入行事曆到 Firebase
   if(loginRole && date && !IS_LOCAL) writeCalEvent(date, calEvents[date]);
+  // 重建課程清單（本地立刻更新）
+  rebuildSessionLists();
 
   // 寫入授課 session 到 Firebase
   if(loginRole) {
