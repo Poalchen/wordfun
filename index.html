@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WordFun v11.3 – 智慧單字學習</title>
+<title>WordFun v11.4 – 智慧單字學習</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -1518,6 +1518,35 @@ nav {
   </div>
 </div>
 
+<!-- 字典自動下載提示 Modal -->
+<div class="modal-bg" id="modal-dict-download">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h3 style="font-size:1rem">📖 偵測到尚未安裝字典</h3>
+      <button class="modal-close" onclick="closeModal('modal-dict-download')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;line-height:1.7">
+        安裝字典後查詢單字時可優先使用本機字典，速度更快且不消耗 AI 額度。<br>
+        是否現在下載內建字典？（約 6MB）
+      </p>
+      <!-- 下載進度 -->
+      <div id="dict-dl-progress" style="display:none;margin-bottom:14px">
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:6px" id="dict-dl-msg">下載中…</div>
+        <div style="background:#e5e7eb;border-radius:99px;height:8px">
+          <div id="dict-dl-bar" style="background:var(--accent2);height:8px;border-radius:99px;width:0%;transition:width .3s"></div>
+        </div>
+        <div id="dict-dl-pct" style="font-size:.75rem;color:var(--muted);margin-top:4px;text-align:right">0%</div>
+      </div>
+      <div id="dict-dl-btns" style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="downloadBuiltinDict()">⬇ 下載字典</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-dict-download')">略過</button>
+      </div>
+      <div style="margin-top:10px;font-size:.75rem;color:var(--muted)">略過後可在「字典」頁面手動上傳 .mdx 字典檔</div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-confirm">
   <div class="modal" style="max-width:360px">
     <div class="modal-body" style="padding:28px 24px;text-align:center">
@@ -1597,7 +1626,7 @@ function localISOString() {
   return new Date(new Date().getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,19);
 }
 
-const APP_VERSION = 'v11.3';
+const APP_VERSION = 'v11.4';
 
 // ── 預設 API Keys（使用者未設定時自動使用）──
 // Gemini Key 以混淆方式儲存，避免被 GitHub secret scanner 偵測
@@ -6212,8 +6241,112 @@ window.addEventListener('load', () => {
   initGDriveFromHash();
   const lastBackup = localStorage.getItem('gdrive_last_backup');
   if (lastBackup) gdriveMsg(`上次備份：${lastBackup}`);
+  // 啟動時偵測是否有字典
+  setTimeout(checkAndPromptDict, 1500);
 });
 
+
+// ═══════════════════════════════════════
+// 內建字典自動下載
+// ═══════════════════════════════════════
+const BUILTIN_DICT_URL      = 'https://poalchen.github.io/wordfun/%E5%89%91%E6%A1%A5%E9%AB%98%E9%98%B6%E8%AF%8D%E5%85%B8.mdx';
+const BUILTIN_DICT_FILENAME = '劍橋高階詞典.mdx';
+const BUILTIN_DICT_SKIP_KEY = 'wf_dict_skip';
+
+async function checkAndPromptDict() {
+  // 使用者已略過就不再提示
+  if (localStorage.getItem(BUILTIN_DICT_SKIP_KEY)) return;
+  // 已有字典就不提示
+  const dicts = await getAllDicts();
+  if (dicts.length > 0) return;
+  // 顯示提示 Modal
+  openModal('modal-dict-download');
+}
+
+async function downloadBuiltinDict() {
+  const btns   = document.getElementById('dict-dl-btns');
+  const prog   = document.getElementById('dict-dl-progress');
+  const msgEl  = document.getElementById('dict-dl-msg');
+  const barEl  = document.getElementById('dict-dl-bar');
+  const pctEl  = document.getElementById('dict-dl-pct');
+
+  btns.style.display = 'none';
+  prog.style.display = 'block';
+  msgEl.textContent  = '連線中…';
+
+  try {
+    const res = await fetch(BUILTIN_DICT_URL);
+    if (!res.ok) throw new Error(`下載失敗 ${res.status}`);
+
+    const total  = parseInt(res.headers.get('Content-Length') || '0');
+    const reader = res.body.getReader();
+    const chunks = [];
+    let received = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.length;
+      if (total) {
+        const pct = Math.round(received / total * 100);
+        barEl.style.width = pct + '%';
+        pctEl.textContent = pct + '%';
+        msgEl.textContent = `下載中… ${(received/1024/1024).toFixed(1)} MB`;
+      } else {
+        msgEl.textContent = `下載中… ${(received/1024/1024).toFixed(1)} MB`;
+      }
+    }
+
+    msgEl.textContent = '解析字典中…';
+    barEl.style.width = '95%';
+
+    // 合併成 ArrayBuffer
+    const ab = await new Blob(chunks).arrayBuffer();
+    const id = 'dict_builtin_' + Date.now();
+
+    // 解析 MDX
+    const parsed = await parseMdx(ab, (pct, msg) => {
+      barEl.style.width = Math.min(95 + pct * 0.05, 99) + '%';
+      msgEl.textContent = msg;
+    });
+
+    // 儲存
+    msgEl.textContent = '儲存字典…';
+    await saveDictData(id, ab);
+    await saveDict(id, parsed.title || BUILTIN_DICT_FILENAME, '內建字典', parsed.keyList.length, ab.byteLength);
+    _dictCache[id] = parsed;
+
+    // 自動啟用
+    if (!getActiveDictId()) setActiveDictId(id);
+
+    barEl.style.width = '100%';
+    msgEl.textContent = `✅ 字典安裝完成！共 ${parsed.keyList.length.toLocaleString()} 個詞條`;
+    pctEl.textContent = '';
+    toast(`📖 字典安裝完成：${parsed.keyList.length.toLocaleString()} 詞條`);
+
+    setTimeout(() => {
+      closeModal('modal-dict-download');
+      renderDictPage();
+    }, 1500);
+
+  } catch(e) {
+    msgEl.textContent = '⚠️ 下載失敗：' + e.message;
+    msgEl.style.color = 'var(--accent)';
+    // 顯示重試按鈕
+    btns.innerHTML = `
+      <button class="btn btn-primary" style="flex:1" onclick="downloadBuiltinDict()">🔄 重試</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="skipDictDownload()">略過</button>
+    `;
+    btns.style.display = 'flex';
+    console.error('字典下載失敗：', e);
+  }
+}
+
+function skipDictDownload() {
+  localStorage.setItem(BUILTIN_DICT_SKIP_KEY, '1');
+  closeModal('modal-dict-download');
+}
 
 async function copyWrongFromStats() {
   const btn = document.getElementById('stats-copy-btn');
