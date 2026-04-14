@@ -308,10 +308,22 @@ html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;
 .device-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
 .device-label{color:rgba(255,255,255,.5);font-size:13px;font-family:var(--font);font-weight:600}
 @media(max-width:500px){
-  .outer{padding:0;background:var(--bg);align-items:flex-start}
-  .phone-shell{width:100%;height:100vh;border-radius:0;box-shadow:none}
-  .device-wrap{gap:0}
+  html,body{height:100%;overflow:hidden}
+  .outer{padding:0;background:var(--bg);align-items:flex-start;justify-content:flex-start}
+  .phone-shell{
+    width:100%;
+    /* dvh 自動扣掉瀏覽器工具列，避免底部被蓋 */
+    height:100dvh;
+    height:calc(var(--vh, 1vh) * 100); /* fallback for older browsers */
+    border-radius:0;box-shadow:none;
+    max-width:100vw;
+  }
+  .device-wrap{gap:0;width:100%;height:100dvh;height:calc(var(--vh,1vh)*100)}
   .device-label{display:none}
+  /* 確保 scroll-area 在手機不超出 */
+  .scroll-area{-webkit-overflow-scrolling:touch}
+  /* 底部 nav 要在安全區以上 */
+  .bottom-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px))}
 }
 
 /* ===== SETTINGS PAGE ===== */
@@ -1722,15 +1734,30 @@ if(IS_LOCAL) {
 function initFirebase() {
   if(IS_LOCAL) {
     setSyncStatus('offline');
-    // 同步指示器改顯示本地模式提示
     var lbl = document.getElementById('sync-label-text');
     if(lbl) lbl.textContent = '本地模式';
     return;
   }
-  // REST API 不需要初始化，直接測試連線
-  fbGet('/.info/serverTimeOffset')
-    .then(function() { setSyncStatus('connected'); })
-    .catch(function() { setSyncStatus('offline'); });
+  // 測試 Firebase 連線
+  fetch(FB_URL + '/.json?shallow=true')
+    .then(function(r) {
+      if(r.ok || r.status === 401) {
+        // ok=成功，401=需要驗證但連線通，兩者都算連線成功
+        setSyncStatus('connected');
+      } else if(r.status === 403) {
+        // 403 = rules 不允許，需要更新規則
+        setSyncStatus('offline');
+        var lbl = document.getElementById('sync-label-text');
+        if(lbl) lbl.textContent = '規則需更新';
+        console.warn('Firebase rules 403 - 請更新 Realtime Database 規則為允許讀寫');
+      } else {
+        setSyncStatus('offline');
+      }
+    })
+    .catch(function(e) {
+      setSyncStatus('offline');
+      console.warn('Firebase 連線失敗:', e.message);
+    });
 }
 
 // GET：讀取資料
@@ -3762,6 +3789,17 @@ function initAllSchedSelects() {
   // 老師A 授課記錄（英文固定）
   fillChapterSelect('ta-rec-ch', 'eng');
 }
+
+// ===== 修正手機 100vh =====
+function setVH() {
+  var vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', vh + 'px');
+}
+setVH();
+window.addEventListener('resize', setVH);
+window.addEventListener('orientationchange', function() {
+  setTimeout(setVH, 200);
+});
 
 // ===== INIT =====
 // 先建行事曆和章節（不依賴登入）
