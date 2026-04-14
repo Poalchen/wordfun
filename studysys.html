@@ -570,6 +570,11 @@ html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;
   color:var(--text);
 }
 .mins-step-unit{font-size:12px;color:var(--muted);font-weight:400}
+
+/* ===== SESSION EDIT MODAL ===== */
+#sched-edit-modal .modal-sheet{padding-bottom:20px}
+.se-info-row{display:flex;gap:8px;margin-bottom:10px}
+.se-badge{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700}
 </style>
 
 </head>
@@ -1622,6 +1627,47 @@ html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;
     </div>
   </div>
 
+
+  <!-- ===== SESSION EDIT MODAL ===== -->
+  <div class="modal-overlay" id="sched-edit-modal" onclick="closeSchedEditModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="modal-title" style="margin:0">編輯排課</div>
+        <button class="modal-close" onclick="document.getElementById('sched-edit-modal').classList.remove('open')">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-label">日期</div>
+        <input class="task-date-inp" type="date" id="se-date">
+      </div>
+      <div class="form-2col" style="margin-top:10px">
+        <div class="form-row">
+          <div class="form-label">開始時間</div>
+          <input class="form-inp" type="time" id="se-time">
+        </div>
+        <div class="form-row">
+          <div class="form-label">時數</div>
+          <select class="form-sel" id="se-dur">
+            <option value="60">60 分鐘</option>
+            <option value="90">90 分鐘</option>
+            <option value="120" selected>120 分鐘</option>
+            <option value="150">150 分鐘</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">章節</div>
+        <select class="form-sel" id="se-ch"></select>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label">備註</div>
+        <input class="form-inp" id="se-note" placeholder="備註（選填）">
+      </div>
+      <button class="submit-btn" style="margin-top:14px" onclick="confirmSchedEdit(this)">更新排課</button>
+      <button class="del-btn" style="margin-top:8px" onclick="confirmSchedDelete()">刪除此排課</button>
+    </div>
+  </div>
+
   <!-- ===== TASK DONE MODAL ===== -->
   <div class="modal-overlay" id="done-modal" onclick="closeDoneModal(event)">
     <div class="modal-sheet" id="done-modal-sheet">
@@ -1883,13 +1929,15 @@ function rebuildSessionLists() {
       var subjMap = {math:'數學', geo:'地理', eng:'英文'};
       var colorMap = {math:'#FD79A8', geo:'#00B894', eng:'#6C5CE7', '#FD79A8':'#FD79A8', '#00B894':'#00B894', '#6C5CE7':'#6C5CE7'};
       var timeStr = ev.sub ? ev.sub.split(' · ')[0] : '';
+      var evIdxInArr = evs.indexOf(ev);
       var cardHtml =
-        '<div class="session-card" data-date="' + dateKey + '">' +
+        '<div class="session-card" data-date="' + dateKey + '" data-idx="' + evIdxInArr + '" data-teacher="' + ev.teacher + '" ' +
+        'onclick="handleSchedCardClick(this)" style="cursor:pointer">' +
         '<div class="stime"><div class="stime-h">' + label + '</div><div class="stime-d">' + timeStr + '</div></div>' +
         '<div class="sdiv"></div>' +
         '<div class="sinfo"><div class="ss" style="color:' + (ev.color||'#888') + '">' + ev.title + '</div>' +
         '<div class="st">' + (ev.sub||'') + '</div></div>' +
-        '<div class="sbadge b-pending">已排課</div>' +
+        '<div class="sbadge b-pending">已排課 ✎</div>' +
         '</div>';
       if(ev.teacher === 'teacher-b') tbCards.push({date: dateKey, html: cardHtml});
       if(ev.teacher === 'teacher-a') taCards.push({date: dateKey, html: cardHtml});
@@ -2845,11 +2893,17 @@ function addTeacherSession(teacher, btn) {
   const card = document.createElement('div');
   card.className = 'session-card';
   card.style.animation = 'fadeIn .3s ease both';
+  var evIdx = calEvents[date].length - 1; // 剛 push 進去的 index
+  card.setAttribute('data-date', date);
+  card.setAttribute('data-idx', evIdx);
+  card.setAttribute('data-teacher', isB ? 'teacher-b' : 'teacher-a');
+  card.style.cursor = 'pointer';
   card.innerHTML =
     '<div class="stime"><div class="stime-h">' + m + '/' + d + '</div><div class="stime-d">' + time + '</div></div>' +
     '<div class="sdiv"></div>' +
     '<div class="sinfo"><div class="ss" style="color:' + colorMap[subj] + '">' + subjMap[subj] + '</div><div class="st">' + chapter + '</div></div>' +
-    '<div class="sbadge b-pending">已排課</div>';
+    '<div class="sbadge b-pending">已排課 ✎</div>';
+  card.addEventListener('click', function() { handleSchedCardClick(this); });
   if(list) {
     // 移除空狀態提示
     var empty = list.querySelector('[style*="尚無排課"]');
@@ -2945,6 +2999,111 @@ function switchToRole(role) {
   showToast('已切換為' + (roleDisplayNames[role] || role));
 }
 
+
+
+// ===== 排課編輯/刪除 =====
+var _editSchedDate = '';
+var _editSchedIdx = -1;
+var _editSchedTeacher = '';
+
+function handleSchedCardClick(el) {
+  var dateKey = el.getAttribute('data-date');
+  var idx = parseInt(el.getAttribute('data-idx'));
+  var teacher = el.getAttribute('data-teacher');
+  if(dateKey && !isNaN(idx)) openSchedEdit(dateKey, idx, teacher);
+}
+
+function openSchedEdit(dateKey, idx, teacher) {
+  var ev = calEvents[dateKey] && calEvents[dateKey][idx];
+  if(!ev) return;
+
+  _editSchedDate = dateKey;
+  _editSchedIdx = idx;
+  _editSchedTeacher = teacher;
+
+  // 填入現有資料
+  document.getElementById('se-date').value = dateKey;
+
+  // 從 sub 解析時間和時數 (格式: "19:00 · 老師A · 120分鐘")
+  var sub = ev.sub || '';
+  var parts = sub.split(' · ');
+  document.getElementById('se-time').value = parts[0] || '19:00';
+  var durMatch = sub.match(/(\d+)分鐘/);
+  if(durMatch) {
+    var durSel = document.getElementById('se-dur');
+    for(var i = 0; i < durSel.options.length; i++) {
+      if(durSel.options[i].value === durMatch[1]) { durSel.selectedIndex = i; break; }
+    }
+  }
+
+  // 章節下拉
+  var isB = teacher === 'teacher-b';
+  var subj = isB ? 'math' : 'eng';
+  // 嘗試從 color 判斷科目
+  if(ev.color === '#FD79A8') subj = 'math';
+  else if(ev.color === '#00B894') subj = 'geo';
+  else if(ev.color === '#6C5CE7') subj = 'eng';
+  fillChapterSelect('se-ch', subj);
+
+  document.getElementById('se-note').value = '';
+  document.getElementById('sched-edit-modal').classList.add('open');
+}
+
+function closeSchedEditModal(e) {
+  if(e.target.id === 'sched-edit-modal') document.getElementById('sched-edit-modal').classList.remove('open');
+}
+
+function confirmSchedEdit(btn) {
+  if(_editSchedIdx < 0 || !_editSchedDate) return;
+  var ev = calEvents[_editSchedDate] && calEvents[_editSchedDate][_editSchedIdx];
+  if(!ev) return;
+
+  var newDate = document.getElementById('se-date').value;
+  var newTime = document.getElementById('se-time').value;
+  var newDur  = document.getElementById('se-dur').value;
+  var chEl    = document.getElementById('se-ch');
+  var newCh   = chEl ? (chEl.options[chEl.selectedIndex] ? chEl.options[chEl.selectedIndex].text : '') : '';
+  var label   = _editSchedTeacher === 'teacher-b' ? '老師B' : '老師A';
+
+  // 更新 sub 字串
+  ev.sub = newTime + ' · ' + label + ' · ' + newDur + '分鐘';
+
+  // 如果日期變了，搬移事件
+  if(newDate !== _editSchedDate) {
+    calEvents[_editSchedDate].splice(_editSchedIdx, 1);
+    if(!calEvents[newDate]) calEvents[newDate] = [];
+    calEvents[newDate].push(ev);
+    if(!IS_LOCAL) {
+      writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+      writeCalEvent(newDate, calEvents[newDate]);
+    }
+  } else {
+    if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+  }
+
+  // 重繪
+  buildCalendar('cal-grid', 'cal-ev-list');
+  buildCalendar('cal-grid-parent', 'cal-ev-parent');
+  rebuildSessionLists();
+  document.getElementById('sched-edit-modal').classList.remove('open');
+  showToast('排課已更新');
+}
+
+function confirmSchedDelete() {
+  if(_editSchedIdx < 0 || !_editSchedDate) return;
+  if(!confirm('確定刪除此排課？')) return;
+
+  calEvents[_editSchedDate].splice(_editSchedIdx, 1);
+  if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+
+  buildCalendar('cal-grid', 'cal-ev-list');
+  buildCalendar('cal-grid-parent', 'cal-ev-parent');
+  rebuildSessionLists();
+  document.getElementById('sched-edit-modal').classList.remove('open');
+  showToast('排課已刪除');
+  _editSchedDate = '';
+  _editSchedIdx = -1;
+}
 
 // ===== 學習分析 =====
 
