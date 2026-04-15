@@ -2291,7 +2291,7 @@ function buildCalendar(containerId, evListId) {
     const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = isCurrentMonth && d===now.getDate();
     const isSel = d===selectedDay && !(isToday);
-    const hasEv = !!calEvents[dateKey];
+    const hasEv = !!(calEvents[dateKey] && calEvents[dateKey].length > 0);
     // 偵測老師A/B是否在這天有排課
     var evA = false, evB = false;
     if(calEvents[dateKey]) {
@@ -3071,12 +3071,16 @@ function confirmSchedEdit(btn) {
   // 如果日期變了，搬移事件
   if(newDate !== _editSchedDate) {
     calEvents[_editSchedDate].splice(_editSchedIdx, 1);
+    // 舊日期空了就刪掉整個 key，行事曆小點才會消失
+    if(calEvents[_editSchedDate].length === 0) {
+      delete calEvents[_editSchedDate];
+      if(!IS_LOCAL) writeCalEvent(_editSchedDate, null); // Firebase 也清掉
+    } else {
+      if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+    }
     if(!calEvents[newDate]) calEvents[newDate] = [];
     calEvents[newDate].push(ev);
-    if(!IS_LOCAL) {
-      writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
-      writeCalEvent(newDate, calEvents[newDate]);
-    }
+    if(!IS_LOCAL) writeCalEvent(newDate, calEvents[newDate]);
   } else {
     if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
   }
@@ -3094,7 +3098,13 @@ function confirmSchedDelete() {
   if(!confirm('確定刪除此排課？')) return;
 
   calEvents[_editSchedDate].splice(_editSchedIdx, 1);
-  if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+  // 空了就刪掉整個 key
+  if(calEvents[_editSchedDate].length === 0) {
+    delete calEvents[_editSchedDate];
+    if(!IS_LOCAL) writeCalEvent(_editSchedDate, null);
+  } else {
+    if(!IS_LOCAL) writeCalEvent(_editSchedDate, calEvents[_editSchedDate]);
+  }
 
   buildCalendar('cal-grid', 'cal-ev-list');
   buildCalendar('cal-grid-parent', 'cal-ev-parent');
