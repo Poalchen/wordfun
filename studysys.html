@@ -675,13 +675,9 @@ html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;
     </div>
 
     <div class="sec-title">今日家教課</div>
-    <div class="session-card">
-      <div class="stime"><div class="stime-h">15:00</div><div class="stime-d">90分</div></div>
-      <div class="sdiv"></div>
-      <div class="sinfo"><div class="ss c-math">數學・地理</div><div class="st">老師 B</div></div>
-      <div class="sbadge b-soon">即將開始</div>
+    <div id="today-sessions">
+      <div style="font-size:12px;color:var(--muted);padding:8px 0 16px;text-align:center">今天沒有排課</div>
     </div>
-    <div style="height:8px"></div>
   </div>
 
   <!-- Student Subject -->
@@ -1721,17 +1717,23 @@ html,body{height:100%;font-family:var(--font);color:var(--text);background:#eee;
         <div class="form-label">日期</div>
         <input class="task-date-inp" type="date" id="add-date">
       </div>
-      <div class="form-row" style="margin-top:10px">
-        <div class="form-label">科目</div>
-        <select class="form-sel" id="add-subj">
-          <option value="eng">英文</option><option value="math">數學</option>
-          <option value="geo">地理</option><option value="hist">歷史</option>
-          <option value="chi">國文</option><option value="civ">公民</option>
-        </select>
+      <div class="form-2col" style="margin-top:10px">
+        <div class="form-row">
+          <div class="form-label">科目</div>
+          <select class="form-sel" id="add-subj" onchange="refreshAddChapters()">
+            <option value="eng">英文</option><option value="math">數學</option>
+            <option value="geo">地理</option><option value="hist">歷史</option>
+            <option value="chi">國文</option><option value="civ">公民</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-label">章節</div>
+          <select class="form-sel" id="add-chapter"></select>
+        </div>
       </div>
       <div class="form-row" style="margin-top:10px">
-        <div class="form-label">任務說明</div>
-        <input class="form-inp" id="add-task-name" placeholder="例：第三冊 第2章 閱讀筆記">
+        <div class="form-label">任務說明（選填，留空自動帶入章節名）</div>
+        <input class="form-inp" id="add-task-name" placeholder="例：閱讀筆記、習題練習…">
       </div>
       <div class="form-2col" style="margin-top:10px">
         <div class="form-row">
@@ -1892,8 +1894,9 @@ function syncFromFirebase() {
       });
       buildCalendar('cal-grid', 'cal-ev-list');
       buildCalendar('cal-grid-parent', 'cal-ev-parent');
-      // 同步重繪本週課程
+      // 同步重繪本週課程和今日家教課
       rebuildSessionLists();
+      renderTodaySessions();
     }).catch(function(){});
 
     // 讀取 sessions（排課紀錄）
@@ -2006,8 +2009,9 @@ function initAfterLogin(role) {
   // 確保 fab 顯示狀態正確（家長和老師也可以點 + 幫學生新增任務）
   var fab = document.getElementById('fab-btn');
   if(fab) fab.style.display = 'flex';
-  // 載入今日任務
+  // 載入今日任務和家教課
   loadTodayTasks();
+  renderTodaySessions();
   // add-date 預設今天
   var addDate = document.getElementById('add-date');
   if(addDate) addDate.value = getTodayKey();
@@ -2544,6 +2548,8 @@ function openModal() {
   editingTaskId = null;
   document.getElementById('add-modal-title').textContent = '新增任務';
   document.getElementById('add-task-name').value = '';
+  // 重置章節選單
+  refreshAddChapters();
   // 重置步進器為 60 分鐘
   var minsInp = document.getElementById('add-mins');
   var minsDisp = document.getElementById('add-mins-display');
@@ -2599,7 +2605,9 @@ function closeAddModal(e) {
 function confirmAddTask(btn) {
   var dateKey = document.getElementById('add-date').value || getTodayKey();
   var subj = document.getElementById('add-subj').value;
-  var name = document.getElementById('add-task-name').value.trim();
+  var chapterEl = document.getElementById('add-chapter');
+  var chapterName = chapterEl && chapterEl.options[chapterEl.selectedIndex] ? chapterEl.options[chapterEl.selectedIndex].text : '';
+  var name = document.getElementById('add-task-name').value.trim() || chapterName;
   var mins = document.getElementById('add-mins').value || '60';
   var source = document.getElementById('add-source').value || 'self';
   if(!name) { alert('請填寫任務說明'); return; }
@@ -3000,6 +3008,58 @@ function switchToRole(role) {
 }
 
 
+
+
+// ===== 新增任務 modal：科目切換時更新章節 =====
+function refreshAddChapters() {
+  var subj = document.getElementById('add-subj').value;
+  fillChapterSelect('add-chapter', subj);
+}
+
+// ===== 今日家教課動態渲染 =====
+function renderTodaySessions() {
+  var today = getTodayKey();
+  var el = document.getElementById('today-sessions');
+  if(!el) return;
+
+  var evs = calEvents[today] || [];
+  var teacherEvs = evs.filter(function(ev) {
+    return ev.teacher === 'teacher-a' || ev.teacher === 'teacher-b';
+  });
+
+  if(!teacherEvs.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0 16px;text-align:center">今天沒有排課</div>';
+    return;
+  }
+
+  el.innerHTML = teacherEvs.map(function(ev) {
+    var parts = (ev.sub || '').split(' · ');
+    var time = parts[0] || '';
+    var dur = (ev.sub || '').match(/(\d+)分鐘/);
+    var durStr = dur ? dur[1] + '分' : '';
+    var soon = '';
+    if(time) {
+      var now = new Date();
+      var h = parseInt(time.split(':')[0]);
+      var m = parseInt(time.split(':')[1]);
+      var evMin = h * 60 + m;
+      var nowMin = now.getHours() * 60 + now.getMinutes();
+      if(evMin - nowMin <= 60 && evMin - nowMin >= 0) soon = 'b-soon';
+      else if(evMin <= nowMin) soon = 'b-done';
+      else soon = 'b-pending';
+    }
+    var badgeText = soon === 'b-soon' ? '即將開始' : soon === 'b-done' ? '已結束' : '今日排課';
+    return '<div class="session-card">' +
+      '<div class="stime"><div class="stime-h">' + time + '</div><div class="stime-d">' + durStr + '</div></div>' +
+      '<div class="sdiv"></div>' +
+      '<div class="sinfo">' +
+        '<div class="ss" style="color:' + (ev.color||'#888') + '">' + (ev.title||'家教課') + '</div>' +
+        '<div class="st">' + (parts[1]||'') + '</div>' +
+      '</div>' +
+      '<div class="sbadge ' + soon + '">' + badgeText + '</div>' +
+    '</div>';
+  }).join('');
+}
 
 // ===== 排課編輯/刪除 =====
 var _editSchedDate = '';
