@@ -1907,59 +1907,52 @@ function syncFromFirebase() {
 }
 
 // 從 calEvents 重建「本週課程」列表
+function makeSchedCardHtml(dateKey, evIdx, ev) {
+  var parts = dateKey.split('-');
+  var label = parts[1] + '/' + parts[2];
+  var timeStr = ev.sub ? ev.sub.split(' · ')[0] : '';
+  return '<div class="session-card" data-date="' + dateKey + '" data-idx="' + evIdx + '" data-teacher="' + (ev.teacher||'') + '" ' +
+    'onclick="handleSchedCardClick(this)" style="cursor:pointer">' +
+    '<div class="stime"><div class="stime-h">' + label + '</div><div class="stime-d">' + timeStr + '</div></div>' +
+    '<div class="sdiv"></div>' +
+    '<div class="sinfo"><div class="ss" style="color:' + (ev.color||'#888') + '">' + (ev.title||'家教課') + '</div>' +
+    '<div class="st">' + (ev.sub||'') + '</div></div>' +
+    '<div class="sbadge b-pending">已排課 ✎</div>' +
+    '</div>';
+}
+
 function rebuildSessionLists() {
   var now = new Date();
-  var weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay()); // 本週日
-  var weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 13); // 往後兩週
+  // 從兩週前到四週後，確保不會遺漏
+  var rangeStart = new Date(now); rangeStart.setDate(now.getDate() - 14);
+  var rangeEnd   = new Date(now); rangeEnd.setDate(now.getDate() + 28);
 
   var tbList = document.getElementById('tb-sessions');
   var taList = document.getElementById('ta-sessions');
-  if(!tbList && !taList) return;
 
-  // 收集本週+下週的排課
   var tbCards = [], taCards = [];
 
   Object.keys(calEvents).sort().forEach(function(dateKey) {
     var d = new Date(dateKey + 'T00:00:00');
-    if(d < weekStart || d > weekEnd) return;
+    if(d < rangeStart || d > rangeEnd) return;
     var evs = calEvents[dateKey] || [];
-    evs.forEach(function(ev) {
+    evs.forEach(function(ev, idx) {
       if(!ev.teacher) return;
-      var parts = dateKey.split('-');
-      var label = parts[1] + '/' + parts[2];
-      var subjMap = {math:'數學', geo:'地理', eng:'英文'};
-      var colorMap = {math:'#FD79A8', geo:'#00B894', eng:'#6C5CE7', '#FD79A8':'#FD79A8', '#00B894':'#00B894', '#6C5CE7':'#6C5CE7'};
-      var timeStr = ev.sub ? ev.sub.split(' · ')[0] : '';
-      var evIdxInArr = evs.indexOf(ev);
-      var cardHtml =
-        '<div class="session-card" data-date="' + dateKey + '" data-idx="' + evIdxInArr + '" data-teacher="' + ev.teacher + '" ' +
-        'onclick="handleSchedCardClick(this)" style="cursor:pointer">' +
-        '<div class="stime"><div class="stime-h">' + label + '</div><div class="stime-d">' + timeStr + '</div></div>' +
-        '<div class="sdiv"></div>' +
-        '<div class="sinfo"><div class="ss" style="color:' + (ev.color||'#888') + '">' + ev.title + '</div>' +
-        '<div class="st">' + (ev.sub||'') + '</div></div>' +
-        '<div class="sbadge b-pending">已排課 ✎</div>' +
-        '</div>';
-      if(ev.teacher === 'teacher-b') tbCards.push({date: dateKey, html: cardHtml});
-      if(ev.teacher === 'teacher-a') taCards.push({date: dateKey, html: cardHtml});
+      var html = makeSchedCardHtml(dateKey, idx, ev);
+      if(ev.teacher === 'teacher-b') tbCards.push(html);
+      if(ev.teacher === 'teacher-a') taCards.push(html);
     });
   });
 
   if(tbList) {
-    if(tbCards.length === 0) {
-      tbList.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
-    } else {
-      tbList.innerHTML = tbCards.map(function(c) { return c.html; }).join('');
-    }
+    tbList.innerHTML = tbCards.length
+      ? tbCards.join('')
+      : '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
   }
   if(taList) {
-    if(taCards.length === 0) {
-      taList.innerHTML = '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
-    } else {
-      taList.innerHTML = taCards.map(function(c) { return c.html; }).join('');
-    }
+    taList.innerHTML = taCards.length
+      ? taCards.join('')
+      : '<div style="padding:12px 16px;font-size:12px;color:var(--muted)">尚無排課記錄</div>';
   }
 }
 
@@ -2346,22 +2339,44 @@ function renderEventList(evListId) {
   if(evs.length===0){
     html += `<div style="font-size:13px;color:var(--muted);padding:12px 0">這天沒有課程或考試</div>`;
   } else {
-    evs.forEach(ev=>{
-      html += `<div class="cal-ev-card" style="margin-bottom:8px">
-        <div class="ev-stripe" style="background:${ev.color}"></div>
-        <div class="ev-info"><div class="ev-title">${ev.title}</div><div class="ev-sub">${ev.sub}</div></div>
-      </div>`;
+    evs.forEach(function(ev, idx) {
+      var canEdit = ev.teacher && (loginRole === ev.teacher || loginRole === 'parent');
+      var editBtn = canEdit
+        ? '<button onclick="openSchedEdit(\'' + dateKey + '\',' + idx + ',\'' + (ev.teacher||'') + '\')" ' +
+          'style="border:none;background:none;font-size:11px;color:var(--primary);font-weight:700;cursor:pointer;font-family:var(--font);padding:0;margin-left:8px">✎ 修改</button>'
+        : '';
+      html += '<div class="cal-ev-card" style="margin-bottom:8px">' +
+        '<div class="ev-stripe" style="background:' + (ev.color||'#888') + '"></div>' +
+        '<div class="ev-info">' +
+          '<div class="ev-title" style="display:flex;align-items:center;justify-content:space-between">' +
+            '<span>' + (ev.title||'') + '</span>' + editBtn +
+          '</div>' +
+          '<div class="ev-sub">' + (ev.sub||'') + '</div>' +
+        '</div>' +
+        '</div>';
     });
   }
 
   html += `<div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 8px">即將到來的事項</div>`;
-  upcoming.forEach(([k,evList])=>{
-    const [y,m,d2] = k.split('-');
-    evList.forEach(ev=>{
-      html += `<div class="cal-ev-card" style="margin-bottom:8px">
-        <div class="ev-stripe" style="background:${ev.color}"></div>
-        <div class="ev-info"><div class="ev-title">${ev.title}</div><div class="ev-sub">${m}月${d2}日 · ${ev.sub}</div></div>
-      </div>`;
+  upcoming.forEach(function(entry) {
+    var k = entry[0], evList = entry[1];
+    var kparts = k.split('-');
+    var km = kparts[1], kd = kparts[2];
+    evList.forEach(function(ev, idx) {
+      var canEdit = ev.teacher && (loginRole === ev.teacher || loginRole === 'parent');
+      var editBtn2 = canEdit
+        ? '<button onclick="openSchedEdit(\'' + k + '\',' + idx + ',\'' + (ev.teacher||'') + '\')" ' +
+          'style="border:none;background:none;font-size:11px;color:var(--primary);font-weight:700;cursor:pointer;font-family:var(--font);padding:0;margin-left:8px">✎ 修改</button>'
+        : '';
+      html += '<div class="cal-ev-card" style="margin-bottom:8px">' +
+        '<div class="ev-stripe" style="background:' + (ev.color||'#888') + '"></div>' +
+        '<div class="ev-info">' +
+          '<div class="ev-title" style="display:flex;align-items:center;justify-content:space-between">' +
+            '<span>' + (ev.title||'') + '</span>' + editBtn2 +
+          '</div>' +
+          '<div class="ev-sub">' + km + '月' + kd + '日 · ' + (ev.sub||'') + '</div>' +
+        '</div>' +
+        '</div>';
     });
   });
 
@@ -2901,17 +2916,9 @@ function addTeacherSession(teacher, btn) {
   const card = document.createElement('div');
   card.className = 'session-card';
   card.style.animation = 'fadeIn .3s ease both';
-  var evIdx = calEvents[date].length - 1; // 剛 push 進去的 index
-  card.setAttribute('data-date', date);
-  card.setAttribute('data-idx', evIdx);
-  card.setAttribute('data-teacher', isB ? 'teacher-b' : 'teacher-a');
-  card.style.cursor = 'pointer';
-  card.innerHTML =
-    '<div class="stime"><div class="stime-h">' + m + '/' + d + '</div><div class="stime-d">' + time + '</div></div>' +
-    '<div class="sdiv"></div>' +
-    '<div class="sinfo"><div class="ss" style="color:' + colorMap[subj] + '">' + subjMap[subj] + '</div><div class="st">' + chapter + '</div></div>' +
-    '<div class="sbadge b-pending">已排課 ✎</div>';
-  card.addEventListener('click', function() { handleSchedCardClick(this); });
+  var evIdx = calEvents[date].length - 1;
+  // 重建課程清單確保 idx 正確
+  rebuildSessionLists();
   if(list) {
     // 移除空狀態提示
     var empty = list.querySelector('[style*="尚無排課"]');
